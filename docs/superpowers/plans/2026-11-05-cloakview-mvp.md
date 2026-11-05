@@ -22,6 +22,10 @@
 - Audio format: 16 kHz mono PCM s16le; chunks sent to Realtime as base64.
 - Answers context: last 30 transcript turns.
 - `is_pro()` stub returns `false` (no license system in v1).
+- UI text is never hardcoded: every user-facing string goes through the typed
+  `t()` catalog. Locales: `en` (default) and `es`, enforced by a vitest
+  key-parity test (Task 12). macOS system dialogs (Info.plist usage strings)
+  stay English in v1 — system-rendered, out of app control.
 
 ## Review Focus
 
@@ -44,6 +48,9 @@ cloakview/
 │   ├── lib/
 │   │   ├── models.ts                 # shared TS types (mirrors Rust DTOs)
 │   │   ├── ipc.ts                    # typed invoke wrappers + event subscription
+│   │   ├── i18n.ts                   # t()/setLocale/getLocale over typed catalog
+│   │   ├── locales/en.ts             # full string catalog (source of truth)
+│   │   ├── locales/es.ts             # Spanish catalog (key-parity tested)
 │   │   └── transcriptBuffer.ts       # pure TS mirror of the 30-turn buffer (vitest)
 │   ├── hub/HubApp.tsx
 │   ├── listen/ListenApp.tsx
@@ -1583,15 +1590,16 @@ Extract the loop body as `async fn pump(src, ws_rx, emit)` to make this testable
 
 ---
 
-### Task 12: Frontend core (models + typed IPC + buffer + vitest)
+### Task 12: Frontend core (models + typed IPC + i18n es/en + buffer + vitest)
 
 **Files:**
-- Create: `src/lib/models.ts`, `src/lib/ipc.ts`, `src/lib/transcriptBuffer.ts`, `src/lib/transcriptBuffer.test.ts`
+- Create: `src/lib/models.ts`, `src/lib/ipc.ts`, `src/lib/i18n.ts`, `src/lib/locales/en.ts`, `src/lib/locales/es.ts`, `src/lib/transcriptBuffer.ts`, `src/lib/i18n.test.ts`, `src/lib/transcriptBuffer.test.ts`
 
 **Interfaces:**
 - Produces:
   - `models.ts`: `Turn`, `Note`, `Conversation`, `ConversationMessage`, `Settings`, `ListenState`, `RealtimeEvent`, `AnswersEvent`, `IpcError` — mirroring Rust serde names exactly (camelCase).
   - `ipc.ts`: typed wrappers — `saveApiKey(key)`, `hasApiKey()`, `clearApiKey()`, `getSettings()`, `saveSettings(patch)`, `startListen()`, `stopListen()`, `requestAnswer(q?)`, `stopAnswer()`, note/conversation CRUD, plus `subscribeRealtime(cb)`, `subscribeAnswers(cb)`, `subscribeListenState(cb)`.
+  - `i18n.ts`: `type Locale = "en" | "es"`, `t(key)`, `setLocale(l)`, `getLocale()`. Catalog typed as `typeof en`; `es` must have identical keys (parity test). Boot wiring: after `getSettings()`, call `setLocale(settings.language === "es" ? "es" : "en")`.
   - `transcriptBuffer.ts`: TS mirror of the 30-turn ring (used by ListenApp before persisting).
 - Consumes: nothing.
 
@@ -1609,7 +1617,151 @@ describe("TranscriptBuffer", () => {
   });
 });
 ```
-- [ ] **Step 2:** `npx vitest run` → FAIL. **Step 3:** implement `transcriptBuffer.ts` + `models.ts` + `ipc.ts` (wrappers via `invoke`/`listen` from `@tauri-apps/api`). **Step 4:** pass + `npm run build`. **Step 5:** commit `"feat: frontend core — models, typed IPC, transcript buffer"`.
+- [ ] **Step 2:** `npx vitest run` → FAIL (both test files missing).
+
+- [ ] **Step 3:** Implement `transcriptBuffer.ts`, `models.ts`, `ipc.ts` (wrappers via `invoke`/`listen` from `@tauri-apps/api`), plus the es/en i18n module:
+
+`src/lib/locales/en.ts` (source of truth — full MVP catalog):
+```ts
+export const en = {
+  "hub.listen": "Listen",
+  "hub.ask": "Ask",
+  "hub.notes": "Notes",
+  "hub.settings": "Settings",
+  "hub.close": "Close",
+  "listen.title": "Live transcript",
+  "listen.empty": "Start listening to see the transcript here.",
+  "listen.start": "Start Listen",
+  "listen.stop": "Stop",
+  "listen.listening": "Listening…",
+  "ask.title": "Ask",
+  "ask.placeholder": "Ask a question about the conversation…",
+  "ask.send": "Send",
+  "ask.stop": "Stop",
+  "ask.thinking": "Thinking…",
+  "ask.empty": "Suggestions will appear here.",
+  "notes.title": "Notes",
+  "notes.new": "New note",
+  "notes.empty": "No notes yet.",
+  "notes.delete": "Delete",
+  "settings.title": "Settings",
+  "settings.apiKey": "OpenAI API key",
+  "settings.apiKeyHint": "Stored in the macOS Keychain. Never leaves this device except to api.openai.com.",
+  "settings.saveKey": "Save key",
+  "settings.keySaved": "Key saved",
+  "settings.testConnection": "Test connection",
+  "settings.testOk": "Connection OK",
+  "settings.testFail": "Connection failed",
+  "settings.language": "Language",
+  "settings.theme": "Theme",
+  "settings.themeDark": "Dark",
+  "settings.themeLight": "Light",
+  "settings.opacity": "Opacity",
+  "settings.answersModel": "Answers model",
+  "settings.shortcuts": "Shortcuts",
+  "perm.title": "Permissions needed",
+  "perm.screenCapture": "Screen & system audio capture",
+  "perm.microphone": "Microphone",
+  "perm.grant": "Open System Settings",
+  "perm.statusGranted": "Granted",
+  "perm.statusMissing": "Missing",
+  "errors.missingApiKey": "Add your OpenAI API key in Settings first.",
+  "errors.generic": "Something went wrong",
+} as const;
+export type Catalog = typeof en;
+```
+
+`src/lib/locales/es.ts` — identical keys, Spanish values:
+```ts
+import type { Catalog } from "./en";
+export const es: Catalog = {
+  "hub.listen": "Escuchar",
+  "hub.ask": "Preguntar",
+  "hub.notes": "Notas",
+  "hub.settings": "Ajustes",
+  "hub.close": "Cerrar",
+  "listen.title": "Transcripción en vivo",
+  "listen.empty": "Inicia la escucha para ver la transcripción aquí.",
+  "listen.start": "Iniciar escucha",
+  "listen.stop": "Detener",
+  "listen.listening": "Escuchando…",
+  "ask.title": "Preguntar",
+  "ask.placeholder": "Pregunta algo sobre la conversación…",
+  "ask.send": "Enviar",
+  "ask.stop": "Detener",
+  "ask.thinking": "Pensando…",
+  "ask.empty": "Las sugerencias aparecerán aquí.",
+  "notes.title": "Notas",
+  "notes.new": "Nueva nota",
+  "notes.empty": "Aún no hay notas.",
+  "notes.delete": "Eliminar",
+  "settings.title": "Ajustes",
+  "settings.apiKey": "Clave de API de OpenAI",
+  "settings.apiKeyHint": "Guardada en el Keychain de macOS. Nunca sale de este equipo excepto hacia api.openai.com.",
+  "settings.saveKey": "Guardar clave",
+  "settings.keySaved": "Clave guardada",
+  "settings.testConnection": "Probar conexión",
+  "settings.testOk": "Conexión correcta",
+  "settings.testFail": "Falló la conexión",
+  "settings.language": "Idioma",
+  "settings.theme": "Tema",
+  "settings.themeDark": "Oscuro",
+  "settings.themeLight": "Claro",
+  "settings.opacity": "Opacidad",
+  "settings.answersModel": "Modelo de respuestas",
+  "settings.shortcuts": "Atajos",
+  "perm.title": "Permisos necesarios",
+  "perm.screenCapture": "Captura de pantalla y audio del sistema",
+  "perm.microphone": "Micrófono",
+  "perm.grant": "Abrir Ajustes del Sistema",
+  "perm.statusGranted": "Concedido",
+  "perm.statusMissing": "Faltante",
+  "errors.missingApiKey": "Primero añade tu clave de API de OpenAI en Ajustes.",
+  "errors.generic": "Algo salió mal",
+};
+```
+
+`src/lib/i18n.ts`:
+```ts
+import { en, type Catalog } from "./locales/en";
+import { es } from "./locales/es";
+
+export type Locale = "en" | "es";
+const catalogs: Record<Locale, Catalog> = { en, es };
+let current: Locale =
+  (localStorage.getItem("cloakview-locale") as Locale | null) ?? "en";
+
+export function setLocale(l: Locale): void {
+  current = l;
+  localStorage.setItem("cloakview-locale", l);
+}
+export function getLocale(): Locale { return current; }
+export function t(key: keyof Catalog): string { return catalogs[current][key]; }
+```
+
+`src/lib/i18n.test.ts` (parity test — keeps Spanish from silently rotting):
+```ts
+import { describe, it, expect } from "vitest";
+import { en } from "./locales/en";
+import { es } from "./locales/es";
+
+describe("i18n parity", () => {
+  it("es has exactly the same non-empty keys as en", () => {
+    const enKeys = Object.keys(en);
+    expect(Object.keys(es).sort()).toEqual(enKeys.sort());
+    for (const k of enKeys) {
+      expect((es as Record<string, string>)[k].trim().length).toBeGreaterThan(0);
+    }
+  });
+});
+```
+
+- [ ] **Step 4:** `npx vitest run` → PASS (both suites); `npm run build` clean. Boot wiring: `App.tsx` on mount calls `getSettings().then(s => setLocale(s.language === "es" ? "es" : "en"))`.
+
+- [ ] **Step 5:** Commit
+```bash
+git add -A && git commit -m "feat: frontend core — models, typed IPC, es/en i18n with parity test, transcript buffer"
+```
 
 ---
 
@@ -1641,7 +1793,7 @@ pub fn exclude_from_capture(window: &tauri::WebviewWindow) -> crate::error::AppR
 ```
 Call it on the hub webview window in `.setup`. Non-macOS: no-op stub.
 
-- [ ] **Step 2:** `HubApp.tsx`: draggable region (`data-tauri-drag-region`), buttons Listen/Ask/Notes/Settings wired to `ipc.ts` (Listen toggles start/stop; others `WebviewWindow` open with `?win=listen|ask|notes|settings`), opacity control calling `saveSettings`. **Step 3:** `npm run build` + `cargo build`. **Step 4:** manual: hub floats above fullscreen video, doesn't appear in `screencapture`. **Step 5:** commit `"feat: hub overlay + macOS capture exclusion"`.
+- [ ] **Step 2:** `HubApp.tsx`: draggable region (`data-tauri-drag-region`), buttons Listen/Ask/Notes/Settings — all labels via `t("hub.*")` (Task 12) — wired to `ipc.ts` (Listen toggles start/stop; others `WebviewWindow` open with `?win=listen|ask|notes|settings`), opacity control calling `saveSettings`. **Step 3:** `npm run build` + `cargo build`. **Step 4:** manual: hub floats above fullscreen video, doesn't appear in `screencapture`. **Step 5:** commit `"feat: hub overlay + macOS capture exclusion"`.
 
 ---
 
@@ -1650,7 +1802,7 @@ Call it on the hub webview window in `.setup`. Non-macOS: no-op stub.
 **Files:**
 - Create: `src/listen/ListenApp.tsx`, `src/ask/AskApp.tsx`, `src/notes/NotesApp.tsx`, `src/settings/SettingsApp.tsx`; Modify: `src/App.tsx` (route by `windowKind`).
 
-- [ ] **Step 1–2:** `ListenApp` subscribes `subscribeRealtime`, appends to `TranscriptBuffer`, renders transcript list with `isUserTurn` highlight; auto-scroll bottom. **Step 3–4:** `AskApp`: input + `requestAnswer`, subscribes `subscribeAnswers`, renders streaming deltas; `stopAnswer` on unmount. `NotesApp`: list/create/edit/delete via note IPC (local state + refresh). `SettingsApp`: masked key input with Save/Test (test = `startListen`+immediate `stopListen` catching `IpcError`), model fields, opacity slider, theme toggle — all via `saveSettings`. Route all in `App.tsx`. **Step 5:** `npm run build` + typecheck strict clean → commit `"feat: listen/ask/notes/settings windows"`.
+- [ ] **Step 1–2:** `ListenApp` subscribes `subscribeRealtime`, appends to `TranscriptBuffer`, renders transcript list with `isUserTurn` highlight (title/empty/listening states via `t("listen.*")`); auto-scroll bottom. **Step 3–4:** `AskApp`: input placeholder/submit via `t("ask.*")`, `requestAnswer`, subscribes `subscribeAnswers`, renders streaming deltas; `stopAnswer` on unmount. `NotesApp`: list/create/edit/delete via note IPC, all labels via `t("notes.*")`. `SettingsApp`: masked key input with Save/Test (test = `startListen`+immediate `stopListen` catching `IpcError`), model fields, opacity slider, theme toggle, **language selector (en/es) that calls `setLocale` immediately and persists via `saveSettings({ language })`** — all labels via `t("settings.*")`. Route all in `App.tsx`. **Step 5:** `npm run build` + typecheck strict clean → commit `"feat: listen/ask/notes/settings windows with es/en i18n"`.
 
 (These are thin presentational components over the Task 12 IPC surface; verification is build + the Task 11 manual checklist per window.)
 
@@ -1676,7 +1828,7 @@ Call it on the hub webview window in `.setup`. Non-macOS: no-op stub.
 
 ## Self-Review
 
-**Spec coverage:** MVP features → Tasks: scaffold(1), secrets(3), settings(4), overlay(13), audio(8), realtime(9), answers(10), detect(7), notes/conversations(5,6), UI(12–14), hotkeys(15), signing(16), IPC(11), listen-state/turn events(9,11). Spec §5 command list fully covered by Task 11. `is_pro()` stub: add `pub fn is_pro() -> bool { false }` in `state.rs` during Task 2 (covered). Spec §6 flow → Tasks 8→9→7→10→11. Spec §7 (zero telemetry) → no analytics anywhere (enforced by review). Spec §8 (checksums/notarization) → Task 16.
+**Spec coverage:** MVP features → Tasks: scaffold(1), secrets(3), settings(4), overlay(13), audio(8), realtime(9), answers(10), detect(7), notes/conversations(5,6), UI(12–14, all text through es/en i18n), hotkeys(15), signing(16), IPC(11), listen-state/turn events(9,11). Spec §5 command list fully covered by Task 11. `is_pro()` stub: add `pub fn is_pro() -> bool { false }` in `state.rs` during Task 2 (covered). Spec §6 flow → Tasks 8→9→7→10→11. Spec §7 (zero telemetry) → no analytics anywhere (enforced by review). Spec §8 (checksums/notarization) → Task 16. Spec's "i18n-ready (es/en)" → real es/en catalogs with parity test (Task 12) and in-app language switching (Task 14).
 
 **Placeholder scan:** Task 8's SCK body is the single manual seam, explicitly motivated (headless CI cannot drive ScreenCaptureKit) with the trait boundary keeping logic tested — not an open placeholder: the adapter is a bounded ~40-line adaptation pinned to the crate version, verified by the Task 11 manual checklist. No TBD/TODO elsewhere.
 
