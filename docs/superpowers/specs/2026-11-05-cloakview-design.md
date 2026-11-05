@@ -57,7 +57,7 @@ de OpenAI.
 | Secretos | **Keychain** (`keyring` crate) | La API key |
 | Settings | JSON en `~/Library/Application Support/com.baphomet.cloakview/` | `tauri-plugin-store` |
 | Atajos globales | `tauri-plugin-global-shortcut` | Quick-hide, push-to-ask |
-| Licencia | MIT (decisión registrada; reversible antes del primer release público) | Facilita contribuciones si se open-sourcea |
+| Licencia | **Open core**: núcleo MIT (repo público), features Pro en binario cerrado | Transparencia que genera confianza + monetización viable |
 
 ## 5. Arquitectura
 
@@ -172,9 +172,15 @@ Eventos Rust → frontend: `transcript-delta`, `turn-detected`,
 - **Fase MVP (este proyecto):** hub + overlay, captura audio, Realtime
   transcripción, turno, Ask con streaming, notas + SQLite, Keychain,
   settings, atajos, firma+notarización, CI de build.
-- **v1.1:** auto-notas con resumen al cerrar sesión, export Markdown/PDF.
-- **v2 (futuro, fuera de este spec):** visión (frames → vision API),
-  traducción realtime, whisper.cpp offline, Windows, i18n completo.
+- **v1.1 — Pro (pago único $39, lanzamiento $29):** visión (frames → vision
+  API con la key del usuario), traducción realtime, whisper.cpp offline,
+  auto-notas con resumen al cerrar sesión, export PDF/Markdown/Email,
+  themes avanzados. Licencia: key Ed25519 firmada (validación offline contra
+  clave pública embebida), venta vía merchant of record (Lemon Squeezy o
+  Polar — cobran, manejan impuestos y emiten keys). Sin servidor de
+  activación propio. Check `is_pro()` en Rust leyendo estado de licencia.
+- **v2 (futuro, fuera de este spec):** relay opcional de tokens (suscripción,
+  requiere backend), Windows, features de equipo/B2B, i18n completo.
 
 ## 10. Riesgos y mitigaciones
 
