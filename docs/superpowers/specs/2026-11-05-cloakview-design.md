@@ -1,8 +1,8 @@
-# auris — Copiloto de reuniones en tiempo real (BYOK-first)
+# CloakView — Copiloto de reuniones en tiempo real (BYOK-first)
 
 **Fecha:** 2026-11-05
 **Estado:** propuesto para aprobación
-**Codename:** `auris` (provisional, cambiable antes del primer release)
+**Nombre:** CloakView (dominios cloakview.app, .ai, .io y .dev libres; cloakview.com está en venta — opcional comprarlo después)
 
 ---
 
@@ -55,7 +55,7 @@ de OpenAI.
 | Transcripción offline (v2) | `whisper.cpp` (crate `whisper-rs`) | Modo $0/sin red |
 | Datos | **SQLite** (`rusqlite`, WAL) | Notas, transcripciones, conversaciones |
 | Secretos | **Keychain** (`keyring` crate) | La API key |
-| Settings | JSON en `~/Library/Application Support/com.baphomet.auris/` | `tauri-plugin-store` |
+| Settings | JSON en `~/Library/Application Support/com.baphomet.cloakview/` | `tauri-plugin-store` |
 | Atajos globales | `tauri-plugin-global-shortcut` | Quick-hide, push-to-ask |
 | Licencia | MIT (decisión registrada; reversible antes del primer release público) | Facilita contribuciones si se open-sourcea |
 
@@ -63,7 +63,7 @@ de OpenAI.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│ auris.app (Tauri 2)                                      │
+│ cloakview.app (Tauri 2)                                      │
 │                                                          │
 │  ┌─────────────┐  IPC (invoke/events)  ┌───────────────┐ │
 │  │  Rust core  │ ◄──────────────────► │  React UI     │ │
@@ -80,7 +80,7 @@ de OpenAI.
 └──────────────────────────────────────────────────────────┘
 ```
 
-### Componentes Rust (crate `auris-core` dentro del repo Tauri)
+### Componentes Rust (crate `cloakview-core` dentro del repo Tauri)
 
 1. **`audio`** — Abstracción `AudioSource`: implementación macOS con
    ScreenCaptureKit (SCStream con `capturesAudio = true`, mezcla sistema+mic,
@@ -100,7 +100,7 @@ de OpenAI.
 5. **`store`** — SQLite en Application Support: tablas `notes`,
    `conversations`, `conversation_messages` (esquema propio, diseñado en la
    fase de plan).
-6. **`secrets`** — `keyring` con service `auris`, account `openai-api-key`.
+6. **`secrets`** — `keyring` con service `cloakview`, account `openai-api-key`.
    Comandos: `save_api_key`, `has_api_key`, `clear_api_key`. Nunca loguear
    el valor.
 7. **`windows`** — Manager de ventanas overlay: config Tauri
