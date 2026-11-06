@@ -1,0 +1,25 @@
+{
+  "nav": {
+    "home": "Home",
+    "pricing": "Pricing",
+    "docs": "Docs",
+    "faq": "FAQ",
+    "download": "Download"
+  },
+  "footer": {
+    "tagline": "Local-first. Your key, your control.",
+    "support": "Support",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "cookies": "Cookies",
+    "changelog": "Changelog",
+    "rights": "All rights reserved."
+  },
+  "home": {
+    "title": "CloakView — Private meeting copilot",
+    "heading": "Scaffold placeholder — Phase 2 builds the real landing page."
+  },
+  "meta": {
+    "siteName": "CloakView"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "pricing": "Precios",
+    "docs": "Documentación",
+    "faq": "Preguntas frecuentes",
+    "download": "Descargar"
+  },
+  "footer": {
+    "tagline": "Local-first. Tu clave, tu control.",
+    "support": "Soporte",
+    "privacy": "Privacidad",
+    "terms": "Términos",
+    "cookies": "Cookies",
+    "changelog": "Novedades",
+    "rights": "Todos los derechos reservados."
+  },
+  "home": {
+    "title": "CloakView — Copiloto privado de reuniones",
+    "heading": "Placeholder de scaffold — la Fase 2 construye la landing real."
+  },
+  "meta": {
+    "siteName": "CloakView"
+  }
+}
