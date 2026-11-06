@@ -17,7 +17,123 @@
   },
   "home": {
     "title": "CloakView — Copiloto privado de reuniones",
-    "heading": "Placeholder de scaffold — la Fase 2 construye la landing real."
+    "hero": {
+      "badge": "Para macOS 14.2+",
+      "title": "Un copiloto de reuniones que solo tú puedes ver",
+      "subtitle": "CloakView escucha tu llamada, la transcribe en vivo y te sugiere qué decir después — en un overlay privado que nadie más en la llamada puede ver. Tu clave, tu control.",
+      "ctaHow": "Cómo funciona",
+      "ctaDownload": "Descargar para macOS",
+      "ctaSoon": "Próximamente",
+      "platformsNote": "Funciona junto a Zoom, Google Meet y Microsoft Teams",
+      "mockupAlt": "Ilustración del overlay de CloakView sobre una videollamada: transcripción en vivo y una respuesta sugerida, visibles solo para el usuario.",
+      "mockup": {
+        "windowTitle": "Reunión semanal",
+        "participant1": "Tú",
+        "participant2": "Alex",
+        "speaking": "hablando",
+        "overlayTitle": "CloakView",
+        "live": "Transcripción en vivo",
+        "suggestionLabel": "Respuesta sugerida",
+        "suggestionText": "Buen punto — puedo encargarme de la integración con la API y tener un borrador listo para el jueves."
+      }
+    },
+    "how": {
+      "title": "Cómo funciona",
+      "subtitle": "Tres pasos. Sin cuenta, sin nube, sin intermediarios.",
+      "steps": [
+        {
+          "title": "Conecta tu clave",
+          "desc": "Pega tu propia clave de la API de OpenAI. CloakView habla directo con OpenAI — nunca a través de nuestros servidores, porque no tenemos ninguno."
+        },
+        {
+          "title": "Escucha",
+          "desc": "Durante la llamada, CloakView transcribe la conversación localmente en tu Mac y detecta cuándo te toca hablar."
+        },
+        {
+          "title": "Sugiere",
+          "desc": "Un overlay privado muestra respuestas según el contexto. Solo tú las ves; el overlay nunca toca la llamada."
+        }
+      ]
+    },
+    "features": {
+      "title": "Hecho para la privacidad, no para atarte",
+      "subtitle": "Cada decisión de diseño favorece tu control.",
+      "items": [
+        {
+          "title": "BYOK primero",
+          "desc": "Traes tu propia clave de OpenAI. Nunca revendemos acceso a la API ni le subimos el precio."
+        },
+        {
+          "title": "Local-first",
+          "desc": "Sin cuentas, sin telemetría, sin backend. Los datos de tus reuniones no salen de tu Mac."
+        },
+        {
+          "title": "Overlay privado",
+          "desc": "Las sugerencias se dibujan solo en tu pantalla — invisibles para Zoom, Meet, Teams y todos los demás."
+        },
+        {
+          "title": "Atajos globales",
+          "desc": "Invoca u oculta el overlay desde cualquier app con un atajo de teclado que tú eliges."
+        },
+        {
+          "title": "Inglés y español",
+          "desc": "La app y esta web son completamente bilingües. La transcripción y las sugerencias manejan ambos idiomas."
+        }
+      ]
+    },
+    "costs": {
+      "title": "Costos honestos",
+      "body": "CloakView es gratis en v1. Pagas tu propio consumo de la API de OpenAI — normalmente unos pocos dólares al mes con uso regular — directamente a OpenAI a sus tarifas publicadas. Nosotros no cogemos nada: sin suscripción, sin margen, sin comisión.",
+      "points": [
+        "Sin cuenta ni suscripción de CloakView",
+        "OpenAI te factura a sus tarifas públicas — nunca tocamos tu dinero",
+        "Revoca la clave cuando quieras y la app simplemente se detiene"
+      ]
+    },
+    "faq": {
+      "title": "Preguntas que haría un escéptico de verdad",
+      "items": [
+        {
+          "q": "¿Me estáis escuchando?",
+          "a": "No. El audio se procesa en tu Mac y se envía a OpenAI solo para transcribir y sugerir, con tu propia clave. No operamos servidores, así que no hay desde dónde escucharte."
+        },
+        {
+          "q": "¿Dónde van las transcripciones?",
+          "a": "Se quedan en tu Mac. Jamás se suben a un servidor de CloakView porque ese servidor no existe. Puedes revisarlas y borrarlas cuando quieras."
+        },
+        {
+          "q": "¿Por qué iba a darle mi clave de OpenAI a una app desconocida?",
+          "a": "No deberías dársela a nadie — de eso va la cosa. Tu clave se guarda en el Llavero de macOS de tu máquina y solo se envía a la API de OpenAI. Puedes revocarla desde el panel de OpenAI en cualquier momento."
+        },
+        {
+          "q": "¿Qué pasa si revoco la clave?",
+          "a": "CloakView deja de funcionar hasta que añadas una nueva. Nada se rompe, nada se pierde, y a nosotros no nos llega ningún aviso."
+        },
+        {
+          "q": "¿Funciona con Teams?",
+          "a": "Sí. CloakView funciona junto a Zoom, Google Meet y Microsoft Teams en macOS 14.2+. Como captura el audio del sistema localmente, no necesita ningún plugin ni ningún bot en la llamada."
+        },
+        {
+          "q": "¿La app se conecta a algún servidor vuestro?",
+          "a": "No tenemos servidores. El único tráfico de red es entre tu Mac y la API de OpenAI — algo que puedes comprobar con cualquier inspector de tráfico."
+        },
+        {
+          "q": "¿Y si la API de OpenAI se cae a mitad de una reunión?",
+          "a": "El overlay se pausa y te lo dice, en vez de fingir que todo va bien. La transcripción y las sugerencias se reanudan cuando la API se recupera."
+        },
+        {
+          "q": "¿Esto no es como hacer trampa?",
+          "a": "Esa decisión es tuya, como usar apuntes o el susurro de un colega en la sala. CloakView es una herramienta; lo que hagas con ella es tu responsabilidad."
+        }
+      ]
+    },
+    "download": {
+      "title": "Consigue CloakView",
+      "body": "Gratis en v1. Requiere macOS 14.2 o posterior, Apple Silicon o Intel. Firmada y notarizada por Apple. Se distribuye vía GitHub Releases — sin cuenta de por medio.",
+      "button": "Descargar para macOS",
+      "soon": "Próximamente — el repo de GitHub aún no es público.",
+      "note": "Nunca te pediremos tu email para descargar."
+    }
   },
   "meta": {
     "siteName": "CloakView"

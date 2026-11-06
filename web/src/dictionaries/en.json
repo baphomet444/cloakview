@@ -17,7 +17,123 @@
   },
   "home": {
     "title": "CloakView — Private meeting copilot",
-    "heading": "Scaffold placeholder — Phase 2 builds the real landing page."
+    "hero": {
+      "badge": "For macOS 14.2+",
+      "title": "A meeting copilot only you can see",
+      "subtitle": "CloakView listens to your call, transcribes it live and suggests what to say next — in a private overlay that no one else on the call can see. Your API key, your control.",
+      "ctaHow": "How it works",
+      "ctaDownload": "Download for macOS",
+      "ctaSoon": "Coming soon",
+      "platformsNote": "Works alongside Zoom, Google Meet and Microsoft Teams",
+      "mockupAlt": "Illustration of the CloakView overlay on a video call: live transcription and a suggested reply, visible only to the user.",
+      "mockup": {
+        "windowTitle": "Weekly sync",
+        "participant1": "You",
+        "participant2": "Alex",
+        "speaking": "speaking",
+        "overlayTitle": "CloakView",
+        "live": "Live transcription",
+        "suggestionLabel": "Suggested reply",
+        "suggestionText": "Good point — I can take the API integration and have a draft ready by Thursday."
+      }
+    },
+    "how": {
+      "title": "How it works",
+      "subtitle": "Three steps. No account, no cloud, no middleman.",
+      "steps": [
+        {
+          "title": "Connect your key",
+          "desc": "Paste your own OpenAI API key. CloakView talks directly to OpenAI — never through our servers, because we don't have any."
+        },
+        {
+          "title": "It listens",
+          "desc": "During the call, CloakView transcribes the conversation locally on your Mac and detects when it's your turn to speak."
+        },
+        {
+          "title": "It suggests",
+          "desc": "A private overlay shows context-aware replies. Only you see them; the overlay never touches the call itself."
+        }
+      ]
+    },
+    "features": {
+      "title": "Built for privacy, not for lock-in",
+      "subtitle": "Every design decision favors your control.",
+      "items": [
+        {
+          "title": "BYOK-first",
+          "desc": "Bring your own OpenAI key. We never resell API access and we never mark it up."
+        },
+        {
+          "title": "Local-first",
+          "desc": "No accounts, no telemetry, no backend. Your meeting data never leaves your Mac."
+        },
+        {
+          "title": "Private overlay",
+          "desc": "Suggestions render on your screen only — invisible to Zoom, Meet, Teams and everyone else on the call."
+        },
+        {
+          "title": "Global shortcuts",
+          "desc": "Summon or hide the overlay from any app with a keystroke you choose."
+        },
+        {
+          "title": "English & Spanish",
+          "desc": "The app and this site are fully bilingual. Transcription and suggestions handle both languages."
+        }
+      ]
+    },
+    "costs": {
+      "title": "Honest costs",
+      "body": "CloakView is free in v1. You pay your own OpenAI API consumption — typically a few dollars a month for regular use — directly to OpenAI at their listed rates. We take nothing: no subscription, no markup, no cut.",
+      "points": [
+        "No CloakView account or subscription",
+        "OpenAI bills you at their public rates — we never touch your money",
+        "Revoke the key anytime and the app simply stops"
+      ]
+    },
+    "faq": {
+      "title": "Questions a sceptic would ask",
+      "items": [
+        {
+          "q": "Are you listening to me?",
+          "a": "No. Audio is processed on your Mac and sent to OpenAI only to transcribe and suggest, using your own key. We operate no servers, so there is nowhere for us to listen from."
+        },
+        {
+          "q": "Where do the transcripts go?",
+          "a": "Transcripts stay on your Mac. They are never uploaded to a CloakView server because no such server exists. You can review and delete them at any time."
+        },
+        {
+          "q": "Why should I hand my OpenAI key to an unknown app?",
+          "a": "You shouldn't hand it to anyone — that's the point. Your key is stored in the macOS Keychain on your machine and is sent only to OpenAI's API. You can revoke it from the OpenAI dashboard at any moment."
+        },
+        {
+          "q": "What happens if I revoke the key?",
+          "a": "CloakView stops working until you add a new one. Nothing breaks, nothing is lost, and we are never notified."
+        },
+        {
+          "q": "Does it work with Teams?",
+          "a": "Yes. CloakView works alongside Zoom, Google Meet and Microsoft Teams on macOS 14.2+. Because it captures system audio locally, it needs no plugin and no bot joining your call."
+        },
+        {
+          "q": "Does the app connect to any server of yours?",
+          "a": "We don't have servers. The only network traffic is between your Mac and OpenAI's API — something you can verify with any traffic inspector."
+        },
+        {
+          "q": "What if OpenAI's API goes down mid-meeting?",
+          "a": "The overlay pauses and tells you, instead of pretending everything is fine. Transcription and suggestions resume when the API recovers."
+        },
+        {
+          "q": "Isn't using this cheating?",
+          "a": "That's your call to make, like using notes or a colleague's whisper in the room. CloakView is a tool; what you do with it is your responsibility."
+        }
+      ]
+    },
+    "download": {
+      "title": "Get CloakView",
+      "body": "Free in v1. Requires macOS 14.2 or later, Apple Silicon or Intel. Signed and notarized by Apple. Distributed via GitHub Releases — no account needed.",
+      "button": "Download for macOS",
+      "soon": "Coming soon — the GitHub repo isn't public yet.",
+      "note": "We will never ask for your email to download."
+    }
   },
   "meta": {
     "siteName": "CloakView"

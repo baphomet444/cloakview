@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { getDictionary } from "@/lib/get-dictionary";
 import { siteConfig, type Locale } from "@/site.config";
+import { Hero } from "@/components/hero";
+import { HowItWorks } from "@/components/how-it-works";
+import { FeaturesGrid } from "@/components/features-grid";
+import { CostsSection } from "@/components/costs-section";
+import { Faq } from "@/components/faq";
+import { DownloadCta } from "@/components/download-cta";
 
 export async function generateMetadata({
   params,
@@ -9,7 +15,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const dict = await getDictionary(locale);
-  return { title: dict.home.title };
+  return {
+    title: dict.home.title,
+    description: siteConfig.description[locale],
+  };
 }
 
 export default async function HomePage({
@@ -21,11 +30,13 @@ export default async function HomePage({
   const dict = await getDictionary(locale);
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-24">
-      <h1 className="text-3xl font-semibold text-foreground">
-        {dict.home.heading}
-      </h1>
-      <p className="mt-4 text-muted">{siteConfig.description[locale]}</p>
-    </div>
+    <>
+      <Hero dict={dict.home.hero} />
+      <HowItWorks dict={dict.home.how} />
+      <FeaturesGrid dict={dict.home.features} />
+      <CostsSection dict={dict.home.costs} />
+      <Faq dict={dict.home.faq} />
+      <DownloadCta dict={dict.home.download} />
+    </>
   );
 }
