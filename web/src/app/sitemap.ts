@@ -3,7 +3,7 @@ import { siteConfig } from "@/site.config";
 
 // Fase 1: solo la home existe. Cada fase posterior que añada una ruta debe
 // añadir su entrada aquí (en/es) para mantener el sitemap sin huecos.
-const paths = ["/"];
+const paths = ["/", "/pricing"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

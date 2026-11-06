@@ -135,6 +135,57 @@
       "note": "Nunca te pediremos tu email para descargar."
     }
   },
+  "pricing": {
+    "title": "Precios — gratis en v1, pagas solo tu consumo de API",
+    "description": "CloakView es gratis en v1: sin suscripción y sin cuenta. Solo pagas tu propio consumo de la API de OpenAI — consulta estimaciones mensuales honestas según tu nivel de uso.",
+    "hero": {
+      "badge": "Gratis en v1",
+      "title": "CloakView cuesta $0. Tu factura de OpenAI es cosa de ti y OpenAI.",
+      "body": "No hay suscripción de CloakView, ni planes, ni cuenta. La app habla directo con OpenAI con tu propia clave de la API, y OpenAI te factura tu consumo a sus tarifas públicas. Nosotros nunca tocamos tu dinero.",
+      "points": [
+        "Sin suscripción, sin planes, sin cebo de gratis-a-de-pago",
+        "Pagas directamente a OpenAI, a sus tarifas públicas",
+        "Revoca tu clave cuando quieras y la app simplemente se detiene — sin proceso de cancelación, porque no hay nada que cancelar"
+      ]
+    },
+    "estimator": {
+      "title": "Cómo podría verse tu factura de OpenAI",
+      "subtitle": "Tres perfiles de uso realistas. La única variable es cuántas horas de reuniones le traes.",
+      "profiles": [
+        {
+          "name": "Ligero",
+          "hours": "≈10 h/mes de reuniones",
+          "range": "2–12 $/mes",
+          "desc": "Una reunión semanal y un par de llamadas individuales. Llamadas cortas con uso ligero de sugerencias."
+        },
+        {
+          "name": "Moderado",
+          "hours": "≈30 h/mes de reuniones",
+          "range": "6–35 $/mes",
+          "desc": "Dailies más varias llamadas de clientes o de equipo a la semana, con sugerencias de respuesta activas."
+        },
+        {
+          "name": "Intensivo",
+          "hours": "≈80 h/mes de reuniones",
+          "range": "15–90 $/mes",
+          "desc": "Reuniones casi todo el día — ventas, entrevistas, talleres — con sugerencias funcionando sin parar."
+        }
+      ],
+      "disclaimer": "Rangos aproximados según las tarifas vigentes publicadas por OpenAI para modelos de transcripción y chat, consultadas en noviembre de 2026. OpenAI fija sus propios precios y cambian; confirma siempre en openai.com/api/pricing. Son estimaciones, no presupuestos.",
+      "footnote": "Qué cubre: la transcripción en vivo del audio de tus reuniones más las peticiones de sugerencias. Qué no cubre: nada — no hay ningún cargo de CloakView encima."
+    },
+    "roadmap": {
+      "title": "Qué viene después",
+      "body": "Un Pro de pago único con features avanzadas — visión, traducción, modo offline — llegará en v1.1. Ahí tampoco habrá suscripción: pagas una vez y lo conservas. Publicaremos los detalles antes de lanzarlo."
+    },
+    "cta": {
+      "title": "Pruébalo con tu propia clave",
+      "body": "Gratis en v1 para macOS 14.2+, Apple Silicon o Intel. Firmada y notarizada por Apple. Sin cuenta, sin email.",
+      "button": "Descargar para macOS",
+      "soon": "Próximamente — el repo de GitHub aún no es público.",
+      "note": "Nunca te pediremos tu email para descargar."
+    }
+  },
   "meta": {
     "siteName": "CloakView"
   }
