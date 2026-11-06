@@ -6,15 +6,12 @@ pub const TARGET_SAMPLE_RATE: u32 = 16_000;
 
 /// Raw PCM audio chunk produced by an `AudioSource`.
 ///
-/// TECH DEBT: `pcm_s16le` is typed as `Vec<i8>` rather than `Vec<i16>`/`Vec<u8>`.
-/// 16-bit little-endian PCM samples do not fit in an `i8` without truncation;
-/// this was adopted as-is from a prior session's interface decision and is
-/// carried forward here unchanged. See `task-8-report.md` for detail — fixing
-/// this requires touching every `AudioSource` impl and the realtime encoder
-/// (Task 9), so it's deferred rather than silently "fixed" mid-task.
+/// `pcm_s16le` holds the little-endian byte encoding of 16-bit PCM samples
+/// (2 bytes per sample), not individual sample values — hence `Vec<u8>`
+/// rather than `Vec<i16>`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct AudioChunk {
-    pub pcm_s16le: Vec<i8>,
+    pub pcm_s16le: Vec<u8>,
     pub sample_rate: u32,
     pub channels: u32,
 }
