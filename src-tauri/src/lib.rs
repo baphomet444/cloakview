@@ -1,3 +1,4 @@
+pub mod audio;
 mod db;
 pub mod detect;
 mod error;
