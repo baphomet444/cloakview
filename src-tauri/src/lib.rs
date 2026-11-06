@@ -99,13 +99,15 @@ mod contract_tests {
             speaker: "remote".into(),
             text: "Hola".into(),
             is_user_turn: false,
+            ts: 1_700_000_000,
         };
         assert_eq!(
             serde_json::to_value(&t).unwrap(),
             serde_json::json!({
                 "speaker": "remote",
                 "text": "Hola",
-                "isUserTurn": false
+                "isUserTurn": false,
+                "ts": 1700000000
             })
         );
     }
