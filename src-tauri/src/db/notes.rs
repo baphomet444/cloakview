@@ -81,9 +81,9 @@ pub fn list(db: &Db, filter: NoteFilter) -> AppResult<Vec<Note>> {
         "SELECT id, title, content, tags, favorite, archived, folder_id, created_at, updated_at
          FROM notes WHERE archived = ?1");
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(filter.archived as i64)];
-    if filter.folder_id.is_some() {
+    if let Some(folder_id) = &filter.folder_id {
         sql.push_str(" AND folder_id = ?2");
-        params.push(Box::new(filter.folder_id.clone().unwrap()));
+        params.push(Box::new(folder_id.clone()));
     }
     sql.push_str(" ORDER BY updated_at DESC");
     let mut stmt = db.conn.prepare(&sql)?;
