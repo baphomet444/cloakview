@@ -155,19 +155,19 @@
         {
           "name": "Light",
           "hours": "≈10 h/month of meetings",
-          "range": "$4–$12",
+          "range": "$2–$12 /month",
           "desc": "A weekly sync and a couple of one-to-ones. Mostly short calls with light suggestion use."
         },
         {
           "name": "Moderate",
           "hours": "≈30 h/month of meetings",
-          "range": "$11–$35",
+          "range": "$6–$35 /month",
           "desc": "Daily standups plus several client or team calls a week, with active reply suggestions."
         },
         {
           "name": "Intensive",
           "hours": "≈80 h/month of meetings",
-          "range": "$29–$90",
+          "range": "$15–$90 /month",
           "desc": "Back-to-back meetings most days — sales, interviews, workshops — with suggestions running all day."
         }
       ],
