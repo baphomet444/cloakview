@@ -42,7 +42,7 @@ export function NavBar({ dict, locale }: { dict: Dictionary; locale: Locale }) {
             {otherLocale}
           </Link>
           <Link
-            href={withLocale("/pricing", locale)}
+            href={withLocale("/download", locale)}
             className="rounded bg-accent px-3 py-1.5 font-medium text-accent-foreground hover:opacity-90 transition-opacity"
           >
             {dict.nav.download}

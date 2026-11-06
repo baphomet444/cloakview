@@ -186,6 +186,29 @@
       "note": "We will never ask for your email to download."
     }
   },
+  "download": {
+    "title": "Download CloakView for macOS",
+    "description": "Choose the CloakView build for your Mac. Download from GitHub Releases and check the SHA-256 checksum when available.",
+    "badge": "macOS 14.2+",
+    "heading": "Choose your build",
+    "intro": "Your key stays yours. Choose a download below; all options remain visible regardless of your device. Downloads will open on GitHub Releases once published.",
+    "optionsLabel": "Available platforms",
+    "recommended": "Recommended for this Mac",
+    "notarized": "Signed and notarized by Apple",
+    "soon": "Coming soon",
+    "shaLabel": "SHA-256",
+    "shaPending": "Checksum pending until the release is published",
+    "copyLabel": "Copy SHA-256 for",
+    "copied": "SHA-256 copied to clipboard",
+    "copyFailed": "Could not copy SHA-256. Select the checksum to copy it manually.",
+    "verifyGithub": "Verify on GitHub",
+    "verifyPending": "GitHub verification link pending until the repository is public.",
+    "artifacts": [
+      { "name": "Apple Silicon", "description": "DMG for Macs with Apple Silicon.", "button": "Download Apple Silicon DMG", "unavailable": "Coming soon" },
+      { "name": "Intel Mac", "description": "DMG for Intel-based Macs.", "button": "Download Intel DMG", "unavailable": "Coming soon" },
+      { "name": "Windows", "description": "There is no Windows build in v1.", "button": "Download Windows", "unavailable": "Not available in v1" }
+    ]
+  },
   "meta": {
     "siteName": "CloakView"
   }
