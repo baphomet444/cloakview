@@ -17,6 +17,7 @@ pub mod parse;
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum RealtimeEvent {
+    #[serde(rename_all = "camelCase")]
     Transcript { speaker: String, text: String, is_user_turn: bool },
     TurnBoundary,
     Error { message: String },
@@ -68,5 +69,32 @@ mod tests {
         assert_eq!(seq, vec![1, 2, 4, 8, 15, 15]);
         b.reset();
         assert_eq!(b.next_delay().as_secs(), 1);
+    }
+}
+
+#[cfg(test)]
+mod serde_tests {
+    use super::*;
+
+    #[test]
+    fn realtime_event_serializes_with_camel_case_kind() {
+        let ev = RealtimeEvent::Transcript {
+            speaker: "remote".into(),
+            text: "Hola".into(),
+            is_user_turn: false,
+        };
+        assert_eq!(
+            serde_json::to_value(&ev).unwrap(),
+            serde_json::json!({
+                "kind": "transcript",
+                "speaker": "remote",
+                "text": "Hola",
+                "isUserTurn": false
+            })
+        );
+        assert_eq!(
+            serde_json::to_value(RealtimeEvent::SessionStarted).unwrap(),
+            serde_json::json!({"kind": "sessionStarted"})
+        );
     }
 }

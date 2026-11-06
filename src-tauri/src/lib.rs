@@ -84,3 +84,48 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("error while running cloakview");
 }
+
+#[cfg(test)]
+mod contract_tests {
+    //! These types cross the IPC boundary to the TypeScript front (Task 12).
+    //! Only the JSON matters. A `matches!` or a field-name grep cannot catch
+    //! a missing `rename_all`; comparing real JSON can.
+
+    use crate::transcript::Turn;
+
+    #[test]
+    fn turn_uses_camel_case() {
+        let t = Turn {
+            speaker: "remote".into(),
+            text: "Hola".into(),
+            is_user_turn: false,
+        };
+        assert_eq!(
+            serde_json::to_value(&t).unwrap(),
+            serde_json::json!({
+                "speaker": "remote",
+                "text": "Hola",
+                "isUserTurn": false
+            })
+        );
+    }
+
+    #[test]
+    fn note_uses_camel_case() {
+        let n = crate::db::notes::Note {
+            id: "n1".into(),
+            title: "T".into(),
+            content: "C".into(),
+            tags: vec![],
+            favorite: false,
+            archived: false,
+            folder_id: Some("f1".into()),
+            created_at: 1,
+            updated_at: 2,
+        };
+        let j = serde_json::to_value(&n).unwrap();
+        assert!(j.get("folderId").is_some(), "folderId missing: {j}");
+        assert!(j.get("createdAt").is_some(), "createdAt missing: {j}");
+        assert!(j.get("folder_id").is_none(), "snake_case leaked: {j}");
+    }
+}
