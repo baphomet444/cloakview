@@ -2,6 +2,7 @@ pub mod audio;
 mod db;
 pub mod detect;
 mod error;
+pub mod realtime;
 mod secrets;
 mod settings;
 mod state;
