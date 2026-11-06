@@ -1,8 +1,10 @@
 mod db;
+pub mod detect;
 mod error;
 mod secrets;
 mod settings;
 mod state;
+pub mod transcript;
 
 use tauri::Manager;
 
