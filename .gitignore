@@ -5,3 +5,10 @@ src-tauri/target/
 .DS_Store
 *.log
 .worktrees/
+
+# graphify
+graphify-out/
+.graphify_root
+.graphify_python
+.graphify_analysis.json
+needs_update
