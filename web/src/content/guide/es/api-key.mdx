@@ -1,0 +1,23 @@
+## Crea una clave {#create}
+
+Inicia sesión en el [panel de la API de OpenAI](OPENAI_API_KEYS) con tu cuenta. Configura facturación y un límite de uso si hace falta; crea una **clave secreta nueva**. Cópiala una vez mientras el panel la muestra y no la publiques en chats, incidencias ni capturas. El uso de la API se factura por OpenAI por separado de cualquier suscripción a ChatGPT.
+
+## Conéctala a CloakView {#connect}
+
+Abre **CloakView → Ajustes → Clave de API de OpenAI**, pégala en el campo oculto y guárdala. Prueba la conexión, si está disponible, antes de una reunión. Sin clave válida no habrá escucha ni sugerencias; si falla la prueba, comprueba la facturación y los permisos de la cuenta en OpenAI.
+
+## Dónde se guarda {#storage}
+
+La clave se guarda en el **Llavero de macOS** de este Mac, no en un archivo de ajustes en texto claro ni en servidores de CloakView. La app la usa para conectarse directamente a OpenAI. El audio y las solicitudes enviadas a OpenAI están sujetos a las políticas de su API: local-first no significa funcionamiento sin conexión.
+
+## Revócala o sustitúyela {#revoke}
+
+Elimina la clave desde el [panel de la API de OpenAI](OPENAI_API_KEYS) para impedir su uso futuro. Después, borra la clave guardada en Ajustes de CloakView o guarda otra. La revocación invalida la anterior aunque quede una copia en el Llavero. Si sospechas una filtración, revócala inmediatamente y crea otra; no hay cuenta de CloakView que cancelar.
+
+## Comprueba la clave guardada {#check-status}
+
+La app indica si hay una clave guardada sin volver a mostrar el secreto. Ese estado es local y no demuestra que la clave siga funcionando. Usa la prueba de conexión en Ajustes.
+
+```text
+Ajustes → Clave de API de OpenAI → Probar conexión
+```

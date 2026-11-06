@@ -1,0 +1,31 @@
+## No download is available {#no-download}
+
+The repository and release artifacts are still pending. Check the [download page](/download) for the published release and checksum; do not follow an unofficial mirror or disable Gatekeeper.
+
+## macOS blocks the app at first launch {#gatekeeper}
+
+Confirm you downloaded a signed, notarized release from the official source. If macOS shows an unidentified developer or damaged-app warning, delete that copy and obtain a verified release; do not run quarantine-removal commands to force it open.
+
+## Other participants are missing from the transcript {#system-audio}
+
+Check **System Settings → Privacy & Security → Screen & System Audio Recording** (or Screen Recording), enable CloakView, quit and reopen it, then start listening again. Confirm the meeting app is actually outputting audio on your Mac.
+
+## Your own voice is missing {#mic}
+
+Enable CloakView under **Privacy & Security → Microphone** and choose the correct device under **Sound → Input**. Restart listening and check the microphone in your meeting app too.
+
+## The API key is rejected {#invalid-key}
+
+Check that the key was saved in CloakView Settings without spaces, is still active in the [OpenAI API dashboard](OPENAI_API_KEYS), and that your API account has billing/usage available. Replace a revoked key; never share it with support.
+
+## The overlay stops suggesting answers {#network}
+
+Check your internet connection and OpenAI API service status in the [OpenAI status page](OPENAI_STATUS). If listening reports an error, stop and restart the session. The realtime service requires a live connection; local storage does not make suggestions offline.
+
+## A global shortcut does not respond {#shortcut}
+
+Use the equivalent in-app control. Review **Settings → Shortcuts** for conflicting macOS or meeting-app combinations, assign another key, then test again. Confirm that CloakView is running.
+
+## The permission toggle is missing {#toggle}
+
+Launch a listen attempt to make macOS request access. Then reopen **Privacy & Security** and check the relevant list. If it was already granted, toggle it off and on, quit CloakView, and reopen it before testing.

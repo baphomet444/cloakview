@@ -1,0 +1,31 @@
+## No hay descarga disponible {#no-download}
+
+El repositorio y los artefactos siguen pendientes. Consulta la [página de descarga](/es/download) para encontrar la versión oficial y su hash cuando estén publicados; evita fuentes no oficiales y no desactives Gatekeeper.
+
+## macOS bloquea la app al abrirla {#gatekeeper}
+
+Comprueba que la descargaste firmada y notarizada desde la fuente oficial. Si macOS avisa de un desarrollador no identificado o de una app dañada, elimina esa copia y consigue una versión verificada; no uses comandos para quitar la cuarentena y forzar su apertura.
+
+## No se transcribe la voz de los demás {#system-audio}
+
+Abre **Ajustes del Sistema → Privacidad y seguridad → Grabación de pantalla y audio del sistema** (o Grabación de pantalla), activa CloakView, cierra y vuelve a abrir la app e inicia otra vez la escucha. Comprueba que el audio de la reunión sale por tu Mac.
+
+## No se transcribe tu voz {#mic}
+
+Activa CloakView en **Privacidad y seguridad → Micrófono** y elige el dispositivo correcto en **Sonido → Entrada**. Reinicia la escucha y comprueba el micrófono en tu app de reuniones.
+
+## La clave de API es rechazada {#invalid-key}
+
+Comprueba que guardaste la clave en Ajustes de CloakView sin espacios, que sigue activa en el [panel de la API de OpenAI](OPENAI_API_KEYS) y que tu cuenta tiene facturación y cuota. Sustituye una clave revocada; nunca la compartas con soporte.
+
+## El overlay deja de sugerir respuestas {#network}
+
+Comprueba la conexión a internet y el [estado de la API de OpenAI](OPENAI_STATUS). Si aparece un error de escucha, detén y reinicia la sesión. El servicio en tiempo real necesita conexión; guardar datos localmente no permite sugerencias offline.
+
+## Un atajo global no responde {#shortcut}
+
+Usa el control equivalente en la app. Busca conflictos de teclas con macOS o tu app de reuniones en **Ajustes → Atajos**, elige otra combinación y prueba de nuevo. Asegúrate de que CloakView está abierto.
+
+## No aparece el interruptor del permiso {#toggle}
+
+Intenta iniciar la escucha para que macOS pida acceso. Reabre **Privacidad y seguridad** y busca en la lista correspondiente. Si ya estaba concedido, desactívalo y actívalo, cierra CloakView y vuelve a abrirlo antes de probar.

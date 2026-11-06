@@ -1,0 +1,23 @@
+## Create a key {#create}
+
+Sign in to the [OpenAI API dashboard](OPENAI_API_KEYS) in your own account. Configure billing and a usage limit in the dashboard if required, then create a **new secret key**. Copy it once into a secure location while the dashboard displays it; never post it in chat, issues, or screenshots. API usage is billed by OpenAI, separately from any ChatGPT subscription.
+
+## Connect it to CloakView {#connect}
+
+Open CloakView **Settings → OpenAI API key**, paste your key into the masked input, and save. Use the connection test, if available, before your meeting. A missing or invalid key prevents listening and suggestions; check billing and account permissions in the OpenAI dashboard if the test fails.
+
+## Where it is stored {#storage}
+
+The key is stored on this Mac in **macOS Keychain**, not in a plain-text settings file or a CloakView server. CloakView uses it to connect directly to OpenAI. Your meeting audio and request content sent to OpenAI are subject to OpenAI’s API policies; local-first does not mean offline.
+
+## Revoke or replace {#revoke}
+
+To stop future use, delete the key in the [OpenAI API dashboard](OPENAI_API_KEYS). Then remove the saved key in CloakView Settings, or save a replacement key there. Revocation invalidates the old key even if a copy remains in Keychain. If you think it leaked, revoke it immediately and create a new one; no CloakView account cancellation is required.
+
+## Check the saved key status {#check-status}
+
+The app shows whether a key is saved without displaying the secret again. The status is local to your Mac; it does not prove that the key still works. Use the connection test in Settings.
+
+```text
+Settings → OpenAI API key → Test connection
+```

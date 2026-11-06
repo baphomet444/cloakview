@@ -204,12 +204,62 @@
     "verifyGithub": "Verify on GitHub",
     "verifyPending": "GitHub verification link pending until the repository is public.",
     "artifacts": [
-      { "name": "Apple Silicon", "description": "DMG for Macs with Apple Silicon.", "button": "Download Apple Silicon DMG", "unavailable": "Coming soon" },
-      { "name": "Intel Mac", "description": "DMG for Intel-based Macs.", "button": "Download Intel DMG", "unavailable": "Coming soon" },
-      { "name": "Windows", "description": "There is no Windows build in v1.", "button": "Download Windows", "unavailable": "Not available in v1" }
+      {
+        "name": "Apple Silicon",
+        "description": "DMG for Macs with Apple Silicon.",
+        "button": "Download Apple Silicon DMG",
+        "unavailable": "Coming soon"
+      },
+      {
+        "name": "Intel Mac",
+        "description": "DMG for Intel-based Macs.",
+        "button": "Download Intel DMG",
+        "unavailable": "Coming soon"
+      },
+      {
+        "name": "Windows",
+        "description": "There is no Windows build in v1.",
+        "button": "Download Windows",
+        "unavailable": "Not available in v1"
+      }
     ]
   },
   "meta": {
     "siteName": "CloakView"
+  },
+  "guide": {
+    "title": "Guide",
+    "description": "Set up CloakView, manage permissions and your key, use shortcuts, and resolve common issues. The app and downloads are not yet published.",
+    "homeLabel": "Home",
+    "breadcrumbLabel": "Breadcrumb",
+    "onThisPageLabel": "On this page",
+    "articleNavigationLabel": "More guide articles",
+    "previousLabel": "Previous",
+    "nextLabel": "Next",
+    "copyLabel": "Copy code",
+    "copiedLabel": "Code copied",
+    "copyErrorLabel": "Could not copy code",
+    "articles": {
+      "installation": {
+        "title": "Installation",
+        "description": "Download, move to Applications, and open CloakView for the first time."
+      },
+      "permissions": {
+        "title": "macOS permissions",
+        "description": "Allow screen recording and microphone access, or restore them after denial."
+      },
+      "api-key": {
+        "title": "OpenAI API key",
+        "description": "Create, connect, store, and revoke your own API key."
+      },
+      "shortcuts": {
+        "title": "Global shortcuts",
+        "description": "Configure quick hide, push-to-ask, and listening controls."
+      },
+      "troubleshooting": {
+        "title": "Troubleshooting",
+        "description": "Practical fixes for setup, permissions, connection, and audio issues."
+      }
+    }
   }
 }

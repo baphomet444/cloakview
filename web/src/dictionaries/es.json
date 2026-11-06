@@ -204,12 +204,62 @@
     "verifyGithub": "Verificar en GitHub",
     "verifyPending": "El enlace de verificación estará disponible cuando el repositorio sea público.",
     "artifacts": [
-      { "name": "Apple Silicon", "description": "DMG para Mac con Apple Silicon.", "button": "Descargar DMG para Apple Silicon", "unavailable": "Próximamente" },
-      { "name": "Mac Intel", "description": "DMG para Mac con procesador Intel.", "button": "Descargar DMG para Intel", "unavailable": "Próximamente" },
-      { "name": "Windows", "description": "No hay versión de Windows en v1.", "button": "Descargar para Windows", "unavailable": "No disponible en v1" }
+      {
+        "name": "Apple Silicon",
+        "description": "DMG para Mac con Apple Silicon.",
+        "button": "Descargar DMG para Apple Silicon",
+        "unavailable": "Próximamente"
+      },
+      {
+        "name": "Mac Intel",
+        "description": "DMG para Mac con procesador Intel.",
+        "button": "Descargar DMG para Intel",
+        "unavailable": "Próximamente"
+      },
+      {
+        "name": "Windows",
+        "description": "No hay versión de Windows en v1.",
+        "button": "Descargar para Windows",
+        "unavailable": "No disponible en v1"
+      }
     ]
   },
   "meta": {
     "siteName": "CloakView"
+  },
+  "guide": {
+    "title": "Guía",
+    "description": "Configura CloakView, gestiona permisos y tu clave, usa atajos y resuelve problemas habituales. La app y las descargas aún no están publicadas.",
+    "homeLabel": "Inicio",
+    "breadcrumbLabel": "Ruta de navegación",
+    "onThisPageLabel": "En esta página",
+    "articleNavigationLabel": "Más artículos de la guía",
+    "previousLabel": "Anterior",
+    "nextLabel": "Siguiente",
+    "copyLabel": "Copiar código",
+    "copiedLabel": "Código copiado",
+    "copyErrorLabel": "No se pudo copiar el código",
+    "articles": {
+      "installation": {
+        "title": "Instalación",
+        "description": "Descarga, mueve a Aplicaciones y abre CloakView por primera vez."
+      },
+      "permissions": {
+        "title": "Permisos de macOS",
+        "description": "Concede acceso a captura de pantalla y micrófono o restáuralos tras denegarlos."
+      },
+      "api-key": {
+        "title": "Clave de API de OpenAI",
+        "description": "Crea, conecta, guarda y revoca tu propia clave de API."
+      },
+      "shortcuts": {
+        "title": "Atajos globales",
+        "description": "Configura ocultar rápidamente, abrir Ask y controlar la escucha."
+      },
+      "troubleshooting": {
+        "title": "Solución de problemas",
+        "description": "Soluciones prácticas para instalación, permisos, conexión y audio."
+      }
+    }
   }
 }

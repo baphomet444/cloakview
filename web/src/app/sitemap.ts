@@ -1,15 +1,14 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/site.config";
+import { guidePath, guideSlugs } from "@/lib/guide";
 
-// Fase 1: solo la home existe. Cada fase posterior que añada una ruta debe
-// añadir su entrada aquí (en/es) para mantener el sitemap sin huecos.
-const paths = ["/", "/pricing", "/download"];
+const paths = ["/", "/pricing", "/download", guidePath("en"), ...guideSlugs.map((slug) => guidePath("en", slug))];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   return paths.flatMap((path) => [
-    {
-      url: `${siteConfig.url}${path}`,
+    ...(["en", "es"] as const).map((locale) => ({
+      url: `${siteConfig.url}${locale === "en" ? path : `/es${path === "/" ? "" : path}`}`,
       lastModified: now,
       alternates: {
         languages: {
@@ -17,6 +16,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
           es: `${siteConfig.url}/es${path === "/" ? "" : path}`,
         },
       },
-    },
+    })),
   ]);
 }

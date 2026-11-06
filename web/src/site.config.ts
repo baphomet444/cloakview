@@ -4,6 +4,9 @@
 // existe: la UI debe mostrar un estado "próximamente" explícito, nunca un
 // enlace roto ni un error silencioso.
 
+export const OPENAI_API_KEYS = "https://platform.openai.com/api-keys";
+export const OPENAI_STATUS = "https://status.openai.com/";
+
 export const siteConfig = {
   name: "CloakView",
   // Dominios con marca libre; .com queda explícitamente excluido (brief).

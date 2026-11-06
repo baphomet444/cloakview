@@ -1,0 +1,15 @@
+## Why these permissions matter {#why}
+
+CloakView uses macOS screen-capture permission for system audio from your meeting and microphone permission for your voice. It does not need to join your call as a bot. Grant access only if you trust the installed, signed release.
+
+## Enable screen recording {#screen}
+
+On first listen, macOS may prompt you. If it does not, open **System Settings → Privacy & Security → Screen & System Audio Recording** (on some macOS versions, **Screen Recording**). Find CloakView and switch it on. Quit and reopen the app when prompted, then restart listening. On macOS versions that offer audio-only capture separately, follow the macOS prompt for that permission.
+
+## Enable the microphone {#microphone}
+
+Go to **System Settings → Privacy & Security → Microphone** and enable CloakView. Check that the intended input device is selected in **System Settings → Sound → Input**. Restart listening after changing access.
+
+## If access is denied {#denied}
+
+Without screen/system audio access, CloakView cannot hear other participants; without microphone access, it cannot hear you. You can change either permission in the same Privacy & Security panels at any time. If CloakView is absent from the list, start a listen attempt to trigger the macOS prompt; after changing a toggle, quit and relaunch the app. Revoking access stops the corresponding capture until you re-enable it.
