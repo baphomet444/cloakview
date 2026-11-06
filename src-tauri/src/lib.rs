@@ -1,3 +1,4 @@
+mod db;
 mod error;
 mod secrets;
 mod settings;
@@ -67,8 +68,11 @@ pub fn run() {
         ])
         .setup(|app| {
             let s = settings::load_settings(app.handle());
+            let data_dir = app.path().app_data_dir()?;
+            let db = db::Db::open(&data_dir.join("cloakview.db")).map_err(|e| e.to_string())?;
             app.manage(AppState {
                 settings: std::sync::RwLock::new(s),
+                db: std::sync::Mutex::new(Some(db)),
             });
             Ok(())
         })

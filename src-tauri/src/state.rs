@@ -1,4 +1,4 @@
-use std::sync::RwLock;
+use std::sync::{Mutex, RwLock};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -25,6 +25,7 @@ impl Default for Settings {
 #[derive(Default)]
 pub struct AppState {
     pub settings: RwLock<Settings>,
+    pub db: Mutex<Option<crate::db::Db>>,
 }
 
 impl AppState {

@@ -52,6 +52,11 @@ impl From<keyring::Error> for AppError {
         AppError::Keychain(e.to_string())
     }
 }
+impl From<std::io::Error> for AppError {
+    fn from(e: std::io::Error) -> Self {
+        AppError::Db(e.to_string())
+    }
+}
 impl From<rusqlite::Error> for AppError {
     fn from(e: rusqlite::Error) -> Self {
         AppError::Db(e.to_string())
