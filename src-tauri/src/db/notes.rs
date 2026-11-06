@@ -1,4 +1,4 @@
-use crate::db::Db;
+use crate::db::{now_ms, uuid, Db};
 use crate::error::AppResult;
 use serde::{Deserialize, Serialize};
 
@@ -32,13 +32,6 @@ pub struct NoteFilter {
     pub folder_id: Option<String>,
     #[serde(default)]
     pub archived: bool,
-}
-
-fn now_ms() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as i64)
-        .unwrap_or(0)
 }
 
 fn row_to_note(row: &rusqlite::Row) -> rusqlite::Result<Note> {
@@ -107,12 +100,6 @@ pub fn update(db: &Db, note: &Note) -> AppResult<Note> {
 pub fn delete(db: &Db, id: &str) -> AppResult<()> {
     db.conn.execute("DELETE FROM notes WHERE id = ?1", [id])?;
     Ok(())
-}
-
-fn uuid() -> String {
-    use std::time::{SystemTime, UNIX_EPOCH};
-    let nanos = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0);
-    format!("{:x}-{:x}", nanos, std::process::id())
 }
 
 #[cfg(test)]

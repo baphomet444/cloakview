@@ -4,6 +4,22 @@ use rusqlite::Connection;
 #[allow(dead_code)] // consumed by notes IPC commands in Task 11
 pub mod notes;
 
+#[allow(dead_code)] // consumed by conversations IPC commands in Task 11
+pub mod conversations;
+
+pub(crate) fn now_ms() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0)
+}
+
+pub(crate) fn uuid() -> String {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let nanos = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0);
+    format!("{:x}-{:x}", nanos, std::process::id())
+}
+
 pub struct Db {
     pub(crate) conn: Connection,
 }
