@@ -23,6 +23,18 @@
 //! name. `AudioStatus::Error` also goes through `"listen-state"` as
 //! `Error { message }`, unchanged from before.
 //!
+//! **`"turn-detected"`'s real trigger is not `TurnBoundary`.**
+//! `realtime::parse::parse_frame` never actually constructs that variant
+//! from a real OpenAI frame (see its own test module), so relying on it
+//! would mean this event — the product's core "it's your turn to
+//! speak" signal — never fires at all. Instead, every `Transcript` runs
+//! through `detect::is_user_turn(&turn.text, user_keywords, turn.is_user_turn)`
+//! right after it's buffered and its `"transcript-delta"` is emitted; a
+//! `true` result emits `"turn-detected"` too. The `TurnBoundary` match arm
+//! stays wired as a harmless, currently-unreachable fallback in case a
+//! future `parse_frame` change starts producing it — but it is not what
+//! makes the feature work today.
+//!
 //! `prepare_session`, `pump`, and `pump_until_cancelled` have no `tauri`
 //! imports and are unit-tested directly (this crate's module rule: pure
 //! logic/orchestration-core is testable, I/O glue stays thin) — `emit` is
@@ -141,6 +153,7 @@ async fn pump(
     audio_out: mpsc::Sender<AudioChunk>,
     mut realtime_events: mpsc::Receiver<RealtimeEvent>,
     transcript: &tokio::sync::Mutex<Vec<Turn>>,
+    user_keywords: &[String],
     emit: &(dyn Fn(&str, serde_json::Value) + Send + Sync),
 ) {
     let mut realtime_open = true;
@@ -160,7 +173,13 @@ async fn pump(
                             TRANSCRIPT_DELTA_EVENT,
                             serde_json::to_value(&turn).expect("Turn serializes"),
                         );
+                        if crate::detect::is_user_turn(&turn.text, user_keywords, turn.is_user_turn) {
+                            emit(TURN_DETECTED_EVENT, serde_json::Value::Null);
+                        }
                     }
+                    // Unreachable today (see module doc) — kept so a future
+                    // `parse_frame` producing this doesn't silently need
+                    // new wiring here too.
                     Some(RealtimeEvent::TurnBoundary) => emit(TURN_DETECTED_EVENT, serde_json::Value::Null),
                     Some(RealtimeEvent::Error { message }) => {
                         emit(ERROR_EVENT, serde_json::Value::String(message));
@@ -196,11 +215,12 @@ async fn pump_until_cancelled(
     audio_out: mpsc::Sender<AudioChunk>,
     realtime_events: mpsc::Receiver<RealtimeEvent>,
     transcript: &tokio::sync::Mutex<Vec<Turn>>,
+    user_keywords: &[String],
     emit: &(dyn Fn(&str, serde_json::Value) + Send + Sync),
 ) {
     tokio::select! {
         _ = cancel.cancelled() => {}
-        _ = pump(status_rx, audio_out, realtime_events, transcript, emit) => {}
+        _ = pump(status_rx, audio_out, realtime_events, transcript, user_keywords, emit) => {}
     }
 }
 
@@ -232,10 +252,12 @@ pub fn start(model: String, app: tauri::AppHandle) -> AppResult<SessionHandle> {
     let handle = tokio::spawn(async move {
         emit_listen_state(ListenState::Listening);
         let app_state = app.state::<crate::state::AppState>();
+        let user_keywords = app_state.settings.read().expect("settings lock").user_keywords.clone();
         let realtime_task = realtime::client::run_session(api_key, model, audio_rx, rt_tx);
         tokio::select! {
             _ = pump_until_cancelled(
-                cancel_for_task, status_rx, audio_tx, rt_rx, &app_state.transcript, &emit_generic,
+                cancel_for_task, status_rx, audio_tx, rt_rx, &app_state.transcript, &user_keywords,
+                &emit_generic,
             ) => {}
             res = realtime_task => {
                 if let Err(e) = res {
@@ -293,7 +315,7 @@ mod tests {
         let transcript = tokio::sync::Mutex::new(Vec::<Turn>::new());
         let (emit, emitted) = recording_emit();
 
-        pump(status_rx, audio_tx, rt_rx, &transcript, &emit).await;
+        pump(status_rx, audio_tx, rt_rx, &transcript, &[], &emit).await;
 
         let events = emitted.lock().unwrap();
         assert_eq!(events.len(), 1, "expected exactly one emission, got {events:?}");
@@ -324,7 +346,7 @@ mod tests {
         // very first scheduling, before anything can block for real.
         let _ = tokio::time::timeout(
             std::time::Duration::from_millis(200),
-            pump(status_rx, audio_tx, rt_rx, &transcript, &emit),
+            pump(status_rx, audio_tx, rt_rx, &transcript, &[], &emit),
         )
         .await;
 
@@ -355,7 +377,7 @@ mod tests {
 
         let _ = tokio::time::timeout(
             std::time::Duration::from_millis(200),
-            pump(status_rx, audio_tx, rt_rx, &transcript, &|_, _| {}),
+            pump(status_rx, audio_tx, rt_rx, &transcript, &[], &|_, _| {}),
         )
         .await;
 
@@ -378,10 +400,79 @@ mod tests {
 
         tokio::time::timeout(
             std::time::Duration::from_secs(1),
-            pump_until_cancelled(cancel_child, status_rx, audio_tx, rt_rx, &transcript, &|_, _| {}),
+            pump_until_cancelled(cancel_child, status_rx, audio_tx, rt_rx, &transcript, &[], &|_, _| {}),
         )
         .await
         .expect("cancel() should make pump_until_cancelled return promptly");
+    }
+
+    #[tokio::test]
+    async fn pump_emits_turn_detected_only_when_a_keyword_matches() {
+        let keywords = vec!["opinas".to_string()];
+
+        // Contains a configured keyword: transcript-delta AND turn-detected.
+        {
+            let (_status_tx, status_rx) = mpsc::channel::<AudioStatus>(1);
+            let (audio_tx, _audio_rx) = mpsc::channel::<AudioChunk>(1);
+            let (rt_tx, rt_rx) = mpsc::channel::<RealtimeEvent>(1);
+            let transcript = tokio::sync::Mutex::new(Vec::<Turn>::new());
+            let (emit, emitted) = recording_emit();
+
+            rt_tx
+                .send(RealtimeEvent::Transcript {
+                    speaker: "remote".into(),
+                    text: "¿tú qué opinas?".into(),
+                    is_user_turn: false,
+                })
+                .await
+                .unwrap();
+
+            let _ = tokio::time::timeout(
+                std::time::Duration::from_millis(200),
+                pump(status_rx, audio_tx, rt_rx, &transcript, &keywords, &emit),
+            )
+            .await;
+
+            let events = emitted.lock().unwrap();
+            let names: Vec<&str> = events.iter().map(|(n, _)| n.as_str()).collect();
+            assert_eq!(
+                names,
+                vec![TRANSCRIPT_DELTA_EVENT, TURN_DETECTED_EVENT],
+                "keyword match should emit both events, got {events:?}"
+            );
+        }
+
+        // No keyword match: transcript-delta only.
+        {
+            let (_status_tx, status_rx) = mpsc::channel::<AudioStatus>(1);
+            let (audio_tx, _audio_rx) = mpsc::channel::<AudioChunk>(1);
+            let (rt_tx, rt_rx) = mpsc::channel::<RealtimeEvent>(1);
+            let transcript = tokio::sync::Mutex::new(Vec::<Turn>::new());
+            let (emit, emitted) = recording_emit();
+
+            rt_tx
+                .send(RealtimeEvent::Transcript {
+                    speaker: "remote".into(),
+                    text: "buenos días a todos".into(),
+                    is_user_turn: false,
+                })
+                .await
+                .unwrap();
+
+            let _ = tokio::time::timeout(
+                std::time::Duration::from_millis(200),
+                pump(status_rx, audio_tx, rt_rx, &transcript, &keywords, &emit),
+            )
+            .await;
+
+            let events = emitted.lock().unwrap();
+            let names: Vec<&str> = events.iter().map(|(n, _)| n.as_str()).collect();
+            assert_eq!(
+                names,
+                vec![TRANSCRIPT_DELTA_EVENT],
+                "no keyword match should emit transcript-delta only, got {events:?}"
+            );
+        }
     }
 
     #[test]

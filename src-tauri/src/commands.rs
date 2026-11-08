@@ -70,6 +70,9 @@ pub fn save_settings_cmd(
     if let Some(v) = patch.realtime_model {
         s.realtime_model = v;
     }
+    if let Some(v) = patch.user_keywords {
+        s.user_keywords = v;
+    }
     settings::save_settings(&app, &s).map_err(IpcError::from)?;
     Ok(s.clone())
 }

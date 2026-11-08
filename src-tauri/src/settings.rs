@@ -46,6 +46,7 @@ pub struct SettingsPatch {
     pub opacity: Option<f64>,
     pub answers_model: Option<String>,
     pub realtime_model: Option<String>,
+    pub user_keywords: Option<Vec<String>>,
 }
 
 #[cfg(test)]

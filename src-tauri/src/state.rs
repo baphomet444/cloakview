@@ -8,6 +8,11 @@ pub struct Settings {
     pub opacity: f64,
     pub answers_model: String,
     pub realtime_model: String,
+    /// Keywords `listen::pump` checks against each `Transcript`'s text —
+    /// via `detect::is_user_turn` — to decide whether `"turn-detected"`
+    /// fires (e.g. the user's own name, "¿tú qué opinas?"). Empty by
+    /// default; configured by the user in Settings.
+    pub user_keywords: Vec<String>,
 }
 
 impl Default for Settings {
@@ -18,6 +23,7 @@ impl Default for Settings {
             opacity: 0.95,
             answers_model: "gpt-4o-mini".into(),
             realtime_model: "gpt-4o-mini-realtime".into(),
+            user_keywords: Vec::new(),
         }
     }
 }

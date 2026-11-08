@@ -54,4 +54,31 @@ mod tests {
         let err = r#"{"type":"error","error":{"message":"rate_limit"}}"#;
         assert!(matches!(parse_frame(err), Some(RealtimeEvent::Error { .. })));
     }
+
+    /// `TurnBoundary` isn't a frame type the realtime API sends, and this
+    /// deliberately never produces one — that's fine, not a gap: turn
+    /// detection is a heuristic over each `Transcript`'s *text*
+    /// (`detect::is_user_turn`, called from `listen::pump`), not something
+    /// the server signals. This test just locks in that known fact so a
+    /// future change here doesn't silently surprise whoever's touching
+    /// `pump` (its module doc explains the real trigger).
+    #[test]
+    fn never_produces_turn_boundary_but_that_is_fine() {
+        let frames = [
+            r#"{"type":"session.started"}"#,
+            r#"{"type":"conversation.item.input_audio_transcription.completed",
+                "item":{"content":[{"type":"input_text","text":"hola"}]}}"#,
+            r#"{"type":"error","error":{"message":"boom"}}"#,
+            r#"{"type":"something.unhandled"}"#,
+            "not json",
+            "{}",
+        ];
+        for frame in frames {
+            assert!(
+                !matches!(parse_frame(frame), Some(RealtimeEvent::TurnBoundary)),
+                "parse_frame produced TurnBoundary for {frame}; update listen.rs's module doc \
+                 if this is now the real turn-detected trigger"
+            );
+        }
+    }
 }
