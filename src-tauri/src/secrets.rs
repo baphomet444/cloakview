@@ -41,14 +41,20 @@ pub fn clear_api_key() -> AppResult<()> {
     }
 }
 
+/// Guards the single process-global keyring mock entry (`ENTRY`) that every
+/// test in this crate touches after calling
+/// `keyring::set_default_credential_builder(keyring::mock::default_credential_builder())`.
+/// `cargo test` runs tests in parallel by default; two such tests racing
+/// the same in-memory mock store (this module's own tests, and
+/// `listen::tests::start_without_key_is_missing_api_key`) produce flaky,
+/// order-dependent failures without a shared lock. `pub(crate)` so other
+/// test modules can take it too.
+#[cfg(test)]
+pub(crate) static TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Mutex;
-
-    // Both tests share the single process-global entry (and its mock store),
-    // so they must not run concurrently.
-    static TEST_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn roundtrip_save_has_get_clear() {

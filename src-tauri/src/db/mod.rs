@@ -1,10 +1,8 @@
 use crate::error::AppResult;
 use rusqlite::Connection;
 
-#[allow(dead_code)] // consumed by notes IPC commands in Task 11
 pub mod notes;
 
-#[allow(dead_code)] // consumed by conversations IPC commands in Task 11
 pub mod conversations;
 
 pub(crate) fn now_ms() -> i64 {
