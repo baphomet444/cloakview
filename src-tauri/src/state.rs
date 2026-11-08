@@ -26,9 +26,13 @@ impl Default for Settings {
 pub struct AppState {
     pub settings: RwLock<Settings>,
     pub db: Mutex<Option<crate::db::Db>>,
-    /// Recent transcript turns, used as context for `request_answer`.
-    /// Not yet fed by the realtime session — see task-11-report.md.
-    pub transcript: Mutex<crate::transcript::TranscriptBuffer>,
+    /// Recent transcript turns (bounded to `transcript::CAPACITY`), used as
+    /// context for `request_answer`. Fed by `listen::pump` as
+    /// `RealtimeEvent::Transcript` events arrive. `tokio::sync::Mutex`, not
+    /// `std::sync::Mutex`: `pump` is async and holds this lock across
+    /// `.await` points (see `listen.rs`), which a std guard can't do
+    /// without risking a blocked executor thread.
+    pub transcript: tokio::sync::Mutex<Vec<crate::transcript::Turn>>,
     /// The running listen session, if any. `tokio::sync::Mutex` (not
     /// `std::sync::Mutex`): `start_listen`/`stop_listen` hold this lock
     /// across `.await` points (spawning/awaiting the session task), which

@@ -163,14 +163,7 @@ pub async fn request_answer(
 ) -> Result<(), IpcError> {
     let api_key = secrets::get_api_key().map_err(IpcError::from)?;
     let model = state.settings.read().expect("settings lock").answers_model.clone();
-    let context: Vec<crate::transcript::Turn> = state
-        .transcript
-        .lock()
-        .expect("transcript lock")
-        .last(30)
-        .into_iter()
-        .cloned()
-        .collect();
+    let context: Vec<crate::transcript::Turn> = state.transcript.lock().await.clone();
 
     let mut answer_guard = state.answer_task.lock().await;
     if let Some(prev) = answer_guard.take() {
@@ -181,9 +174,25 @@ pub async fn request_answer(
     *answer_guard = Some(handle);
     drop(answer_guard);
 
+    // Spec event names, not the enum's own `kind` tag (see `listen.rs`'s
+    // doc for the same rule on the realtime side): one Tauri event per
+    // `AnswersEvent` variant, bare payload, no discrimination needed on
+    // the frontend. `AnswersEvent::Error` shares `"error"` with the
+    // realtime side — the spec lists one generic error event, not a
+    // separate per-source one.
     tokio::spawn(async move {
         while let Some(event) = rx.recv().await {
-            let _ = app.emit("answers", event);
+            match event {
+                crate::answers::AnswersEvent::Delta { text } => {
+                    let _ = app.emit("answer-delta", text);
+                }
+                crate::answers::AnswersEvent::Done => {
+                    let _ = app.emit("answer-done", ());
+                }
+                crate::answers::AnswersEvent::Error { message } => {
+                    let _ = app.emit("error", message);
+                }
+            }
         }
     });
 

@@ -46,7 +46,7 @@ pub fn run() {
             app.manage(AppState {
                 settings: std::sync::RwLock::new(s),
                 db: std::sync::Mutex::new(Some(db)),
-                transcript: std::sync::Mutex::new(crate::transcript::TranscriptBuffer::default()),
+                transcript: tokio::sync::Mutex::new(Vec::new()),
                 listen_session: tokio::sync::Mutex::new(None),
                 answer_task: tokio::sync::Mutex::new(None),
             });

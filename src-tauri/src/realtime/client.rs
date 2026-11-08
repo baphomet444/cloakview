@@ -2,7 +2,6 @@ use crate::audio::AudioChunk;
 use crate::error::{AppError, AppResult};
 use crate::realtime::{parse::parse_frame, Backoff, RealtimeEvent};
 use futures_util::{SinkExt, StreamExt};
-use tauri::Emitter;
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 use tokio_tungstenite::tungstenite::http;
@@ -13,11 +12,18 @@ const URL: &str = "wss://api.openai.com/v1/realtime";
 /// pump outgoing audio and incoming frames, reconnect with backoff on
 /// drop/error. Returns only on explicit stop (audio channel closed by
 /// Task 11) or when building the request itself fails.
+///
+/// Forwards every parsed `RealtimeEvent` through `events_out` instead of
+/// emitting to the frontend itself (that moved to `listen::pump`, which
+/// maps each variant to its spec-named event — see that module's doc).
+/// `try_send`, not `.send().await`: this must never block the WS read
+/// loop on a slow/stuck consumer, matching the same drop-and-keep-reading
+/// rule `answers::client::stream_answer` (Task 10) already uses.
 pub async fn run_session(
     api_key: String,
     model: String,
     mut audio_in: tokio::sync::mpsc::Receiver<AudioChunk>,
-    app: tauri::AppHandle,
+    events_out: tokio::sync::mpsc::Sender<RealtimeEvent>,
 ) -> AppResult<()> {
     let mut backoff = Backoff::default();
     loop {
@@ -40,7 +46,7 @@ pub async fn run_session(
             Ok((ws, _)) => {
                 backoff.reset();
                 let (mut write, mut read) = ws.split();
-                let _ = app.emit("realtime", RealtimeEvent::SessionStarted);
+                let _ = events_out.try_send(RealtimeEvent::SessionStarted);
 
                 // session.update: VAD turn detection + transcription
                 let session_cfg = serde_json::json!({
@@ -78,7 +84,7 @@ pub async fn run_session(
                             Some(Ok(tokio_tungstenite::tungstenite::Message::Text(txt))) => {
                                 if let Some(ev) = parse_frame(txt.as_str()) {
                                     let stop = matches!(ev, RealtimeEvent::Error { .. });
-                                    let _ = app.emit("realtime", ev);
+                                    let _ = events_out.try_send(ev);
                                     if stop {
                                         break;
                                     }
@@ -91,10 +97,7 @@ pub async fn run_session(
                 }
             }
             Err(e) => {
-                let _ = app.emit(
-                    "realtime",
-                    RealtimeEvent::Error { message: e.to_string() },
-                );
+                let _ = events_out.try_send(RealtimeEvent::Error { message: e.to_string() });
             }
         }
         tokio::time::sleep(backoff.next_delay()).await;
