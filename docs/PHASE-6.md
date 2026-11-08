@@ -3,45 +3,38 @@
 Lee docs/BRIEF-WEB.md para el contexto del producto.
 
 ## Contexto
-- Repo de GitHub NO existe (site.config.ts con OWNER). isGithubPending() = true.
-- Paleta, componentes y diccionarios ya establecidos en fases 1-5.
-- Next 16.4.5, React 19.3, Tailwind 4 (@theme en CSS). params es Promise.
+- Repo GitHub NO existe (site.config.ts con OWNER). isGithubPending() = true.
+- Next 16.4.5, React 19.3, Tailwind 4. params es Promise.
+- Paleta, componentes y diccionarios establecidos en fases 1-5.
 
-## Requisitos
+## /faq
+1. Bilingüe, mínimo 15 preguntas por tema: privacidad, instalación, costes,
+   compatibilidad, técnico.
+2. Acordeón accesible: button con aria-expanded y aria-controls, panel con id,
+   navegable por teclado, foco visible.
 
-### /faq
-1. Bilingüe, mínimo 15 preguntas agrupadas por tema: privacidad, instalación,
-   costes, compatibilidad, técnico.
-2. Acordeón accesible: <button> con aria-expanded y aria-controls apuntando
-   al panel, panel con id correspondiente. Navegable con teclado, foco visible.
-   NO uses <details> sin estilos ni divs clicables.
-3. Cada respuesta puede enlazar a un artículo de la guía cuando exista.
+## /support
+3. Email desde siteConfig.SUPPORT_EMAIL (mailto).
+4. Enlace a GitHub Issues desde siteConfig.GITHUB_REPO. Con isGithubPending()
+   true: "próximamente" sin href muerto.
+5. Sección "qué incluir al reportar un bug": versión macOS, versión app, pasos.
+   Y qué NO incluir: claves de API, audio.
+6. Enlace a la guía de troubleshooting.
 
-### /support
-4. Bilingüe. Email desde siteConfig.SUPPORT_EMAIL como enlace mailto.
-5. Enlace a GitHub Issues desde siteConfig.GITHUB_REPO. Mientras
-   isGithubPending() sea true, muestra "próximamente" sin href muerto.
-6. Sección "qué incluir al reportar un bug": versión de macOS, versión de la
-   app, pasos para reproducir, y qué NO incluir (claves de API, audio).
-7. Enlace a la guía de troubleshooting.
-
-### /changelog
-8. Bilingüe. Lee GitHub Releases en build time CON FALLBACK obligatorio a
-   src/content/c   src/content/c   src/content/c   src/content/c   src/content/c   src/ch falla, 404, o el repo no existe: usa el JSON local. El build
-     NUNCA debe romperse por esto.
-   - Si el   - Si el   - Si el   - Si el   - no intentes el fetch siquiera:
-     ve directo al fallback.
+## /changelog
+7. Bilingüe. Lee GitHub Releases en build time CON FALLBACK obligatorio a
+   src/content/changelog.json.
+   - Si isGithubPending(): no intentes el fetch, ve directo al fallback.
+   - fetch con AbortSignal.timeout(3000).
+   - El build NUNCA debe romperse por esto.
    - Marca visualmente cuando el contenido viene del fallback local.
-9. El JSON de changelog es bilingüe: cada entrada con title/body en en y es.
-   Paridad de claves testeada.
+8. JSON de changelog bilingüe, paridad de claves testeada.
 
 ## General
-10. Todo el copy de UI en en.json/es.json. Cero strings hardcodeados.
-11. Metadata/OG por página y por idioma. Sitemap actualizado con las tres rutas
-    en ambos idiomas.
-12. Enlaces externos con rel="noopener noreferrer".
+9. Todo el copy9.e UI en en.json/es.json. Cero strings hardcodeados.
+10. Metadata/OG por página e idioma. Sitemap con las tres rutas en ambos idiomas.
+11. Enlaces externos con rel="noopener noreferrer".
 
 ## Cierre
-`npm run build` limpio CON el repo inexistente (esto prueba el fallback),
-`npm run test:i18n` en verde, `npm run lint` limpio, reporte de 5 líneas.
-No empieces la Fase 7.
+npm run build limpio CON el repo inexistente, npm run test:i18n en verde,
+npm run lint limpio, reporte de 5 líneas. No empieces la Fase 7.

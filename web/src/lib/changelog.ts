@@ -32,7 +32,7 @@ export async function getChangelog(): Promise<{ entries: Entry[]; isFallback: bo
     if (repo.hostname !== "github.com" || !match) return { entries: fallback, isFallback: true };
     const response = await fetch(`${GITHUB_API}/repos/${match[1]}/${match[2]}/releases`, {
       headers: { Accept: "application/vnd.github+json" },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(3000),
     });
     if (!response.ok) return { entries: fallback, isFallback: true };
     const releases: unknown = await response.json();
