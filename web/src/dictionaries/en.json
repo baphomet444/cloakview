@@ -395,5 +395,145 @@
     "intro": "Release notes from the official repository when available.",
     "fallback": "Showing local information: GitHub Releases is not available or has no verified bilingual notes yet.",
     "release": "Release"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "description": "How CloakView handles your data: local-first, no backend, no accounts, no telemetry.",
+    "updated": "Last updated",
+    "jurisdiction": "Governed by the laws of Florida, USA.",
+    "sections": {
+      "overview": {
+        "title": "Overview",
+        "content": "CloakView is built on a simple principle: your data stays yours. We operate no backend, maintain no accounts, and collect no telemetry. This policy explains what happens to your information when you use CloakView."
+      },
+      "dataCollection": {
+        "title": "What Data We Collect",
+        "content": "CloakView does not collect, store, or transmit any user data to CloakView servers. Specifically:\n\n• We do not collect meeting audio, transcripts, or personal information.\n• We do not create accounts or user profiles.\n• We do not use cookies, tracking pixels, or analytics.\n• We do not log your API usage or meeting details.\n\nThe only data transmitted outside your Mac is to OpenAI's API, using your own API key, for the purpose of transcription and suggestion generation."
+      },
+      "openaiProcessing": {
+        "title": "OpenAI API Usage",
+        "content": "When you use CloakView with your OpenAI API key:\n\n• Your meeting audio is sent to OpenAI's API servers to be transcribed.\n• Context is sent to OpenAI to generate suggestions.\n• You are responsible for reviewing OpenAI's privacy policy at openai.com/privacy.\n• CloakView never stores, logs, or monitors these requests.\n• OpenAI's terms require that you own the rights to the audio being sent. You remain responsible for compliance.\n\nNo data is retained by CloakView beyond the session."
+      },
+      "yourKey": {
+        "title": "Your API Key",
+        "content": "Your OpenAI API key is:\n\n• Stored locally in macOS Keychain on your Mac only.\n• Never sent to CloakView servers (we do not have any).\n• Sent only to OpenAI's API when you use CloakView.\n• Your responsibility to protect. Do not share it or include it in support reports.\n• Revocable immediately in your OpenAI dashboard.\n\nWe never see, log, or monitor your key in any way."
+      },
+      "tracking": {
+        "title": "No Tracking or Analytics",
+        "content": "CloakView does not include analytics, telemetry, crash reporting, or usage tracking of any kind. We do not know how many users install the app, how often it is opened, or what features are used. This is intentional: it is a privacy feature, not a limitation."
+      },
+      "storage": {
+        "title": "Local Storage",
+        "content": "All processing happens on your Mac. Meeting audio and transcripts remain local to your system unless you explicitly share them. CloakView does not backup, sync, or upload any data to cloud storage."
+      },
+      "thirdParties": {
+        "title": "Third Parties",
+        "content": "CloakView does not share your data with third parties. The only external service is OpenAI's API, which you invoke directly with your own key. We do not have access to, control over, or visibility into OpenAI's processing of your data beyond their published privacy policy."
+      },
+      "dataRights": {
+        "title": "Your Rights",
+        "content": "Because we collect no data, there is nothing for us to provide, correct, or delete. Your data remains entirely on your device and under your control.\n\nIf you believe OpenAI has retained data incorrectly, you may contact OpenAI directly. CloakView has no involvement."
+      },
+      "appUpdates": {
+        "title": "App Updates",
+        "content": "The app does not automatically check for or download updates. You control when and whether to update CloakView by visiting the GitHub Releases page."
+      },
+      "contacts": {
+        "title": "Contact",
+        "content": "If you have questions about this privacy policy, contact us at soporte@cloakview.app."
+      }
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "description": "CloakView terms of use, limitations, and your responsibilities.",
+    "updated": "Last updated",
+    "jurisdiction": "Governed by the laws of Florida, USA.",
+    "sections": {
+      "acceptance": {
+        "title": "Acceptance of Terms",
+        "content": "By downloading and using CloakView, you agree to these terms. If you do not agree, do not use the app."
+      },
+      "license": {
+        "title": "License Grant",
+        "content": "We grant you a personal, non-exclusive, non-transferable, revocable license to use CloakView on your own Mac for your own use. You may not:\n\n• Reverse-engineer, decompile, or disassemble the app.\n• Distribute, sublicense, rent, or resell CloakView.\n• Use it for any unlawful purpose or in violation of local laws."
+      },
+      "yourApiKey": {
+        "title": "Your API Key is Your Responsibility",
+        "content": "CloakView requires your OpenAI API key to function. You are solely responsible for:\n\n• Obtaining and maintaining your own OpenAI account and API key.\n• Keeping your key confidential and secure.\n• Paying any charges incurred by your own API usage.\n• Complying with OpenAI's terms of service.\n• Ensuring you own the rights to any audio processed through your key.\n\nCloakView operates as instructed with your key and does not monitor or restrict your usage."
+      },
+      "liability": {
+        "title": "No Warranty; Limitation of Liability",
+        "content": "CLOAKVIEW IS PROVIDED \"AS-IS\" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. We disclaim all warranties including merchantability, fitness for a particular purpose, and non-infringement.\n\nWE ARE NOT LIABLE FOR:\n• Errors, bugs, or unexpected behavior in the app.\n• Missed meeting details or incorrect suggestions.\n• Data loss, corruption, or disclosure (though your data is local).\n• OpenAI API outages, errors, or termination of your access.\n• Any indirect, incidental, special, or consequential damages.\n• Lost revenue, profits, or business opportunities.\n\nYour sole remedy is to stop using CloakView."
+      },
+      "legalEntity": {
+        "title": "Legal Entity",
+        "content": "CloakView is offered by PLACEHOLDER LLC (pending legal registration — this placeholder will be updated before v1 release)."
+      },
+      "intellectualProperty": {
+        "title": "Intellectual Property",
+        "content": "All CloakView code, design, and documentation are owned by or licensed to the publisher. You retain ownership of any audio or content you create and process."
+      },
+      "indemnification": {
+        "title": "Indemnification",
+        "content": "You agree to indemnify, defend, and hold harmless the publisher from any claims, damages, or costs arising from:\n• Your use of CloakView in violation of these terms.\n• Your API key usage or OpenAI charges.\n• Audio or meeting data you process using CloakView.\n• Your violation of any law or third-party rights."
+      },
+      "modifications": {
+        "title": "Changes to These Terms",
+        "content": "We may modify these terms at any time. Changes will be posted at cloakview.app/terms. Your continued use of CloakView after changes are posted constitutes acceptance of the new terms."
+      },
+      "governing": {
+        "title": "Governing Law",
+        "content": "These terms are governed by and construed in accordance with the laws of Florida, USA, without regard to its conflict-of-law principles. Any legal action or proceeding must be brought exclusively in the state and federal courts located in Florida."
+      },
+      "severability": {
+        "title": "Severability",
+        "content": "If any part of these terms is held to be invalid or unenforceable, that part will be severed and the remainder will continue in effect."
+      },
+      "entireAgreement": {
+        "title": "Entire Agreement",
+        "content": "These terms, together with our Privacy Policy and Cookies Policy, constitute the entire agreement between you and CloakView regarding your use of the app."
+      }
+    }
+  },
+  "cookies": {
+    "title": "Cookies Policy",
+    "description": "CloakView does not use cookies, tracking, or analytics.",
+    "updated": "Last updated",
+    "jurisdiction": "Governed by the laws of Florida, USA.",
+    "sections": {
+      "overview": {
+        "title": "No Cookies or Tracking",
+        "content": "CloakView does not use cookies, web beacons, pixels, or any other tracking technology. Our website and app do not store persistent identifiers or track your behavior.\n\nThis is not a limitation — it is a feature of our privacy-first design."
+      },
+      "whyNo": {
+        "title": "Why No Analytics?",
+        "content": "We believe your privacy should be the default, not an option. CloakView does not collect:\n• How many users install the app.\n• Which features are used most often.\n• Crash reports or error telemetry.\n• Session duration or app engagement.\n• Geographic location or device information.\n• Unique device identifiers.\n\nThis means we cannot easily measure adoption or debug issues with aggregate data, but it also means we cannot build surveillance into CloakView."
+      },
+      "websiteCookies": {
+        "title": "This Website",
+        "content": "This website (cloakview.app) does not use cookies, tracking scripts, or analytics tools. Visit our pages anonymously with full privacy."
+      },
+      "thirdPartyScripts": {
+        "title": "No Third-Party Scripts",
+        "content": "The CloakView website contains no Google Analytics, Segment, Mixpanel, or other telemetry services. No JavaScript is loaded from tracking domains."
+      },
+      "localStorage": {
+        "title": "App Storage",
+        "content": "The CloakView app may store settings locally (such as your OpenAI API key in Keychain, or your preference for language or shortcuts) entirely on your Mac. No data is synced to cloud servers."
+      },
+      "ifWeChange": {
+        "title": "If We Add Analytics",
+        "content": "If CloakView ever adds telemetry, crash reporting, or analytics in the future:\n• It will be opt-in, never forced.\n• This policy will be updated and clearly published.\n• You will be able to disable it at any time without affecting the app's core functionality.\n• Current v1 releases will remain free of tracking."
+      },
+      "thirdPartyLinks": {
+        "title": "Third-Party Links",
+        "content": "This website and app contain links to external sites (OpenAI, GitHub, etc.). Those services have their own privacy policies and cookie practices. We are not responsible for their tracking behavior."
+      },
+      "questions": {
+        "title": "Questions?",
+        "content": "If you have questions about cookies or tracking, email us at soporte@cloakview.app."
+      }
+    }
   }
 }

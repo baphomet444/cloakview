@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "@/site.config";
 import { guidePath, guideSlugs } from "@/lib/guide";
 
-const paths = ["/", "/pricing", "/download", "/faq", "/support", "/changelog", guidePath("en"), ...guideSlugs.map((slug) => guidePath("en", slug))];
+const paths = ["/", "/pricing", "/download", "/faq", "/support", "/changelog", "/privacy", "/terms", "/cookies", guidePath("en"), ...guideSlugs.map((slug) => guidePath("en", slug))];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

@@ -27,6 +27,10 @@ export const siteConfig = {
   SHA256_INTEL: null as string | null,
   SHA256_WINDOWS: null as string | null,
 
+  // --- Términos legales ---
+  LEGAL_UPDATED: "2026-11-08", // ISO date: Fase 7
+  LEGAL_JURISDICTION: "Florida, USA",
+
   locales: ["en", "es"] as const,
   defaultLocale: "en" as const,
 } as const;
