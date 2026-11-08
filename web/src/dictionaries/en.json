@@ -261,5 +261,139 @@
         "description": "Practical fixes for setup, permissions, connection, and audio issues."
       }
     }
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "description": "Answers about privacy, installation, costs, compatibility and technical setup for CloakView.",
+    "intro": "Clear answers before you install. The app and GitHub repository have not been published yet.",
+    "guideLink": "Read the guide",
+    "topics": [
+      {
+        "title": "Privacy",
+        "items": [
+          {
+            "q": "Does CloakView record or upload meetings to its own servers?",
+            "a": "No CloakView backend or telemetry is planned. Meeting audio is processed on your Mac and API requests go directly to OpenAI with your key. Check OpenAI’s data handling policy before using the service."
+          },
+          {
+            "q": "Where is my API key stored?",
+            "a": "The planned app stores your key in macOS Keychain and sends it directly to OpenAI, not to CloakView servers. Revoke it in your OpenAI account whenever you like.",
+            "guide": "api-key"
+          },
+          {
+            "q": "Can other people on the call see the overlay?",
+            "a": "The overlay is designed to appear only on your Mac. Test your screen-sharing setup before a sensitive meeting: sharing your entire screen may expose anything visible on it."
+          },
+          {
+            "q": "Should I include my key or meeting audio in a support report?",
+            "a": "No. Never send API keys, raw audio, transcripts, or private meeting details in a support email or public issue."
+          }
+        ]
+      },
+      {
+        "title": "Installation",
+        "items": [
+          {
+            "q": "When can I download the app?",
+            "a": "Not yet. The repository and signed release artifacts are pending; this site will link to the official release when it exists.",
+            "guide": "installation"
+          },
+          {
+            "q": "Which macOS version do I need?",
+            "a": "macOS 14.2 or later is planned. Check the release notes for the final system requirements before installing.",
+            "guide": "installation"
+          },
+          {
+            "q": "What if macOS blocks the installer?",
+            "a": "Verify the official signed and notarized release. Do not bypass Gatekeeper or remove quarantine flags to force an unverified copy to run.",
+            "guide": "troubleshooting"
+          }
+        ]
+      },
+      {
+        "title": "Costs",
+        "items": [
+          {
+            "q": "Is CloakView free?",
+            "a": "The planned v1 is free, with no CloakView subscription. You pay your own OpenAI API usage directly to OpenAI."
+          },
+          {
+            "q": "Does a ChatGPT subscription cover API usage?",
+            "a": "No. OpenAI API billing is separate from a ChatGPT subscription. Set a usage limit in your OpenAI account.",
+            "guide": "api-key"
+          },
+          {
+            "q": "Can I stop API charges?",
+            "a": "Stop using the app and revoke your API key in your OpenAI dashboard. Check your OpenAI billing page for any outstanding usage.",
+            "guide": "api-key"
+          }
+        ]
+      },
+      {
+        "title": "Compatibility",
+        "items": [
+          {
+            "q": "Does it work with Zoom, Meet and Teams?",
+            "a": "It is designed to work alongside Zoom, Google Meet and Microsoft Teams on a supported Mac, without adding a bot to the call. Actual support should be confirmed when the app ships."
+          },
+          {
+            "q": "Is there a Windows version?",
+            "a": "No Windows build is planned for v1. The download page will show the availability of each platform."
+          },
+          {
+            "q": "Are Apple Silicon and Intel supported?",
+            "a": "Both are planned; Intel and Apple Silicon artifacts are not yet published. Only install an official release matched to your Mac.",
+            "guide": "installation"
+          }
+        ]
+      },
+      {
+        "title": "Technical",
+        "items": [
+          {
+            "q": "Why can’t it hear the meeting?",
+            "a": "Check Screen & System Audio Recording permission, the meeting app’s output device and whether listening is enabled. Restart the app after changing permissions.",
+            "guide": "troubleshooting"
+          },
+          {
+            "q": "Why can’t it hear my voice?",
+            "a": "Check Microphone permission and the selected input device in macOS settings, then try again.",
+            "guide": "permissions"
+          },
+          {
+            "q": "What happens when OpenAI is unavailable?",
+            "a": "Suggestions require OpenAI connectivity. Check your key, billing, network connection and OpenAI service status; the planned app should not pretend requests succeeded.",
+            "guide": "troubleshooting"
+          }
+        ]
+      }
+    ]
+  },
+  "support": {
+    "title": "Support",
+    "description": "Get CloakView support by email, report a bug safely, or follow the troubleshooting guide.",
+    "intro": "Need help? Start with the troubleshooting guide or write to us without sharing sensitive data.",
+    "emailTitle": "Email support",
+    "emailText": "Contact us at",
+    "issuesTitle": "GitHub Issues",
+    "issuesText": "Track or report public issues in the repository when it is available.",
+    "issuesLink": "Open GitHub Issues",
+    "issuesPending": "Coming soon — the repository is not public yet.",
+    "reportTitle": "What to include in a bug report",
+    "include": [
+      "Your macOS version and Mac model",
+      "Your CloakView app version, if installed",
+      "Steps to reproduce the issue and what you expected to happen"
+    ],
+    "excludeTitle": "Do not include",
+    "exclude": "Never send API keys, meeting audio, transcripts or private call details — especially in public issues.",
+    "troubleshooting": "Read the troubleshooting guide"
+  },
+  "changelog": {
+    "title": "Changelog",
+    "description": "CloakView release history and updates. Local notes appear when GitHub Releases is unavailable.",
+    "intro": "Release notes from the official repository when available.",
+    "fallback": "Showing local information: GitHub Releases is not available or has no verified bilingual notes yet.",
+    "release": "Release"
   }
 }

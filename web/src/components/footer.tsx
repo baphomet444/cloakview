@@ -15,6 +15,7 @@ const BUILD_YEAR = new Date().getFullYear();
 export function Footer({ dict, locale }: { dict: Dictionary; locale: Locale }) {
   const links = [
     { href: "/support", label: dict.footer.support },
+    { href: "/faq", label: dict.faq.title },
     { href: "/privacy", label: dict.footer.privacy },
     { href: "/terms", label: dict.footer.terms },
     { href: "/cookies", label: dict.footer.cookies },

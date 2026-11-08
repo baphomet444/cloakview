@@ -1,0 +1,11 @@
+[
+  {
+    "version": "unreleased",
+    "date": null,
+    "title": { "en": "Release pending", "es": "Lanzamiento pendiente" },
+    "body": {
+      "en": "CloakView has not published a GitHub release yet. Check back here for verified release notes once the repository and downloads are available.",
+      "es": "CloakView aún no ha publicado una versión en GitHub. Vuelve aquí para consultar las notas verificadas cuando estén disponibles el repositorio y las descargas."
+    }
+  }
+]
