@@ -4,6 +4,7 @@ import { siteConfig } from "@/site.config";
 // Localización "as-needed": inglés (default) vive en la raíz sin prefijo,
 // español vive bajo /es. Reescribimos internamente a /en o /es dentro de
 // src/app/[locale] para que ambos compartan el mismo árbol de rutas.
+// Los prefijos explícitos /en y /es también se aceptan y se normalizan.
 
 const PUBLIC_FILE = /\.(.*)$/;
 
@@ -21,7 +22,7 @@ export default function proxy(request: NextRequest) {
   const isSpanish = pathname === "/es" || pathname.startsWith("/es/");
 
   const locale = isSpanish ? "es" : siteConfig.defaultLocale;
-  const rest = isSpanish ? pathname.replace(/^\/es/, "") || "/" : pathname;
+  const rest = pathname.replace(/^\/(es|en)(?=\/|$)/, "") || "/";
 
   const url = request.nextUrl.clone();
   url.pathname = `/${locale}${rest}`;

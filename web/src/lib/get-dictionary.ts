@@ -7,7 +7,8 @@ const dictionaries = {
 };
 
 export async function getDictionary(locale: Locale) {
-  return dictionaries[locale]();
+  const load = dictionaries[locale] ?? dictionaries.en;
+  return load();
 }
 
 export type Dictionary = Awaited<ReturnType<typeof getDictionary>>;
