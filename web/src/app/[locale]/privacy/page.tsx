@@ -51,7 +51,7 @@ export default async function PrivacyPage(props: Props) {
         {/* Overview */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{p.sections.overview.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {p.sections.overview.content}
           </p>
         </div>
@@ -59,7 +59,7 @@ export default async function PrivacyPage(props: Props) {
         {/* Data Collection */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{p.sections.dataCollection.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {p.sections.dataCollection.content}
           </p>
         </div>
@@ -67,7 +67,7 @@ export default async function PrivacyPage(props: Props) {
         {/* OpenAI Processing */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{p.sections.openaiProcessing.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {p.sections.openaiProcessing.content}
           </p>
         </div>
@@ -75,7 +75,7 @@ export default async function PrivacyPage(props: Props) {
         {/* Your Key */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{p.sections.yourKey.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {p.sections.yourKey.content}
           </p>
         </div>
@@ -83,7 +83,7 @@ export default async function PrivacyPage(props: Props) {
         {/* Tracking */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{p.sections.tracking.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {p.sections.tracking.content}
           </p>
         </div>
@@ -91,7 +91,7 @@ export default async function PrivacyPage(props: Props) {
         {/* Storage */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{p.sections.storage.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {p.sections.storage.content}
           </p>
         </div>
@@ -99,7 +99,7 @@ export default async function PrivacyPage(props: Props) {
         {/* Third Parties */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{p.sections.thirdParties.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {p.sections.thirdParties.content}
           </p>
         </div>
@@ -107,7 +107,7 @@ export default async function PrivacyPage(props: Props) {
         {/* Data Rights */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{p.sections.dataRights.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {p.sections.dataRights.content}
           </p>
         </div>
@@ -115,7 +115,7 @@ export default async function PrivacyPage(props: Props) {
         {/* App Updates */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{p.sections.appUpdates.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {p.sections.appUpdates.content}
           </p>
         </div>
@@ -123,7 +123,7 @@ export default async function PrivacyPage(props: Props) {
         {/* Contact */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{p.sections.contacts.title}</h2>
-          <LegalText className="text-slate-300" text={p.sections.contacts.content} />
+          <LegalText className="text-muted" text={p.sections.contacts.content} />
         </div>
       </section>
     </LegalLayout>

@@ -51,7 +51,7 @@ export default async function CookiesPage(props: Props) {
         {/* Overview */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{c.sections.overview.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {c.sections.overview.content}
           </p>
         </div>
@@ -59,7 +59,7 @@ export default async function CookiesPage(props: Props) {
         {/* Why No */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{c.sections.whyNo.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {c.sections.whyNo.content}
           </p>
         </div>
@@ -67,7 +67,7 @@ export default async function CookiesPage(props: Props) {
         {/* Website Cookies */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{c.sections.websiteCookies.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {c.sections.websiteCookies.content}
           </p>
         </div>
@@ -75,7 +75,7 @@ export default async function CookiesPage(props: Props) {
         {/* Third Party Scripts */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{c.sections.thirdPartyScripts.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {c.sections.thirdPartyScripts.content}
           </p>
         </div>
@@ -83,7 +83,7 @@ export default async function CookiesPage(props: Props) {
         {/* Local Storage */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{c.sections.localStorage.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {c.sections.localStorage.content}
           </p>
         </div>
@@ -91,7 +91,7 @@ export default async function CookiesPage(props: Props) {
         {/* If We Change */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{c.sections.ifWeChange.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {c.sections.ifWeChange.content}
           </p>
         </div>
@@ -99,7 +99,7 @@ export default async function CookiesPage(props: Props) {
         {/* Third Party Links */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{c.sections.thirdPartyLinks.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+          <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {c.sections.thirdPartyLinks.content}
           </p>
         </div>
@@ -107,7 +107,7 @@ export default async function CookiesPage(props: Props) {
         {/* Questions */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{c.sections.questions.title}</h2>
-          <LegalText className="text-slate-300" text={c.sections.questions.content} />
+          <LegalText className="text-muted" text={c.sections.questions.content} />
         </div>
       </section>
     </LegalLayout>

@@ -20,7 +20,7 @@ export function LegalLayout({
   const isPlaceholder = siteConfig.LEGAL_ENTITY.startsWith('PLACEHOLDER');
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 text-slate-100">
+    <main className="min-h-screen bg-background text-foreground">
       <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         {/* Header */}
         <header className="mb-12">
@@ -30,8 +30,8 @@ export function LegalLayout({
 
           {/* Legal Entity Placeholder Warning */}
           {isPlaceholder && (
-            <div className="bg-yellow-900/30 border border-yellow-600/50 rounded-lg p-4 mb-6">
-              <p className="text-yellow-100 text-sm">
+            <div className="bg-accent/10 border border-accent/40 rounded-lg p-4 mb-6">
+              <p className="text-foreground text-sm">
                 ⚠️ <strong>This policy uses a placeholder legal entity:</strong> {siteConfig.LEGAL_ENTITY}
                 <br />
                 <em>The official legal entity and contact details will be updated before v1 release.</em>
@@ -40,7 +40,7 @@ export function LegalLayout({
           )}
 
           {/* Metadata */}
-          <div className="text-sm text-slate-400 space-y-2">
+          <div className="text-sm text-muted space-y-2">
             <p>
               <strong>{updated}</strong>: {siteConfig.LEGAL_UPDATED}
             </p>
@@ -49,14 +49,14 @@ export function LegalLayout({
         </header>
 
         {/* Content */}
-        <div className="prose prose-invert max-w-none">
+        <div>
           {children}
         </div>
 
         {/* Cross-links */}
-        <nav className="mt-12 pt-8 border-t border-slate-700">
-          <div className="text-sm text-slate-400 space-y-3">
-            <p className="font-semibold text-slate-300">Related policies:</p>
+        <nav className="mt-12 pt-8 border-t border-border">
+          <div className="text-sm text-muted space-y-3">
+            <p className="font-semibold text-muted">Related policies:</p>
             <div className="flex flex-wrap gap-6">
               {locale === 'en' ? (
                 <>
