@@ -398,7 +398,7 @@
     "issuesTitle": "GitHub Issues",
     "issuesText": "Track or report public issues in the GitHub repository.",
     "issuesLink": "Open GitHub Issues",
-    "issuesPending": "Coming soon — the repository is not public yet.",
+    "issuesPending": "Coming soon.",
     "reportTitle": "What to include in a bug report",
     "include": [
       "Your macOS version and Mac model",

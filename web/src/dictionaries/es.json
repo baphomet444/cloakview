@@ -398,7 +398,7 @@
     "issuesTitle": "GitHub Issues",
     "issuesText": "Consulta o reporta problemas públicos en el repositorio de GitHub.",
     "issuesLink": "Abrir GitHub Issues",
-    "issuesPending": "Próximamente — el repositorio aún no es público.",
+    "issuesPending": "Próximamente.",
     "reportTitle": "Qué incluir al reportar un fallo",
     "include": [
       "Tu versión de macOS y modelo de Mac",
