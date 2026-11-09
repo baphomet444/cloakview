@@ -3,8 +3,8 @@
 <plist version="1.0">
 <dict>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>cloakview needs microphone access to transcribe your conversations.</string>
+	<string>CloakView needs microphone access to transcribe your conversations.</string>
 	<key>NSScreenCaptureUsageDescription</key>
-	<string>cloakview needs screen capture access to hear system audio during meetings.</string>
+	<string>CloakView needs screen capture access to hear system audio during meetings.</string>
 </dict>
 </plist>
