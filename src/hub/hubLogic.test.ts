@@ -102,9 +102,14 @@ describe("featureWindowOptions", () => {
   // The product's whole point. These windows carry the transcript and the suggested
   // replies, and only the hub is excluded from capture at startup (`windows_ext`), so
   // each window the hub creates must ask for it itself. On macOS this sets
-  // `NSWindow.sharingType = .none`, the same call `exclude_from_capture` makes.
+  // `NSWindow.sharingType = .none`, the same call `make_overlay` makes.
   it.each(FEATURE_KINDS)("%s: is excluded from screenshots and screen sharing (contentProtected)", (kind) => {
     expect(featureWindowOptions(kind, "Title").contentProtected).toBe(true);
+  });
+
+  // Without it the window vanishes when another app goes full screen.
+  it.each(FEATURE_KINDS)("%s: stays visible over full-screen apps (visibleOnAllWorkspaces)", (kind) => {
+    expect(featureWindowOptions(kind, "Title").visibleOnAllWorkspaces).toBe(true);
   });
 });
 

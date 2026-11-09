@@ -59,8 +59,9 @@ export type FeatureWindowOptions = NonNullable<ConstructorParameters<typeof Webv
  * always on top, off the taskbar — and `contentProtected`, so it never shows up in
  * a screenshot, a recording or a screen share. That last one matters most: these
  * windows carry the transcript and the suggested replies, and only the hub itself
- * is excluded at startup (`windows_ext::exclude_from_capture`). On macOS
+ * is excluded at startup (`windows_ext::make_overlay`). On macOS
  * `contentProtected` is `NSWindow.sharingType = .none`, the same call.
+ * `visibleOnAllWorkspaces` keeps them over other apps' full-screen Spaces.
  * `title` is passed in (already translated) because this module does not touch i18n state.
  */
 export function featureWindowOptions(kind: FeatureKind, title: string): FeatureWindowOptions {
@@ -75,6 +76,7 @@ export function featureWindowOptions(kind: FeatureKind, title: string): FeatureW
     alwaysOnTop: true,
     skipTaskbar: true,
     contentProtected: true,
+    visibleOnAllWorkspaces: true,
   };
 }
 

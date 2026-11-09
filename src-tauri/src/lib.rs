@@ -77,7 +77,7 @@ pub fn run() {
                 answer_task: tokio::sync::Mutex::new(None),
             });
             let hub = app.get_webview_window("hub").ok_or("hub window missing")?;
-            windows_ext::exclude_from_capture(&hub).map_err(|e| e.to_string())?;
+            windows_ext::make_overlay(&hub).map_err(|e| e.to_string())?;
             Ok(())
         })
         .run(tauri::generate_context!())

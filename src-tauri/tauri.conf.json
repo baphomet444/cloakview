@@ -20,6 +20,7 @@
         "transparent": true,
         "alwaysOnTop": true,
         "skipTaskbar": true,
+        "visibleOnAllWorkspaces": true,
         "resizable": false,
         "url": "/?win=hub"
       }
