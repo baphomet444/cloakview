@@ -44,7 +44,9 @@ pub fn make_overlay(window: &tauri::WebviewWindow) -> AppResult<()> {
             | NSWindowCollectionBehavior::IgnoresCycle;
         win.setCollectionBehavior(behavior);
         win.setLevel(CGShieldingWindowLevel() as isize);
-        win.setSharingType(NSWindowSharingType::None);
+        if std::env::var("CLOAKVIEW_SHARING").is_err() {
+            win.setSharingType(NSWindowSharingType::None);
+        }
     }
     Ok(())
 }
