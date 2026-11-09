@@ -31,7 +31,7 @@ export function Footer({ dict, locale }: { dict: Dictionary; locale: Locale }) {
             <Link
               key={link.href}
               href={withLocale(link.href, locale)}
-              className="hover:text-foreground transition-colors"
+              className="inline-flex items-center tap-target hover:text-foreground transition-colors"
             >
               {link.label}
             </Link>

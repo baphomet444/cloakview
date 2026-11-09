@@ -29,14 +29,14 @@ export function NavBar({ dict, locale }: { dict: Dictionary; locale: Locale }) {
             <Link
               key={link.href}
               href={withLocale(link.href, locale)}
-              className="hover:text-foreground transition-colors"
+              className="inline-flex items-center tap-target hover:text-foreground transition-colors"
             >
               {link.label}
             </Link>
           ))}
           <Link
             href={withLocale("/", otherLocale)}
-            className="rounded border border-border px-2 py-1 text-xs uppercase hover:text-foreground transition-colors"
+            className="inline-flex items-center tap-target rounded border border-border px-2 py-1 text-xs uppercase hover:text-foreground transition-colors"
           >
             {otherLocale}
           </Link>
