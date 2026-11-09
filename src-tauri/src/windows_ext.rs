@@ -16,7 +16,7 @@ use crate::error::AppResult;
 #[cfg(target_os = "macos")]
 pub fn make_overlay(window: &tauri::WebviewWindow) -> AppResult<()> {
     use crate::error::AppError;
-    use objc2_app_kit::{NSWindow, NSWindowCollectionBehavior, NSWindowSharingType};
+    use objc2_app_kit::{NSStatusWindowLevel, NSWindow, NSWindowCollectionBehavior, NSWindowSharingType};
     use objc2_foundation::MainThreadMarker;
 
     let ns_win = window.ns_window().map_err(|e| AppError::Audio(e.to_string()))?;
@@ -33,6 +33,7 @@ pub fn make_overlay(window: &tauri::WebviewWindow) -> AppResult<()> {
             | NSWindowCollectionBehavior::CanJoinAllSpaces
             | NSWindowCollectionBehavior::FullScreenAuxiliary;
         win.setCollectionBehavior(behavior);
+        win.setLevel(NSStatusWindowLevel);
         win.setSharingType(NSWindowSharingType::None);
     }
     Ok(())
