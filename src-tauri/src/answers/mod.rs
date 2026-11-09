@@ -3,8 +3,12 @@ use serde::Serialize;
 pub mod client;
 pub mod parse;
 
-/// Events surfaced from the Responses API stream, emitted to the frontend
-/// under the `"answers"` event name.
+/// Events surfaced from the Responses API stream. They travel from
+/// `client::stream_answer` to `commands::request_answer` over an `mpsc`
+/// channel — this enum is internal transport only. `request_answer` maps each
+/// variant onto its design.md §5 frontend event (`answer-delta`,
+/// `answer-done`, `error`); see `crate::events`. Nothing is emitted under an
+/// `"answers"` event name.
 ///
 /// All three variants are struct variants, including `Delta { text }` —
 /// not a newtype `Delta(String)`. `#[serde(tag = "kind")]` is internal

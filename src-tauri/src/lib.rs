@@ -4,7 +4,9 @@ mod commands;
 mod db;
 pub mod detect;
 mod error;
+mod events;
 mod listen;
+mod platform;
 pub mod realtime;
 mod secrets;
 mod settings;
@@ -16,29 +18,52 @@ use tauri::Manager;
 pub use error::{AppError, AppResult, IpcError};
 pub use state::{AppState, Settings};
 
+/// The whole IPC surface, declared in exactly one place.
+///
+/// The one token list below feeds both `tauri::generate_handler!` (what the
+/// frontend can actually invoke) and `REGISTERED_COMMANDS` (what the
+/// `ipc_surface_tests` compare against design.md §5), so the two cannot
+/// drift: a rename or an omission here either fails to compile (the fn is
+/// gone) or fails that test (the name no longer matches the spec).
+macro_rules! ipc_commands {
+    ($($cmd:ident),+ $(,)?) => {
+        #[cfg(test)]
+        const REGISTERED_COMMANDS: &[&str] = &[$(stringify!($cmd)),+];
+
+        fn invoke_handler() -> impl Fn(tauri::ipc::Invoke) -> bool + Send + Sync + 'static {
+            tauri::generate_handler![$(commands::$cmd),+]
+        }
+    };
+}
+
+ipc_commands![
+    save_api_key,
+    get_api_key_status,
+    clear_api_key,
+    get_settings,
+    save_settings,
+    create_note,
+    list_notes,
+    update_note,
+    delete_note,
+    create_conversation,
+    add_message,
+    list_messages,
+    delete_conversation,
+    start_listen,
+    stop_listen,
+    request_answer,
+    stop_answer,
+    get_mic_status,
+    get_app_info,
+    open_external,
+];
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![
-            commands::save_api_key,
-            commands::has_api_key,
-            commands::clear_api_key,
-            commands::get_settings,
-            commands::save_settings_cmd,
-            commands::create_note_cmd,
-            commands::list_notes_cmd,
-            commands::update_note_cmd,
-            commands::delete_note_cmd,
-            commands::create_conversation_cmd,
-            commands::add_message_cmd,
-            commands::list_messages_cmd,
-            commands::delete_conversation_cmd,
-            commands::start_listen,
-            commands::stop_listen,
-            commands::request_answer,
-            commands::stop_answer,
-        ])
+        .invoke_handler(invoke_handler())
         .setup(|app| {
             let s = settings::load_settings(app.handle());
             let data_dir = app.path().app_data_dir()?;
@@ -54,6 +79,70 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running cloakview");
+}
+
+#[cfg(test)]
+mod ipc_surface_tests {
+    use super::REGISTERED_COMMANDS;
+    use std::collections::BTreeSet;
+
+    /// The commands design.md §5 ("Comandos IPC") names, transcribed by hand.
+    ///
+    /// - §5 only says "CRUD conversaciones" without names; the four
+    ///   conversation commands below are the ones agreed for it.
+    /// - §5 also mentions notes "folders/tags" without naming commands, and
+    ///   none exist yet (there is a `folders` table, no IPC). When they are
+    ///   added, this constant must grow in the same change.
+    ///
+    /// Being a manual transcription, it will not notice the spec itself
+    /// changing — only the registered set drifting away from *this* list.
+    const SPEC_COMMANDS: &[&str] = &[
+        // secrets
+        "get_api_key_status",
+        "save_api_key",
+        "clear_api_key",
+        // listen / answer
+        "start_listen",
+        "stop_listen",
+        "get_mic_status",
+        "request_answer",
+        "stop_answer",
+        // notes
+        "create_note",
+        "list_notes",
+        "update_note",
+        "delete_note",
+        // conversations
+        "create_conversation",
+        "add_message",
+        "list_messages",
+        "delete_conversation",
+        // settings / app
+        "get_settings",
+        "save_settings",
+        "get_app_info",
+        "open_external",
+    ];
+
+    #[test]
+    fn registered_commands_are_exactly_the_spec_commands() {
+        let registered: BTreeSet<&str> = REGISTERED_COMMANDS.iter().copied().collect();
+        let spec: BTreeSet<&str> = SPEC_COMMANDS.iter().copied().collect();
+
+        assert_eq!(
+            registered.len(),
+            REGISTERED_COMMANDS.len(),
+            "a command is listed twice in ipc_commands!"
+        );
+        assert_eq!(spec.len(), SPEC_COMMANDS.len(), "SPEC_COMMANDS lists a name twice");
+
+        let missing: Vec<_> = spec.difference(&registered).collect();
+        let unexpected: Vec<_> = registered.difference(&spec).collect();
+        assert!(
+            missing.is_empty() && unexpected.is_empty(),
+            "IPC surface differs from design.md §5.\n  in the spec but not registered: {missing:?}\n  registered but not in the spec: {unexpected:?}"
+        );
+    }
 }
 
 #[cfg(test)]

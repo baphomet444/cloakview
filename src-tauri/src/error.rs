@@ -17,6 +17,10 @@ pub enum AppError {
     Serialize(String),
     #[error("screen recording permission denied")]
     PermissionDenied,
+    #[error("invalid url: {0}")]
+    InvalidUrl(String),
+    #[error("could not open url: {0}")]
+    OpenFailed(String),
 }
 
 pub type AppResult<T> = Result<T, AppError>;
@@ -31,6 +35,8 @@ pub enum IpcError {
     Network(String),
     Serialize(String),
     PermissionDenied,
+    InvalidUrl(String),
+    OpenFailed(String),
 }
 
 impl From<AppError> for IpcError {
@@ -43,6 +49,8 @@ impl From<AppError> for IpcError {
             AppError::Network(m) => IpcError::Network(m),
             AppError::Serialize(m) => IpcError::Serialize(m),
             AppError::PermissionDenied => IpcError::PermissionDenied,
+            AppError::InvalidUrl(m) => IpcError::InvalidUrl(m),
+            AppError::OpenFailed(m) => IpcError::OpenFailed(m),
         }
     }
 }
@@ -77,6 +85,20 @@ mod tests {
         let ipc: IpcError = AppError::MissingApiKey.into();
         let json = serde_json::to_value(ipc).unwrap();
         assert_eq!(json["kind"], "MissingApiKey");
+    }
+
+    #[test]
+    fn url_errors_serialize_with_kind_and_message() {
+        let invalid: IpcError = AppError::InvalidUrl("scheme \"file\" is not allowed".into()).into();
+        assert_eq!(
+            serde_json::to_value(invalid).unwrap(),
+            serde_json::json!({"kind": "InvalidUrl", "message": "scheme \"file\" is not allowed"})
+        );
+        let failed: IpcError = AppError::OpenFailed("boom".into()).into();
+        assert_eq!(
+            serde_json::to_value(failed).unwrap(),
+            serde_json::json!({"kind": "OpenFailed", "message": "boom"})
+        );
     }
 
     #[test]

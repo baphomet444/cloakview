@@ -4,7 +4,9 @@
 
 use crate::db::{conversations, notes, Db};
 use crate::error::{AppError, IpcError};
+use crate::events::{ANSWER_DELTA_EVENT, ANSWER_DONE_EVENT, ERROR_EVENT};
 use crate::listen;
+use crate::platform;
 use crate::secrets;
 use crate::settings::{self, SettingsPatch};
 use crate::state::{AppState, Settings};
@@ -32,7 +34,7 @@ pub fn save_api_key(key: String) -> Result<(), IpcError> {
 }
 
 #[tauri::command]
-pub fn has_api_key() -> Result<bool, IpcError> {
+pub fn get_api_key_status() -> Result<bool, IpcError> {
     secrets::has_api_key().map_err(IpcError::from)
 }
 
@@ -49,7 +51,7 @@ pub fn get_settings(state: State<AppState>) -> Settings {
 }
 
 #[tauri::command]
-pub fn save_settings_cmd(
+pub fn save_settings(
     app: AppHandle,
     state: State<AppState>,
     patch: SettingsPatch,
@@ -63,12 +65,12 @@ pub fn save_settings_cmd(
 // --- notes (Task 5) ---
 
 #[tauri::command]
-pub fn create_note_cmd(state: State<AppState>, input: notes::NewNote) -> Result<notes::Note, IpcError> {
+pub fn create_note(state: State<AppState>, input: notes::NewNote) -> Result<notes::Note, IpcError> {
     with_db(&state, |db| notes::create(db, input))
 }
 
 #[tauri::command]
-pub fn list_notes_cmd(
+pub fn list_notes(
     state: State<AppState>,
     filter: Option<notes::NoteFilter>,
 ) -> Result<Vec<notes::Note>, IpcError> {
@@ -76,19 +78,19 @@ pub fn list_notes_cmd(
 }
 
 #[tauri::command]
-pub fn update_note_cmd(state: State<AppState>, note: notes::Note) -> Result<notes::Note, IpcError> {
+pub fn update_note(state: State<AppState>, note: notes::Note) -> Result<notes::Note, IpcError> {
     with_db(&state, |db| notes::update(db, &note))
 }
 
 #[tauri::command]
-pub fn delete_note_cmd(state: State<AppState>, id: String) -> Result<(), IpcError> {
+pub fn delete_note(state: State<AppState>, id: String) -> Result<(), IpcError> {
     with_db(&state, |db| notes::delete(db, &id))
 }
 
 // --- conversations (Task 6) ---
 
 #[tauri::command]
-pub fn create_conversation_cmd(
+pub fn create_conversation(
     state: State<AppState>,
     title: String,
 ) -> Result<conversations::Conversation, IpcError> {
@@ -96,7 +98,7 @@ pub fn create_conversation_cmd(
 }
 
 #[tauri::command]
-pub fn add_message_cmd(
+pub fn add_message(
     state: State<AppState>,
     input: conversations::NewMessage,
 ) -> Result<conversations::ConversationMessage, IpcError> {
@@ -104,7 +106,7 @@ pub fn add_message_cmd(
 }
 
 #[tauri::command]
-pub fn list_messages_cmd(
+pub fn list_messages(
     state: State<AppState>,
     conversation_id: String,
 ) -> Result<Vec<conversations::ConversationMessage>, IpcError> {
@@ -112,7 +114,7 @@ pub fn list_messages_cmd(
 }
 
 #[tauri::command]
-pub fn delete_conversation_cmd(state: State<AppState>, id: String) -> Result<(), IpcError> {
+pub fn delete_conversation(state: State<AppState>, id: String) -> Result<(), IpcError> {
     with_db(&state, |db| conversations::delete_conversation(db, &id))
 }
 
@@ -170,13 +172,13 @@ pub async fn request_answer(
         while let Some(event) = rx.recv().await {
             match event {
                 crate::answers::AnswersEvent::Delta { text } => {
-                    let _ = app.emit("answer-delta", text);
+                    let _ = app.emit(ANSWER_DELTA_EVENT, text);
                 }
                 crate::answers::AnswersEvent::Done => {
-                    let _ = app.emit("answer-done", ());
+                    let _ = app.emit(ANSWER_DONE_EVENT, ());
                 }
                 crate::answers::AnswersEvent::Error { message } => {
-                    let _ = app.emit("error", message);
+                    let _ = app.emit(ERROR_EVENT, message);
                 }
             }
         }
@@ -191,4 +193,73 @@ pub async fn stop_answer(state: State<'_, AppState>) -> Result<(), IpcError> {
         handle.abort();
     }
     Ok(())
+}
+
+// --- app / platform (design.md §5) ---
+
+/// What `get_app_info` reports. `version` is the Tauri package version —
+/// `tauri.conf.json`'s `version` (which falls back to the crate's).
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AppInfo {
+    pub name: String,
+    pub version: String,
+}
+
+fn app_info(info: &tauri::PackageInfo) -> AppInfo {
+    AppInfo { name: info.name.clone(), version: info.version.to_string() }
+}
+
+/// Microphone permission, read from the OS without opening a stream (and
+/// without prompting).
+#[tauri::command]
+pub fn get_mic_status() -> platform::MicStatus {
+    platform::mic_status()
+}
+
+#[tauri::command]
+pub fn get_app_info(app: AppHandle) -> AppInfo {
+    app_info(app.package_info())
+}
+
+/// Opens an `http`/`https` URL in the default browser. Any other scheme (or a
+/// malformed URL) is rejected as `InvalidUrl` before anything is launched.
+#[tauri::command]
+pub async fn open_external(url: String) -> Result<(), IpcError> {
+    platform::open_external(&url).await.map_err(IpcError::from)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// `get_app_info` reports what `AppHandle::package_info()` holds. Where
+    /// Tauri gets that from (`tauri.conf.json`'s `version`, else the crate's)
+    /// is Tauri's own logic; what is ours — and tested — is the mapping.
+    /// (`generate_context!()` can't be called a second time to fetch the real
+    /// one: it defines a global `_EMBED_INFO_PLIST` symbol and `run()` already
+    /// owns it.)
+    #[test]
+    fn app_info_maps_name_and_version_from_package_info() {
+        let package = tauri::PackageInfo {
+            name: "cloakview".into(),
+            version: "1.2.3-beta.4".parse().unwrap(),
+            authors: "",
+            description: "",
+            crate_name: "cloakview",
+        };
+        assert_eq!(
+            app_info(&package),
+            AppInfo { name: "cloakview".into(), version: "1.2.3-beta.4".into() }
+        );
+    }
+
+    #[test]
+    fn app_info_serializes_as_name_and_version() {
+        let info = AppInfo { name: "cloakview".into(), version: "0.1.0".into() };
+        assert_eq!(
+            serde_json::to_value(info).unwrap(),
+            serde_json::json!({"name": "cloakview", "version": "0.1.0"})
+        );
+    }
 }

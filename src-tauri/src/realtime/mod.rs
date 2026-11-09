@@ -4,8 +4,12 @@ use std::time::Duration;
 pub mod client;
 pub mod parse;
 
-/// Events surfaced from the realtime WS session, emitted to the frontend
-/// under the `"realtime"` event name.
+/// Events surfaced from the realtime WS session. They travel from
+/// `client::run_session` to `listen::pump` over an `mpsc` channel — this enum
+/// is internal transport only. `pump` maps each variant onto its design.md §5
+/// frontend event (`transcript-delta`, `turn-detected`, `error`,
+/// `listen-state`); see `crate::events` and `listen.rs`'s module doc. Nothing
+/// is emitted under a `"realtime"` event name.
 ///
 /// `Error` is a struct variant (`Error { message: String }`), not a tuple
 /// variant (`Error(String)`), even though Task 9's "Interfaces" prose

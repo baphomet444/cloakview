@@ -54,6 +54,7 @@
 
 use crate::audio::{AudioChunk, AudioSource, AudioStatus};
 use crate::error::AppResult;
+use crate::events::{ERROR_EVENT, LISTEN_STATE_EVENT, TRANSCRIPT_DELTA_EVENT, TURN_DETECTED_EVENT};
 use crate::realtime::{self, RealtimeEvent};
 use crate::secrets;
 use crate::transcript::Turn;
@@ -62,11 +63,6 @@ use tauri::{Emitter, Manager};
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
-
-const LISTEN_STATE_EVENT: &str = "listen-state";
-const TRANSCRIPT_DELTA_EVENT: &str = "transcript-delta";
-const TURN_DETECTED_EVENT: &str = "turn-detected";
-const ERROR_EVENT: &str = "error";
 
 /// What `detect::is_user_turn` needs besides the text itself: the keyword
 /// list and the user's name, snapshotted once at session start (see the

@@ -30,3 +30,5 @@ screencapturekit-sys = "0.2.8"
 objc2-app-kit = "0.3"
 objc2-core-graphics = "0.3"
 objc2-foundation = "0.3"
+url = "2"
+objc2-av-foundation = { version = "0.3", default-features = false, features = ["std", "AVCaptureDevice", "AVMediaFormat"] }
