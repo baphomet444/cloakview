@@ -11,7 +11,7 @@ export const OPENAI_STATUS = "https://status.openai.com/";
 export const siteConfig = {
   name: "CloakView",
   // Dominios con marca libre; .com queda explícitamente excluido (brief).
-  url: "https://cloakview.app",
+  url: "https://getcloakview.com",
   description: {
     en: "Your private meeting copilot. Your API key, your control.",
     es: "Tu copiloto privado de reuniones. Tu clave, tu control.",
@@ -20,7 +20,7 @@ export const siteConfig = {
   // --- Placeholders pendientes de valores reales ---
   GITHUB_RELEASES: "https://github.com/baphomet444/cloakview/releases/latest",
   GITHUB_REPO: "https://github.com/baphomet444/cloakview",
-  SUPPORT_EMAIL: "soporte@cloakview.app",
+  SUPPORT_EMAIL: "soporte@getcloakview.com",
   LEGAL_ENTITY: "PLACEHOLDER LLC", // TODO: razón social real antes de producción
   // Sustituir solo por hashes SHA-256 publicados para los artefactos reales.
   SHA256_ARM64: null as string | null,

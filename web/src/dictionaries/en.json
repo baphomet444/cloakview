@@ -446,7 +446,7 @@
       },
       "contacts": {
         "title": "Contact",
-        "content": "If you have questions about this privacy policy, contact us at soporte@cloakview.app."
+        "content": "If you have questions about this privacy policy, contact us at soporte@getcloakview.com."
       }
     }
   },
@@ -486,7 +486,7 @@
       },
       "modifications": {
         "title": "Changes to These Terms",
-        "content": "We may modify these terms at any time. Changes will be posted at cloakview.app/terms. Your continued use of CloakView after changes are posted constitutes acceptance of the new terms."
+        "content": "We may modify these terms at any time. Changes will be posted at getcloakview.com/terms. Your continued use of CloakView after changes are posted constitutes acceptance of the new terms."
       },
       "governing": {
         "title": "Governing Law",
@@ -518,7 +518,7 @@
       },
       "websiteCookies": {
         "title": "This Website",
-        "content": "This website (cloakview.app) does not use cookies, tracking scripts, or analytics tools. Visit our pages anonymously with full privacy."
+        "content": "This website (getcloakview.com) does not use cookies, tracking scripts, or analytics tools. Visit our pages anonymously with full privacy."
       },
       "thirdPartyScripts": {
         "title": "No Third-Party Scripts",
@@ -538,7 +538,7 @@
       },
       "questions": {
         "title": "Questions?",
-        "content": "If you have questions about cookies or tracking, email us at soporte@cloakview.app."
+        "content": "If you have questions about cookies or tracking, email us at soporte@getcloakview.com."
       }
     }
   }
