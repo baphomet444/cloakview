@@ -12,6 +12,7 @@ mod secrets;
 mod settings;
 mod state;
 pub mod transcript;
+mod windows_ext;
 
 use tauri::Manager;
 
@@ -75,6 +76,8 @@ pub fn run() {
                 listen_session: tokio::sync::Mutex::new(None),
                 answer_task: tokio::sync::Mutex::new(None),
             });
+            let hub = app.get_webview_window("hub").ok_or("hub window missing")?;
+            windows_ext::exclude_from_capture(&hub).map_err(|e| e.to_string())?;
             Ok(())
         })
         .run(tauri::generate_context!())

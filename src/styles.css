@@ -11,3 +11,83 @@ body,
   background: transparent;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
+
+/* The hub: a 420x58 floating bar (see tauri.conf.json). Buttons shrink and ellipsize
+   rather than overflow, since Spanish labels are longer than English ones. */
+.hub {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(24, 24, 27, 0.94);
+  color: #f4f4f5;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hub-btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.07);
+  color: inherit;
+  font: 500 12px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.hub-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.hub-btn:focus-visible,
+.hub-opacity:focus-visible,
+.hub-error button:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 1px;
+}
+
+/* Listening: a recording-red button, so the state reads at a glance. */
+.hub-btn[aria-pressed="true"] {
+  border-color: #ef4444;
+  background: #dc2626;
+}
+
+.hub-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.hub-opacity {
+  flex: 0 0 56px;
+  accent-color: #a1a1aa;
+}
+
+/* An error takes over the whole bar: there is no room for a second line. */
+.hub-error {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hub-error button {
+  display: block;
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #fecaca;
+  font: 500 12px/1.3 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
