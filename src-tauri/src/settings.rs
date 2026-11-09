@@ -47,6 +47,37 @@ pub struct SettingsPatch {
     pub answers_model: Option<String>,
     pub realtime_model: Option<String>,
     pub user_keywords: Option<Vec<String>>,
+    /// `None` = leave unchanged. A blank string clears the name (a plain
+    /// `Option<String>` can't tell "absent" from "set to null" once
+    /// deserialized, so blank is the explicit "clear" signal).
+    pub user_name: Option<String>,
+}
+
+/// Applies the fields present in `patch` to `s`: `opacity` is clamped to
+/// `0.1..=1.0`; `user_name` is trimmed, and a blank value clears it.
+pub fn apply_patch(s: &mut Settings, patch: SettingsPatch) {
+    if let Some(v) = patch.language {
+        s.language = v;
+    }
+    if let Some(v) = patch.theme {
+        s.theme = v;
+    }
+    if let Some(v) = patch.opacity {
+        s.opacity = v.clamp(0.1, 1.0);
+    }
+    if let Some(v) = patch.answers_model {
+        s.answers_model = v;
+    }
+    if let Some(v) = patch.realtime_model {
+        s.realtime_model = v;
+    }
+    if let Some(v) = patch.user_keywords {
+        s.user_keywords = v;
+    }
+    if let Some(v) = patch.user_name {
+        let v = v.trim();
+        s.user_name = (!v.is_empty()).then(|| v.to_string());
+    }
 }
 
 #[cfg(test)]
@@ -75,5 +106,21 @@ mod tests {
         std::fs::write(&path, "{not json").unwrap();
         let s3 = load_from(&path);
         assert_eq!(s3.language, "en");
+    }
+
+    #[test]
+    fn patch_sets_trims_and_clears_user_name() {
+        let mut s = Settings::default();
+
+        apply_patch(&mut s, SettingsPatch { user_name: Some("  Ana ".into()), ..Default::default() });
+        assert_eq!(s.user_name.as_deref(), Some("Ana"));
+
+        // absent from the patch -> untouched
+        apply_patch(&mut s, SettingsPatch::default());
+        assert_eq!(s.user_name.as_deref(), Some("Ana"));
+
+        // blank -> cleared
+        apply_patch(&mut s, SettingsPatch { user_name: Some("   ".into()), ..Default::default() });
+        assert_eq!(s.user_name, None);
     }
 }

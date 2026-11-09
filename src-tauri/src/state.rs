@@ -10,9 +10,14 @@ pub struct Settings {
     pub realtime_model: String,
     /// Keywords `listen::pump` checks against each `Transcript`'s text —
     /// via `detect::is_user_turn` — to decide whether `"turn-detected"`
-    /// fires (e.g. the user's own name, "¿tú qué opinas?"). Empty by
-    /// default; configured by the user in Settings.
+    /// fires. Seeded with the spec's example phrase so a clean install
+    /// detects turns without any configuration. Read once per listen
+    /// session (see `listen.rs`).
     pub user_keywords: Vec<String>,
+    /// The user's own name, matched by `detect::is_user_turn` as one more
+    /// keyword when set. `None` until the user configures it. Read once
+    /// per listen session (see `listen.rs`).
+    pub user_name: Option<String>,
 }
 
 impl Default for Settings {
@@ -23,7 +28,11 @@ impl Default for Settings {
             opacity: 0.95,
             answers_model: "gpt-4o-mini".into(),
             realtime_model: "gpt-4o-mini-realtime".into(),
-            user_keywords: Vec::new(),
+            // The spec's example phrase (design.md §5, `detect`) and its
+            // punctuation-free variant — Whisper frequently drops the ¿?.
+            // Lowercase because `detect` compares case-insensitively anyway.
+            user_keywords: vec!["¿tú qué opinas?".into(), "tú qué opinas".into()],
+            user_name: None,
         }
     }
 }
@@ -52,5 +61,28 @@ pub struct AppState {
 impl AppState {
     pub fn is_pro() -> bool {
         false
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_seeds_the_spec_keywords_in_lowercase() {
+        let s = Settings::default();
+        assert_eq!(s.user_keywords, vec!["¿tú qué opinas?", "tú qué opinas"]);
+        assert!(s.user_keywords.iter().all(|k| *k == k.to_lowercase()));
+        assert_eq!(s.user_name, None);
+    }
+
+    /// An existing `settings.json` written before these fields existed must
+    /// pick up the seeded defaults, not an empty list.
+    #[test]
+    fn old_settings_json_without_the_new_fields_gets_the_seeded_defaults() {
+        let s: Settings = serde_json::from_str(r#"{"language":"es"}"#).unwrap();
+        assert_eq!(s.language, "es");
+        assert!(!s.user_keywords.is_empty());
+        assert_eq!(s.user_name, None);
     }
 }

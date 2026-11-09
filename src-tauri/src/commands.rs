@@ -55,24 +55,7 @@ pub fn save_settings_cmd(
     patch: SettingsPatch,
 ) -> Result<Settings, IpcError> {
     let mut s = state.settings.write().expect("settings lock");
-    if let Some(v) = patch.language {
-        s.language = v;
-    }
-    if let Some(v) = patch.theme {
-        s.theme = v;
-    }
-    if let Some(v) = patch.opacity {
-        s.opacity = v.clamp(0.1, 1.0);
-    }
-    if let Some(v) = patch.answers_model {
-        s.answers_model = v;
-    }
-    if let Some(v) = patch.realtime_model {
-        s.realtime_model = v;
-    }
-    if let Some(v) = patch.user_keywords {
-        s.user_keywords = v;
-    }
+    settings::apply_patch(&mut s, patch);
     settings::save_settings(&app, &s).map_err(IpcError::from)?;
     Ok(s.clone())
 }

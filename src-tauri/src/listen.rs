@@ -35,6 +35,15 @@
 //! future `parse_frame` change starts producing it — but it is not what
 //! makes the feature work today.
 //!
+//! **Keywords and the user's name are read once per session.** `start`
+//! snapshots `Settings::user_keywords` and `Settings::user_name` when
+//! listening begins and `pump` uses that snapshot until it ends; saving new
+//! values through `save_settings` while a session is running does **not**
+//! affect it. Changing them takes effect only after stopping and starting
+//! listening again. (A clean install works with no configuration: the
+//! defaults are seeded with the spec's "¿tú qué opinas?" phrase — see
+//! `Settings::default`.)
+//!
 //! `prepare_session`, `pump`, and `pump_until_cancelled` have no `tauri`
 //! imports and are unit-tested directly (this crate's module rule: pure
 //! logic/orchestration-core is testable, I/O glue stays thin) — `emit` is
@@ -58,6 +67,16 @@ const LISTEN_STATE_EVENT: &str = "listen-state";
 const TRANSCRIPT_DELTA_EVENT: &str = "transcript-delta";
 const TURN_DETECTED_EVENT: &str = "turn-detected";
 const ERROR_EVENT: &str = "error";
+
+/// What `detect::is_user_turn` needs besides the text itself: the keyword
+/// list and the user's name, snapshotted once at session start (see the
+/// module doc). Bundled so `pump`/`pump_until_cancelled` don't grow a
+/// parameter per detection input.
+#[derive(Debug, Clone, Copy, Default)]
+struct TurnDetection<'a> {
+    keywords: &'a [String],
+    user_name: Option<&'a str>,
+}
 
 /// State surfaced to the frontend under the `"listen-state"` event.
 /// `Connected`/`Reconnecting` mirror the realtime WS connection's own
@@ -153,7 +172,7 @@ async fn pump(
     audio_out: mpsc::Sender<AudioChunk>,
     mut realtime_events: mpsc::Receiver<RealtimeEvent>,
     transcript: &tokio::sync::Mutex<Vec<Turn>>,
-    user_keywords: &[String],
+    detection: TurnDetection<'_>,
     emit: &(dyn Fn(&str, serde_json::Value) + Send + Sync),
 ) {
     let mut realtime_open = true;
@@ -173,7 +192,12 @@ async fn pump(
                             TRANSCRIPT_DELTA_EVENT,
                             serde_json::to_value(&turn).expect("Turn serializes"),
                         );
-                        if crate::detect::is_user_turn(&turn.text, user_keywords, turn.is_user_turn) {
+                        if crate::detect::is_user_turn(
+                            &turn.text,
+                            detection.keywords,
+                            detection.user_name,
+                            turn.is_user_turn,
+                        ) {
                             emit(TURN_DETECTED_EVENT, serde_json::Value::Null);
                         }
                     }
@@ -215,12 +239,12 @@ async fn pump_until_cancelled(
     audio_out: mpsc::Sender<AudioChunk>,
     realtime_events: mpsc::Receiver<RealtimeEvent>,
     transcript: &tokio::sync::Mutex<Vec<Turn>>,
-    user_keywords: &[String],
+    detection: TurnDetection<'_>,
     emit: &(dyn Fn(&str, serde_json::Value) + Send + Sync),
 ) {
     tokio::select! {
         _ = cancel.cancelled() => {}
-        _ = pump(status_rx, audio_out, realtime_events, transcript, user_keywords, emit) => {}
+        _ = pump(status_rx, audio_out, realtime_events, transcript, detection, emit) => {}
     }
 }
 
@@ -252,11 +276,17 @@ pub fn start(model: String, app: tauri::AppHandle) -> AppResult<SessionHandle> {
     let handle = tokio::spawn(async move {
         emit_listen_state(ListenState::Listening);
         let app_state = app.state::<crate::state::AppState>();
-        let user_keywords = app_state.settings.read().expect("settings lock").user_keywords.clone();
+        // Snapshot, once per session: later `save_settings` calls do not
+        // reach a running session (documented in the module doc).
+        let (user_keywords, user_name) = {
+            let s = app_state.settings.read().expect("settings lock");
+            (s.user_keywords.clone(), s.user_name.clone())
+        };
+        let detection = TurnDetection { keywords: &user_keywords, user_name: user_name.as_deref() };
         let realtime_task = realtime::client::run_session(api_key, model, audio_rx, rt_tx);
         tokio::select! {
             _ = pump_until_cancelled(
-                cancel_for_task, status_rx, audio_tx, rt_rx, &app_state.transcript, &user_keywords,
+                cancel_for_task, status_rx, audio_tx, rt_rx, &app_state.transcript, detection,
                 &emit_generic,
             ) => {}
             res = realtime_task => {
@@ -276,16 +306,90 @@ mod tests {
     use crate::audio::FakeAudioSource;
     use crate::error::AppError;
 
-    fn recording_emit() -> (
-        impl Fn(&str, serde_json::Value) + Send + Sync,
-        std::sync::Arc<std::sync::Mutex<Vec<(String, serde_json::Value)>>>,
-    ) {
+    /// Every `(event name, payload)` a test's `emit` was called with.
+    type Recorded = std::sync::Arc<std::sync::Mutex<Vec<(String, serde_json::Value)>>>;
+
+    fn recording_emit() -> (impl Fn(&str, serde_json::Value) + Send + Sync, Recorded) {
         let emitted = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
         let recorder = emitted.clone();
         let emit = move |name: &str, payload: serde_json::Value| {
             recorder.lock().unwrap().push((name.to_string(), payload));
         };
         (emit, emitted)
+    }
+
+    /// Runs `pump` over a single remote `Transcript` with the given
+    /// detection inputs and returns the names of the events it emitted.
+    async fn emitted_names_for(text: &str, detection: TurnDetection<'_>) -> Vec<String> {
+        let (_status_tx, status_rx) = mpsc::channel::<AudioStatus>(1);
+        let (audio_tx, _audio_rx) = mpsc::channel::<AudioChunk>(1);
+        let (rt_tx, rt_rx) = mpsc::channel::<RealtimeEvent>(1);
+        let transcript = tokio::sync::Mutex::new(Vec::<Turn>::new());
+        let (emit, emitted) = recording_emit();
+
+        rt_tx
+            .send(RealtimeEvent::Transcript {
+                speaker: "remote".into(),
+                text: text.into(),
+                is_user_turn: false,
+            })
+            .await
+            .unwrap();
+
+        // `pump` never returns on its own here; the timeout just bounds the wait
+        // (the queued `Transcript` is handled on its first scheduling).
+        let _ = tokio::time::timeout(
+            std::time::Duration::from_millis(200),
+            pump(status_rx, audio_tx, rt_rx, &transcript, detection, &emit),
+        )
+        .await;
+
+        let events = emitted.lock().unwrap();
+        let names: Vec<String> = events.iter().map(|(n, _)| n.clone()).collect();
+        names
+    }
+
+    #[tokio::test]
+    async fn clean_install_defaults_fire_turn_detected_without_any_configuration() {
+        // Exactly what `start` would snapshot on a fresh install: nothing
+        // configured, so only `Settings::default()` is in play.
+        let settings = crate::state::Settings::default();
+        let detection = TurnDetection {
+            keywords: &settings.user_keywords,
+            user_name: settings.user_name.as_deref(),
+        };
+
+        // The spec's phrase, with and without the Spanish punctuation
+        // (Whisper often drops the ¿?), and capitalized like a sentence.
+        for text in ["¿Tú qué opinas?", "Tú qué opinas", "y bien, tú qué opinas de esto"] {
+            assert_eq!(
+                emitted_names_for(text, detection).await,
+                vec![TRANSCRIPT_DELTA_EVENT, TURN_DETECTED_EVENT],
+                "default keywords should detect {text:?}"
+            );
+        }
+
+        // ...and the defaults are not a catch-all.
+        assert_eq!(
+            emitted_names_for("buenos días a todos", detection).await,
+            vec![TRANSCRIPT_DELTA_EVENT]
+        );
+    }
+
+    #[tokio::test]
+    async fn user_name_fires_turn_detected_and_none_does_not_break() {
+        let named = TurnDetection { keywords: &[], user_name: Some("Christian") };
+        assert_eq!(
+            emitted_names_for("Christian, ¿puedes explicar?", named).await,
+            vec![TRANSCRIPT_DELTA_EVENT, TURN_DETECTED_EVENT]
+        );
+
+        // No name configured (and no keywords): the same line is just a delta.
+        let anonymous = TurnDetection { keywords: &[], user_name: None };
+        assert_eq!(
+            emitted_names_for("Christian, ¿puedes explicar?", anonymous).await,
+            vec![TRANSCRIPT_DELTA_EVENT]
+        );
     }
 
     #[tokio::test]
@@ -315,7 +419,7 @@ mod tests {
         let transcript = tokio::sync::Mutex::new(Vec::<Turn>::new());
         let (emit, emitted) = recording_emit();
 
-        pump(status_rx, audio_tx, rt_rx, &transcript, &[], &emit).await;
+        pump(status_rx, audio_tx, rt_rx, &transcript, TurnDetection::default(), &emit).await;
 
         let events = emitted.lock().unwrap();
         assert_eq!(events.len(), 1, "expected exactly one emission, got {events:?}");
@@ -346,7 +450,7 @@ mod tests {
         // very first scheduling, before anything can block for real.
         let _ = tokio::time::timeout(
             std::time::Duration::from_millis(200),
-            pump(status_rx, audio_tx, rt_rx, &transcript, &[], &emit),
+            pump(status_rx, audio_tx, rt_rx, &transcript, TurnDetection::default(), &emit),
         )
         .await;
 
@@ -377,7 +481,7 @@ mod tests {
 
         let _ = tokio::time::timeout(
             std::time::Duration::from_millis(200),
-            pump(status_rx, audio_tx, rt_rx, &transcript, &[], &|_, _| {}),
+            pump(status_rx, audio_tx, rt_rx, &transcript, TurnDetection::default(), &|_, _| {}),
         )
         .await;
 
@@ -400,7 +504,15 @@ mod tests {
 
         tokio::time::timeout(
             std::time::Duration::from_secs(1),
-            pump_until_cancelled(cancel_child, status_rx, audio_tx, rt_rx, &transcript, &[], &|_, _| {}),
+            pump_until_cancelled(
+                cancel_child,
+                status_rx,
+                audio_tx,
+                rt_rx,
+                &transcript,
+                TurnDetection::default(),
+                &|_, _| {},
+            ),
         )
         .await
         .expect("cancel() should make pump_until_cancelled return promptly");
@@ -409,6 +521,7 @@ mod tests {
     #[tokio::test]
     async fn pump_emits_turn_detected_only_when_a_keyword_matches() {
         let keywords = vec!["opinas".to_string()];
+        let detection = TurnDetection { keywords: &keywords, user_name: None };
 
         // Contains a configured keyword: transcript-delta AND turn-detected.
         {
@@ -429,7 +542,7 @@ mod tests {
 
             let _ = tokio::time::timeout(
                 std::time::Duration::from_millis(200),
-                pump(status_rx, audio_tx, rt_rx, &transcript, &keywords, &emit),
+                pump(status_rx, audio_tx, rt_rx, &transcript, detection, &emit),
             )
             .await;
 
@@ -461,7 +574,7 @@ mod tests {
 
             let _ = tokio::time::timeout(
                 std::time::Duration::from_millis(200),
-                pump(status_rx, audio_tx, rt_rx, &transcript, &keywords, &emit),
+                pump(status_rx, audio_tx, rt_rx, &transcript, detection, &emit),
             )
             .await;
 
