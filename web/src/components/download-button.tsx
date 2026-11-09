@@ -19,7 +19,9 @@ export function DownloadButton({
   const base =
     "inline-flex items-center justify-center rounded-lg bg-accent px-5 py-2.5 font-medium text-accent-foreground transition-opacity";
 
-  if (isGithubPending()) {
+  const ready = !isGithubPending() && Boolean(siteConfig.SHA256_ARM64);
+
+  if (!ready) {
     return (
       <span
         aria-disabled="true"

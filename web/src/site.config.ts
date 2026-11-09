@@ -18,8 +18,8 @@ export const siteConfig = {
   },
 
   // --- Placeholders pendientes de valores reales ---
-  GITHUB_RELEASES: "https://github.com/OWNER/cloakview/releases/latest",
-  GITHUB_REPO: "https://github.com/OWNER/cloakview",
+  GITHUB_RELEASES: "https://github.com/baphomet444/cloakview/releases/latest",
+  GITHUB_REPO: "https://github.com/baphomet444/cloakview",
   SUPPORT_EMAIL: "soporte@cloakview.app",
   LEGAL_ENTITY: "PLACEHOLDER LLC", // TODO: razón social real antes de producción
   // Sustituir solo por hashes SHA-256 publicados para los artefactos reales.
