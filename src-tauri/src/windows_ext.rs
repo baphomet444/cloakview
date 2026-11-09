@@ -1,4 +1,8 @@
 //! OS-level window behaviour that Tauri's window config cannot express.
+//!
+//! Warning: on macOS the hub sits at `CGShieldingWindowLevel()` (2147483628). That
+//! puts the pill above the menu bar and above system dialogs, not only above
+//! ordinary windows.
 
 use crate::error::AppResult;
 
@@ -7,8 +11,11 @@ use crate::error::AppResult;
 ///
 /// - `sharingType = .none` is the product's whole point: the overlay is visible to the
 ///   user and to nobody they share their screen with.
-/// - `CanJoinAllSpaces | FullScreenAuxiliary` lets it follow the user into a full-screen
-///   app; `alwaysOnTop` alone does not.
+/// - `CanJoinAllSpaces | FullScreenAuxiliary | Stationary | IgnoresCycle` lets it
+///   follow the user into every Space, stay put during Space transitions and stay out
+///   of Cmd-` window cycling.
+/// - The shielding window level keeps it above other apps' full-screen windows;
+///   `alwaysOnTop` alone (the floating level) does not.
 ///
 /// Must run on the main thread (`setup` does). Called from `lib.rs` right after the
 /// app state is managed; if it fails, setup fails and the app does not start —
@@ -16,7 +23,8 @@ use crate::error::AppResult;
 #[cfg(target_os = "macos")]
 pub fn make_overlay(window: &tauri::WebviewWindow) -> AppResult<()> {
     use crate::error::AppError;
-    use objc2_app_kit::{NSStatusWindowLevel, NSWindow, NSWindowCollectionBehavior, NSWindowSharingType};
+    use objc2_app_kit::{NSWindow, NSWindowCollectionBehavior, NSWindowSharingType};
+    use objc2_core_graphics::CGShieldingWindowLevel;
     use objc2_foundation::MainThreadMarker;
 
     let ns_win = window.ns_window().map_err(|e| AppError::Audio(e.to_string()))?;
@@ -31,9 +39,11 @@ pub fn make_overlay(window: &tauri::WebviewWindow) -> AppResult<()> {
         let win = &*ns_win.cast::<NSWindow>();
         let behavior = win.collectionBehavior()
             | NSWindowCollectionBehavior::CanJoinAllSpaces
-            | NSWindowCollectionBehavior::FullScreenAuxiliary;
+            | NSWindowCollectionBehavior::FullScreenAuxiliary
+            | NSWindowCollectionBehavior::Stationary
+            | NSWindowCollectionBehavior::IgnoresCycle;
         win.setCollectionBehavior(behavior);
-        win.setLevel(NSStatusWindowLevel);
+        win.setLevel(CGShieldingWindowLevel() as isize);
         win.setSharingType(NSWindowSharingType::None);
     }
     Ok(())
