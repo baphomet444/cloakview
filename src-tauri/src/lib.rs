@@ -66,6 +66,10 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .invoke_handler(invoke_handler())
         .setup(|app| {
+            // An accessory ("agent") app: no Dock icon, no Cmd-Tab entry. Only these
+            // can put a window into another app's full-screen Space.
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
             let s = settings::load_settings(app.handle());
             let data_dir = app.path().app_data_dir()?;
             let db = db::Db::open(&data_dir.join("cloakview.db")).map_err(|e| e.to_string())?;
