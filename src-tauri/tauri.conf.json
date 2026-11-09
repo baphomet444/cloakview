@@ -30,12 +30,19 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["dmg"],
-    "icon": ["icons/icon.icns"],
+    "targets": [
+      "dmg"
+    ],
+    "icon": [
+      "icons/icon.icns"
+    ],
     "macOS": {
       "minimumSystemVersion": "14.2",
       "entitlements": "entitlements.plist",
-      "infoPlist": "Info.plist"
+      "infoPlist": "Info.plist",
+      "providerShortName": "RRZ966WRYC",
+      "signingIdentity": "Developer ID Application: Lazaro A Hernandez (RRZ966WRYC)",
+      "hardenedRuntime": true
     }
   }
 }
