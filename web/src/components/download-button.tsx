@@ -16,8 +16,7 @@ export function DownloadButton({
   soonLabel,
   className = "",
 }: DownloadButtonProps) {
-  const base =
-    "inline-flex items-center justify-center rounded-lg bg-accent px-5 py-2.5 font-medium text-accent-foreground transition-opacity";
+  const base = "btn btn-primary";
 
   const ready = !isGithubPending() && Boolean(siteConfig.SHA256_ARM64);
 
@@ -37,7 +36,7 @@ export function DownloadButton({
     <a
       href={siteConfig.GITHUB_RELEASES}
       rel="noopener noreferrer"
-      className={`${base} hover:opacity-90 ${className}`}
+      className={`${base} ${className}`}
     >
       {label}
     </a>

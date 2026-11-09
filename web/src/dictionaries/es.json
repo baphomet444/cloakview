@@ -4,7 +4,8 @@
     "pricing": "Precios",
     "docs": "Documentación",
     "faq": "Preguntas frecuentes",
-    "download": "Descargar"
+    "download": "Descargar",
+    "menu": "Menú"
   },
   "footer": {
     "tagline": "Local-first. Tu clave, tu control.",
@@ -18,8 +19,9 @@
   "home": {
     "title": "CloakView — Copiloto privado de reuniones",
     "hero": {
-      "badge": "Para macOS 14.2+",
-      "title": "Un copiloto de reuniones que solo tú puedes ver",
+      "kicker": "Para macOS 14.2+",
+      "titleLead": "Un copiloto de reuniones",
+      "titleEmphasis": "que solo tú puedes ver",
       "subtitle": "CloakView escucha tu llamada, la transcribe en vivo y te sugiere qué decir después — en un overlay privado que nadie más en la llamada puede ver. Tu clave, tu control.",
       "ctaHow": "Cómo funciona",
       "ctaDownload": "Descargar para macOS",
@@ -60,16 +62,16 @@
       "subtitle": "Cada decisión de diseño favorece tu control.",
       "items": [
         {
-          "title": "BYOK primero",
-          "desc": "Traes tu propia clave de OpenAI. Nunca revendemos acceso a la API ni le subimos el precio."
+          "title": "Overlay privado",
+          "desc": "Las sugerencias se dibujan solo en tu pantalla — invisibles para Zoom, Meet, Teams y todos los demás."
         },
         {
           "title": "Local-first",
           "desc": "Sin cuentas, sin telemetría, sin backend. Los datos de tus reuniones no salen de tu Mac."
         },
         {
-          "title": "Overlay privado",
-          "desc": "Las sugerencias se dibujan solo en tu pantalla — invisibles para Zoom, Meet, Teams y todos los demás."
+          "title": "BYOK primero",
+          "desc": "Traes tu propia clave de OpenAI. Nunca revendemos acceso a la API ni le subimos el precio."
         },
         {
           "title": "Atajos globales",
@@ -78,6 +80,10 @@
         {
           "title": "Inglés y español",
           "desc": "La app y esta web son completamente bilingües. La transcripción y las sugerencias manejan ambos idiomas."
+        },
+        {
+          "title": "Sin bots en la llamada",
+          "desc": "CloakView captura el audio del sistema en tu Mac. Sin plugins que instalar y sin bots que se unan a tu reunión."
         }
       ]
     },

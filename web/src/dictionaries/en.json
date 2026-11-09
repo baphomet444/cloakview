@@ -4,7 +4,8 @@
     "pricing": "Pricing",
     "docs": "Docs",
     "faq": "FAQ",
-    "download": "Download"
+    "download": "Download",
+    "menu": "Menu"
   },
   "footer": {
     "tagline": "Local-first. Your key, your control.",
@@ -18,8 +19,9 @@
   "home": {
     "title": "CloakView — Private meeting copilot",
     "hero": {
-      "badge": "For macOS 14.2+",
-      "title": "A meeting copilot only you can see",
+      "kicker": "For macOS 14.2+",
+      "titleLead": "A meeting copilot",
+      "titleEmphasis": "only you can see",
       "subtitle": "CloakView listens to your call, transcribes it live and suggests what to say next — in a private overlay that no one else on the call can see. Your API key, your control.",
       "ctaHow": "How it works",
       "ctaDownload": "Download for macOS",
@@ -60,16 +62,16 @@
       "subtitle": "Every design decision favors your control.",
       "items": [
         {
-          "title": "BYOK-first",
-          "desc": "Bring your own OpenAI key. We never resell API access and we never mark it up."
+          "title": "Private overlay",
+          "desc": "Suggestions render on your screen only — invisible to Zoom, Meet, Teams and everyone else on the call."
         },
         {
           "title": "Local-first",
           "desc": "No accounts, no telemetry, no backend. Your meeting data never leaves your Mac."
         },
         {
-          "title": "Private overlay",
-          "desc": "Suggestions render on your screen only — invisible to Zoom, Meet, Teams and everyone else on the call."
+          "title": "BYOK-first",
+          "desc": "Bring your own OpenAI key. We never resell API access and we never mark it up."
         },
         {
           "title": "Global shortcuts",
@@ -78,6 +80,10 @@
         {
           "title": "English & Spanish",
           "desc": "The app and this site are fully bilingual. Transcription and suggestions handle both languages."
+        },
+        {
+          "title": "No bot in the call",
+          "desc": "CloakView captures system audio on your Mac. No plugin to install, no bot joining your meeting."
         }
       ]
     },

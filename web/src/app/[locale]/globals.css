@@ -2,16 +2,20 @@
 @source "../../..";
 
 :root {
-  /* Paleta dark elegante: fondo casi negro con tinte índigo frío y acento
-     índigo suave. Evita el verde "IA genérica" y el azul SaaS saturado de
-     competidores; comunica privacidad/tecnología sin agresividad comercial. */
-  --background: #0b0e14;
-  --surface: #11151f;
-  --foreground: #e6e8ef;
-  --muted: #8b93a7;
-  --accent: #7c8cff;
-  --accent-foreground: #0b0e14;
-  --border: #1e2330;
+  /* Fase 9 — "cinemática cálida". Carbón cálido (no azul-negro) con un único
+     acento ámbar/ember, como la luz de una pantalla en una sala a oscuras:
+     el producto es una capa discreta encima de la llamada, no otra landing
+     SaaS fría. Ratios WCAG verificados (check-contrast.py):
+       foreground/background 16.06 · muted/background 6.83
+       accent/background 8.84 · accent-foreground/accent 8.71
+       foreground/surface 14.91 · muted/surface 6.35 · accent/surface 8.21 */
+  --background: #14110e;
+  --surface: #1d1915;
+  --foreground: #f3ece4;
+  --muted: #a69a8d;
+  --accent: #f2a03d;
+  --accent-foreground: #1a1208;
+  --border: #2e2822;
 }
 
 @theme inline {
@@ -24,6 +28,7 @@
   --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fraunces);
 }
 
 body {
@@ -31,7 +36,117 @@ body {
   color: var(--foreground);
 }
 
+/* Grano de película: tesela PNG de ruido (128px, generada, no stock) fija bajo el contenido.
+   Antes era un feTurbulence SVG en línea: rasterizarlo a pantalla completa retrasaba
+   el primer pintado y volvía inestable el LCP de Lighthouse (z-index -1 pinta
+   sobre el lienzo de fondo y por debajo de todo lo demás). */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("/grain.png");
+  background-size: 128px 128px;
+}
+
 .tap-target {
   min-height: 24px;
   min-width: 24px;
+}
+
+@layer components {
+  /* Profundidad por elevación: luz de borde cálida arriba + sombra real. */
+  .elevated {
+    background-color: var(--surface);
+    box-shadow:
+      inset 0 1px 0 rgb(255 214 170 / 0.07),
+      0 0 0 1px rgb(255 214 170 / 0.06),
+      0 1px 2px rgb(0 0 0 / 0.5),
+      0 18px 40px -16px rgb(0 0 0 / 0.75);
+  }
+
+  /* Kicker en versalitas con punto vivo (sustituye a la píldora de badge). */
+  .kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    font-variant-caps: all-small-caps;
+    font-size: 1rem;
+    color: var(--muted);
+  }
+  .kicker-dot {
+    position: relative;
+    display: inline-block;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 9999px;
+    background: var(--accent);
+    box-shadow: 0 0 10px 1px rgb(242 160 61 / 0.7);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .kicker-dot {
+      animation: kicker-live 2.4s ease-in-out infinite;
+    }
+  }
+
+  /* Botones de radio mínimo con highlight interior superior; nunca planos. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 3px;
+    padding: 0.7rem 1.25rem;
+    font-weight: 600;
+    line-height: 1.25;
+    transition:
+      transform 150ms ease,
+      box-shadow 150ms ease,
+      filter 150ms ease;
+  }
+  .btn-primary {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.45),
+      inset 0 -2px 0 rgb(0 0 0 / 0.18),
+      0 1px 2px rgb(0 0 0 / 0.5),
+      0 8px 24px -8px rgb(242 160 61 / 0.55);
+  }
+  a.btn-primary:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
+  .btn-secondary {
+    background-color: var(--surface);
+    color: var(--foreground);
+    box-shadow:
+      inset 0 1px 0 rgb(255 214 170 / 0.1),
+      0 0 0 1px var(--border),
+      0 1px 2px rgb(0 0 0 / 0.5);
+  }
+  .btn-secondary:hover {
+    box-shadow:
+      inset 0 1px 0 rgb(255 214 170 / 0.14),
+      0 0 0 1px rgb(242 160 61 / 0.55),
+      0 1px 2px rgb(0 0 0 / 0.5);
+  }
+  .btn-sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem;
+  }
+}
+
+@keyframes kicker-live {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }

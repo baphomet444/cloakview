@@ -24,7 +24,7 @@ export function Footer({ dict, locale }: { dict: Dictionary; locale: Locale }) {
 
   return (
     <footer className="mt-auto border-t border-border">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-6 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
         <p>{dict.footer.tagline}</p>
         <div className="flex flex-wrap gap-4">
           {links.map((link) => (

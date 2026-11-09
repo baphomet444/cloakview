@@ -1,23 +1,34 @@
 import type { Dictionary } from "@/lib/get-dictionary";
 
+/** Banda horizontal a sangre con tres pasos numerados. */
 export function HowItWorks({ dict }: { dict: Dictionary["home"]["how"] }) {
   return (
-    <section id="how-it-works" className="border-t border-border">
-      <div className="mx-auto max-w-5xl px-6 py-20">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">
-          {dict.title}
-        </h2>
-        <p className="mt-3 text-lg text-muted">{dict.subtitle}</p>
-        <ol className="mt-12 grid gap-8 sm:grid-cols-3">
+    <section
+      id="how-it-works"
+      className="scroll-mt-8 border-y border-border bg-surface shadow-[inset_0_1px_0_rgb(255_214_170/0.06)]"
+    >
+      <div className="mx-auto max-w-7xl px-6 py-16 lg:py-20">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <h2 className="font-display text-4xl leading-[0.95] font-semibold tracking-[-0.02em] text-foreground sm:text-5xl">
+            {dict.title}
+          </h2>
+          <p className="max-w-sm text-lg text-muted lg:text-right">
+            {dict.subtitle}
+          </p>
+        </div>
+        <ol className="mt-12 grid border-t border-border md:grid-cols-3">
           {dict.steps.map((step, i) => (
-            <li key={step.title} className="rounded-xl border border-border p-6">
+            <li
+              key={step.title}
+              className="border-b border-border py-8 md:border-b-0 md:py-10 md:pr-10 md:not-first:border-l md:not-first:pl-10"
+            >
               <span
                 aria-hidden="true"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent font-mono text-sm font-bold text-accent-foreground"
+                className="font-display text-6xl leading-none font-light text-accent italic"
               >
-                {i + 1}
+                {String(i + 1).padStart(2, "0")}
               </span>
-              <h3 className="mt-4 text-lg font-semibold text-foreground">
+              <h3 className="mt-6 text-xl font-semibold text-foreground">
                 {step.title}
               </h3>
               <p className="mt-2 leading-relaxed text-muted">{step.desc}</p>
