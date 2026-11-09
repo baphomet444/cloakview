@@ -25,7 +25,7 @@ export function DownloadButton({
       <span
         aria-disabled="true"
         title={soonLabel}
-        className={`${base} cursor-not-allowed opacity-40 ${className}`}
+        className={`${base} cursor-not-allowed border border-border !bg-transparent !text-muted ${className}`}
       >
         {soonLabel}
       </span>
