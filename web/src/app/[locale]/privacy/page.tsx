@@ -1,5 +1,6 @@
 import { getDictionary } from '@/lib/get-dictionary';
 import { LegalLayout } from '@/components/LegalLayout';
+import { LegalText } from '@/components/legal-text';
 import { Metadata } from 'next';
 import { siteConfig } from '@/site.config';
 
@@ -122,9 +123,7 @@ export default async function PrivacyPage(props: Props) {
         {/* Contact */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{p.sections.contacts.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
-            {p.sections.contacts.content}
-          </p>
+          <LegalText className="text-slate-300" text={p.sections.contacts.content} />
         </div>
       </section>
     </LegalLayout>

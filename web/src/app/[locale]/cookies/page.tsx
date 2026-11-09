@@ -1,5 +1,6 @@
 import { getDictionary } from '@/lib/get-dictionary';
 import { LegalLayout } from '@/components/LegalLayout';
+import { LegalText } from '@/components/legal-text';
 import { Metadata } from 'next';
 import { siteConfig } from '@/site.config';
 
@@ -106,9 +107,7 @@ export default async function CookiesPage(props: Props) {
         {/* Questions */}
         <div>
           <h2 className="text-2xl font-bold mb-4">{c.sections.questions.title}</h2>
-          <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
-            {c.sections.questions.content}
-          </p>
+          <LegalText className="text-slate-300" text={c.sections.questions.content} />
         </div>
       </section>
     </LegalLayout>

@@ -460,7 +460,7 @@
       },
       "contacts": {
         "title": "Contact",
-        "content": "If you have questions about this privacy policy, contact us at soporte@getcloakview.com."
+        "content": "If you have questions about this privacy policy, contact us at {{email}}."
       }
     }
   },
@@ -552,7 +552,7 @@
       },
       "questions": {
         "title": "Questions?",
-        "content": "If you have questions about cookies or tracking, email us at soporte@getcloakview.com."
+        "content": "If you have questions about cookies or tracking, email us at {{email}}."
       }
     }
   }
