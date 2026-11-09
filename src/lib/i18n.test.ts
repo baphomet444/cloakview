@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { en, type Catalog } from "./locales/en";
 import { es } from "./locales/es";
+import { IPC_ERROR_UNIT_KINDS } from "./models";
 
 /** Keys `reference` has that `candidate` lacks (`missing`), and keys `candidate` has that `reference` lacks (`extra`). */
 function keyDiff(reference: object, candidate: object): { missing: string[]; extra: string[] } {
@@ -42,6 +43,32 @@ describe("i18n parity", () => {
     // @ts-expect-error a key that `en` does not have must be a type error
     const extra: Catalog = { ...es, "not.a.key": "x" };
     expect([missing, extra]).toHaveLength(2);
+  });
+});
+
+describe("error copy", () => {
+  const agreed = {
+    "errors.permissionDenied": {
+      en: "Grant the permission in System Settings and try again.",
+      es: "Concede el permiso en Ajustes del Sistema e inténtalo de nuevo.",
+    },
+    "errors.invalidUrl": { en: "That address is not valid.", es: "Esa dirección no es válida." },
+    "errors.openFailed": { en: "The link could not be opened.", es: "No se pudo abrir el enlace." },
+  } as const;
+
+  it.each(Object.entries(agreed))("%s exists in both languages with the agreed text", (key, text) => {
+    expect((en as Record<string, string>)[key]).toBe(text.en);
+    expect((es as Record<string, string>)[key]).toBe(text.es);
+  });
+
+  // A unit IpcError (no `message`) leaves the UI nothing to show but its own copy, so
+  // every one must have an `errors.<kind>` entry — including any Rust adds later.
+  it("every IpcError kind that carries no message has its own errors.<kind> copy, in both languages", () => {
+    for (const kind of IPC_ERROR_UNIT_KINDS) {
+      const key = `errors.${kind.charAt(0).toLowerCase()}${kind.slice(1)}`;
+      expect(en, `en is missing ${key}`).toHaveProperty([key]);
+      expect(es, `es is missing ${key}`).toHaveProperty([key]);
+    }
   });
 });
 

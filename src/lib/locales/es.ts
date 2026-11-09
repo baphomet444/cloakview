@@ -43,5 +43,8 @@ export const es: Catalog = {
   "perm.statusGranted": "Concedido",
   "perm.statusMissing": "Faltante",
   "errors.missingApiKey": "Primero añade tu clave de API de OpenAI en Ajustes.",
+  "errors.permissionDenied": "Concede el permiso en Ajustes del Sistema e inténtalo de nuevo.",
+  "errors.invalidUrl": "Esa dirección no es válida.",
+  "errors.openFailed": "No se pudo abrir el enlace.",
   "errors.generic": "Algo salió mal",
 };

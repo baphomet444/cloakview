@@ -113,4 +113,72 @@ mod tests {
         delete_conversation(&db, &c.id).unwrap();
         assert_eq!(list_messages(&db, &c.id).unwrap().len(), 0);
     }
+
+    // Both structs cross IPC (`create_conversation`, `add_message`, `list_messages`), so
+    // their keys are a contract with the frontend's `Conversation` / `ConversationMessage`
+    // types. Without `rename_all` they would emit `created_at` / `conversation_id`.
+
+    fn assert_no_snake_case_keys(json: &serde_json::Value) {
+        for key in json.as_object().unwrap().keys() {
+            assert!(!key.contains('_'), "snake_case key leaked into the JSON: {key}");
+        }
+    }
+
+    #[test]
+    fn conversation_serializes_with_camel_case_keys() {
+        let c = Conversation {
+            id: "c1".into(),
+            title: "demo".into(),
+            created_at: 1,
+            updated_at: 2,
+        };
+        let json = serde_json::to_value(&c).unwrap();
+
+        assert_eq!(
+            json,
+            serde_json::json!({"id": "c1", "title": "demo", "createdAt": 1, "updatedAt": 2})
+        );
+        assert_no_snake_case_keys(&json);
+    }
+
+    #[test]
+    fn conversation_message_serializes_with_camel_case_keys() {
+        let m = ConversationMessage {
+            id: "m1".into(),
+            conversation_id: "c1".into(),
+            role: "user".into(),
+            content: "hi".into(),
+            model: Some("gpt-4o-mini".into()),
+            created_at: 3,
+        };
+        let json = serde_json::to_value(&m).unwrap();
+
+        assert_eq!(
+            json,
+            serde_json::json!({
+                "id": "m1",
+                "conversationId": "c1",
+                "role": "user",
+                "content": "hi",
+                "model": "gpt-4o-mini",
+                "createdAt": 3
+            })
+        );
+        assert_no_snake_case_keys(&json);
+    }
+
+    /// An unset model is sent as `null` (the frontend's type is `string | null`), not omitted.
+    #[test]
+    fn conversation_message_sends_an_unset_model_as_null_not_omitted() {
+        let m = ConversationMessage {
+            id: "m1".into(),
+            conversation_id: "c1".into(),
+            role: "assistant".into(),
+            content: "hello".into(),
+            model: None,
+            created_at: 4,
+        };
+        let json = serde_json::to_value(&m).unwrap();
+        assert_eq!(json.get("model"), Some(&serde_json::Value::Null));
+    }
 }

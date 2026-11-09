@@ -85,4 +85,45 @@ mod tests {
         assert!(!s.user_keywords.is_empty());
         assert_eq!(s.user_name, None);
     }
+
+    /// `Settings` goes to the frontend (`get_settings`, `save_settings`) and is persisted
+    /// to `settings.json`, so these exact camelCase keys are a contract with the
+    /// frontend's `Settings` type. Without `rename_all` it would silently emit
+    /// `answers_model`, `realtime_model`, `user_keywords` and `user_name` instead.
+    #[test]
+    fn settings_serializes_with_camel_case_keys() {
+        let s = Settings {
+            language: "es".into(),
+            theme: "light".into(),
+            opacity: 0.5,
+            answers_model: "gpt-4o-mini".into(),
+            realtime_model: "gpt-4o-mini-realtime".into(),
+            user_keywords: vec!["opinas".into()],
+            user_name: Some("Ana".into()),
+        };
+        let json = serde_json::to_value(&s).unwrap();
+
+        assert_eq!(
+            json,
+            serde_json::json!({
+                "language": "es",
+                "theme": "light",
+                "opacity": 0.5,
+                "answersModel": "gpt-4o-mini",
+                "realtimeModel": "gpt-4o-mini-realtime",
+                "userKeywords": ["opinas"],
+                "userName": "Ana"
+            })
+        );
+        for key in json.as_object().unwrap().keys() {
+            assert!(!key.contains('_'), "snake_case key leaked into the Settings JSON: {key}");
+        }
+    }
+
+    /// An unset name is sent as `null` (the frontend's type is `string | null`), not omitted.
+    #[test]
+    fn settings_sends_an_unset_user_name_as_null_not_omitted() {
+        let json = serde_json::to_value(Settings::default()).unwrap();
+        assert_eq!(json.get("userName"), Some(&serde_json::Value::Null));
+    }
 }

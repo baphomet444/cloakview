@@ -41,6 +41,9 @@ export const en = {
   "perm.statusGranted": "Granted",
   "perm.statusMissing": "Missing",
   "errors.missingApiKey": "Add your OpenAI API key in Settings first.",
+  "errors.permissionDenied": "Grant the permission in System Settings and try again.",
+  "errors.invalidUrl": "That address is not valid.",
+  "errors.openFailed": "The link could not be opened.",
   "errors.generic": "Something went wrong",
 };
 
