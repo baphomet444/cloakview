@@ -5,11 +5,11 @@ export function HowItWorks({ dict }: { dict: Dictionary["home"]["how"] }) {
   return (
     <section
       id="how-it-works"
-      className="scroll-mt-8 border-y border-border bg-surface shadow-[inset_0_1px_0_rgb(255_214_170/0.06)]"
+      className="scroll-mt-8 border-y border-border bg-surface shadow-[inset_0_1px_0_rgb(255_255_255/0.06)]"
     >
       <div className="mx-auto max-w-7xl px-6 py-16 lg:py-20">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <h2 className="font-display text-4xl leading-[0.95] font-semibold tracking-[-0.02em] text-foreground sm:text-5xl">
+          <h2 className="font-display text-4xl leading-[0.92] font-extrabold tracking-[-0.03em] text-foreground sm:text-5xl">
             {dict.title}
           </h2>
           <p className="max-w-sm text-lg text-muted lg:text-right">
@@ -24,7 +24,7 @@ export function HowItWorks({ dict }: { dict: Dictionary["home"]["how"] }) {
             >
               <span
                 aria-hidden="true"
-                className="font-display text-6xl leading-none font-light text-accent italic"
+                className="font-display text-6xl leading-none font-extrabold text-accent"
               >
                 {String(i + 1).padStart(2, "0")}
               </span>

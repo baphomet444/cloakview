@@ -5,164 +5,190 @@ type HeroProps = {
   dict: Dictionary["home"]["hero"];
 };
 
-/** Envuelve texto a un ancho aproximado en caracteres (solo presentación SVG). */
-function wrapText(text: string, maxChars: number): string[] {
-  const words = text.split(" ");
-  const lines: string[] = [];
-  let current = "";
-  for (const word of words) {
-    const next = current ? `${current} ${word}` : word;
-    if (next.length > maxChars && current) {
-      lines.push(current);
-      current = word;
-    } else {
-      current = next;
-    }
-  }
-  if (current) lines.push(current);
-  return lines;
+/** Turno de la transcripción que se resalta (al que responde la sugerencia). */
+const HIGHLIGHTED_TURN = 0;
+
+/**
+ * Subrayado a mano alzada detrás de la palabra manuscrita. El trazo se
+ * deforma con feTurbulence + feDisplacementMap para que no parezca un
+ * vector perfecto. SVG pequeño y local: no afecta al primer pintado.
+ */
+function HandUnderline() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 300 40"
+      preserveAspectRatio="none"
+      className="pointer-events-none absolute -bottom-[0.12em] left-[-6%] -z-10 h-[0.32em] w-[112%] overflow-visible"
+    >
+      <defs>
+        <filter id="cv-hand-rough" x="-5%" y="-50%" width="110%" height="200%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.035 0.6" numOctaves="2" seed="7" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </defs>
+      <path
+        d="M6 26 C 70 12, 150 10, 294 18 M24 34 C 110 24, 200 22, 280 28"
+        fill="none"
+        stroke="var(--accent)"
+        strokeOpacity="0.6"
+        strokeWidth="7"
+        strokeLinecap="round"
+        filter="url(#cv-hand-rough)"
+      />
+    </svg>
+  );
+}
+
+/** Flecha manuscrita de la anotación. `dir` decide hacia dónde apunta. */
+function HandArrow({ dir, className = "" }: { dir: "right" | "up"; className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 60 40"
+      className={`h-8 w-12 shrink-0 text-accent ${dir === "up" ? "-rotate-90" : ""} ${className}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 30 C 18 8, 36 6, 52 18" />
+      <path d="M42 10 L 53 18 L 41 25" />
+    </svg>
+  );
 }
 
 /**
- * Mockup SVG ORIGINAL del overlay de CloakView sobre una videollamada:
- * ventana de llamada con dos participantes + panel del overlay con
- * transcripción en vivo y sugerencia de respuesta. Ilustración propia,
- * sin capturas ni imágenes de stock. El marco, la sombra proyectada, la
- * rotación y la luz de borde los pone el contenedor en <Hero>.
+ * Tarjeta de UI del overlay de CloakView, en JSX (no SVG): barra de ventana,
+ * transcripción con un turno resaltado, burbuja de sugerencia y pie con el
+ * indicador "escuchando". Todo el texto sale del diccionario.
  */
-function OverlayMockup({ dict }: HeroProps) {
-  const suggestionLines = wrapText(dict.mockup.suggestionText, 40);
-  const transcriptBars = [250, 205, 262, 170];
-
+function OverlayCard({ dict }: HeroProps) {
+  const m = dict.mockup;
   return (
-    <svg
-      viewBox="0 0 640 400"
-      role="img"
+    <figure
       aria-label={dict.mockupAlt}
-      className="block h-auto w-full"
+      className="mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-surface text-left shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_40px_80px_-24px_rgb(0_0_0/0.9),0_0_120px_-40px_rgb(255_107_26/0.35)]"
     >
-      <defs>
-        <filter id="cv-overlay-shadow" x="-10%" y="-10%" width="120%" height="140%">
-          <feDropShadow dx="0" dy="14" stdDeviation="14" floodColor="#000" floodOpacity="0.6" />
-          <feDropShadow dx="0" dy="0" stdDeviation="10" floodColor="#f2a03d" floodOpacity="0.18" />
-        </filter>
-      </defs>
+      {/* Barra de ventana */}
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <span aria-hidden="true" className="flex gap-1.5">
+          <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+          <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
+          <span className="h-3 w-3 rounded-full bg-[#28c840]" />
+        </span>
+        <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted">
+          {m.windowTitle}
+        </span>
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-accent">
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-accent" />
+          {m.live}
+        </span>
+      </div>
 
-      {/* Ventana de videollamada */}
-      <rect width="640" height="400" className="fill-surface" />
-      {/* Barra de título */}
-      <rect width="640" height="38" className="fill-background" opacity="0.55" />
-      <line x1="0" y1="38" x2="640" y2="38" className="stroke-border" strokeWidth="1" />
-      <circle cx="22" cy="19" r="5.5" fill="#ff5f57" opacity="0.85" />
-      <circle cx="40" cy="19" r="5.5" fill="#febc2e" opacity="0.85" />
-      <circle cx="58" cy="19" r="5.5" fill="#28c840" opacity="0.85" />
-      <text x="320" y="23.5" textAnchor="middle" className="fill-muted" fontSize="12" fontWeight="500">
-        {dict.mockup.windowTitle}
-      </text>
+      {/* Transcripción */}
+      <ol className="space-y-1 px-3 pt-4 sm:px-5">
+        {m.turns.map((turn, i) => {
+          const hl = i === HIGHLIGHTED_TURN;
+          return (
+            <li
+              key={i}
+              className={`rounded-lg border-l-2 px-3 py-2 text-sm leading-relaxed sm:text-[0.95rem] ${
+                hl ? "border-accent bg-accent/10" : "border-transparent"
+              }`}
+            >
+              <span className={`mr-2 font-semibold ${hl ? "text-accent" : "text-foreground"}`}>
+                {turn.speaker}
+              </span>
+              <span className={hl ? "text-foreground" : "text-muted"}>{turn.text}</span>
+            </li>
+          );
+        })}
+      </ol>
 
-      {/* Participante 1 (tú) */}
-      <rect x="20" y="54" width="290" height="206" rx="8" className="fill-background" />
-      <circle cx="165" cy="140" r="36" className="fill-border" />
-      <circle cx="165" cy="128" r="14" className="fill-muted" opacity="0.8" />
-      <path d="M 141 166 q 24 -24 48 0 v 8 h -48 z" className="fill-muted" opacity="0.8" />
-      <text x="34" y="246" className="fill-foreground" fontSize="13" fontWeight="600">
-        {dict.mockup.participant1}
-      </text>
+      {/* Burbuja de sugerencia */}
+      <div className="px-3 pt-4 pb-5 sm:px-5">
+        <div className="ml-auto max-w-[34rem] rounded-2xl rounded-br-sm border border-accent/40 bg-background px-4 py-3">
+          <p className="text-xs font-semibold tracking-[0.06em] text-accent uppercase">
+            {m.suggestionLabel}
+          </p>
+          <p className="mt-1.5 text-sm leading-relaxed text-foreground sm:text-[0.95rem]">
+            {m.suggestionText}
+          </p>
+        </div>
+      </div>
 
-      {/* Participante 2 (hablando): anillo ámbar de hablante activo */}
-      <rect x="330" y="54" width="290" height="206" rx="8" className="fill-background stroke-accent" strokeWidth="1.5" strokeOpacity="0.7" />
-      <circle cx="475" cy="140" r="36" className="fill-border" />
-      <circle cx="475" cy="140" r="42" fill="none" className="stroke-accent" strokeWidth="1.5" opacity="0.45" />
-      <circle cx="475" cy="128" r="14" className="fill-foreground" opacity="0.75" />
-      <path d="M 451 166 q 24 -24 48 0 v 8 h -48 z" className="fill-foreground" opacity="0.75" />
-      <circle cx="349" cy="242" r="4" className="fill-accent" />
-      <text x="359" y="246" className="fill-foreground" fontSize="13" fontWeight="600">
-        {dict.mockup.participant2} · {dict.mockup.speaking}
-      </text>
-
-      {/* Barra de controles de la llamada */}
-      <circle cx="280" cy="300" r="11" className="fill-border" />
-      <circle cx="320" cy="300" r="15" className="fill-border" />
-      <circle cx="360" cy="300" r="11" className="fill-border" />
-
-      {/* --- Overlay de CloakView (privado, solo visible para el usuario) --- */}
-      <g filter="url(#cv-overlay-shadow)">
-        <rect x="150" y="190" width="468" height="190" rx="6" className="fill-background" />
-      </g>
-      <rect x="150.5" y="190.5" width="467" height="189" rx="6" fill="none" className="stroke-accent" strokeOpacity="0.55" />
-      {/* Luz de borde superior del overlay */}
-      <line x1="158" y1="191.5" x2="610" y2="191.5" className="stroke-accent" strokeOpacity="0.9" strokeWidth="1" />
-
-      {/* Cabecera del overlay */}
-      <text x="168" y="217" className="fill-foreground" fontSize="14" fontWeight="700">
-        {dict.mockup.overlayTitle}
-      </text>
-      <circle cx="476" cy="212.5" r="3.5" className="fill-accent" />
-      <text x="486" y="216.5" className="fill-accent" fontSize="10.5" fontWeight="600">
-        {dict.mockup.live}
-      </text>
-
-      {/* Líneas de transcripción (barras de texto en vivo) */}
-      {transcriptBars.map((w, i) => (
-        <rect key={i} x="168" y={232 + i * 13} width={w} height="6" rx="3" className="fill-muted" opacity={0.55 - i * 0.1} />
-      ))}
-
-      {/* Separador */}
-      <line x1="168" y1="292" x2="600" y2="292" className="stroke-border" strokeWidth="1" />
-
-      {/* Sugerencia de respuesta */}
-      <text x="168" y="312" className="fill-accent" fontSize="11" fontWeight="600" letterSpacing="0.06em">
-        {dict.mockup.suggestionLabel}
-      </text>
-      {suggestionLines.map((line, i) => (
-        <text key={i} x="168" y={334 + i * 17} className="fill-foreground" fontSize="13">
-          {line}
-        </text>
-      ))}
-    </svg>
+      {/* Pie: indicador de escucha */}
+      <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 text-xs text-muted sm:px-5">
+        <span className="flex items-center gap-2">
+          <span aria-hidden="true" className="flex h-3.5 items-end gap-[3px]">
+            {[0, 1, 2, 3].map((i) => (
+              <span
+                key={i}
+                className="listen-bar block h-full w-[3px] rounded-full bg-accent"
+                style={{ animationDelay: `${i * 140}ms` }}
+              />
+            ))}
+          </span>
+          {m.listening}
+        </span>
+        <span>{m.privateNote}</span>
+      </div>
+    </figure>
   );
 }
 
 export function Hero({ dict }: HeroProps) {
   return (
-    <section className="relative overflow-x-clip">
-      <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 pt-14 pb-20 sm:pt-20 lg:grid-cols-12 lg:gap-8 lg:pt-24 lg:pb-28">
-        <div className="lg:col-span-5">
-          <p className="kicker">
-            <span aria-hidden="true" className="kicker-dot" />
-            {dict.kicker}
+    <section className="relative isolate overflow-x-clip">
+      {/* Rejilla de 1px cada 56px con máscara radial */}
+      <div aria-hidden="true" className="hero-grid pointer-events-none absolute inset-0 -z-10" />
+
+      <div className="mx-auto max-w-5xl px-6 pt-16 pb-20 text-center sm:pt-24 lg:pt-28 lg:pb-28">
+        <p className="kicker justify-center">
+          <span aria-hidden="true" className="kicker-dot" />
+          {dict.kicker}
+        </p>
+
+        <h1 className="mt-7 font-display text-5xl leading-[0.92] font-extrabold tracking-[-0.03em] text-balance text-foreground sm:text-7xl md:text-8xl lg:text-9xl">
+          {dict.titleLead}{" "}
+          <span className="relative isolate inline-block -rotate-2 px-[0.04em] font-hand text-[1.08em] leading-[0.8] font-bold tracking-normal text-accent">
+            {dict.titleHand}
+            <HandUnderline />
+          </span>{" "}
+          {dict.titleTail}
+        </h1>
+
+        <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-muted sm:text-xl">
+          {dict.subtitle}
+        </p>
+
+        <div className="relative mx-auto mt-10 flex w-fit flex-wrap items-center justify-center gap-3">
+          {/* Anotación manuscrita (escritorio): a la izquierda, apuntando al CTA */}
+          <p
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1/2 right-full mr-3 hidden -translate-y-1/2 items-center gap-1 font-hand text-2xl leading-none font-bold whitespace-nowrap text-accent lg:flex"
+          >
+            <span className="-rotate-6">{dict.annotation}</span>
+            <HandArrow dir="right" />
           </p>
-          <h1 className="mt-6 font-display text-5xl leading-[0.95] tracking-[-0.025em] text-foreground sm:text-6xl xl:text-7xl">
-            <span className="block font-semibold">{dict.titleLead}</span>
-            <span className="mt-1 block font-light italic text-accent">
-              {dict.titleEmphasis}
-            </span>
-          </h1>
-          <p className="mt-7 max-w-md text-lg leading-relaxed text-muted">
-            {dict.subtitle}
-          </p>
-          <div className="mt-9 flex flex-wrap items-center gap-3">
-            <DownloadButton label={dict.ctaDownload} soonLabel={dict.ctaSoon} />
-            <a href="#how-it-works" className="btn btn-secondary">
-              {dict.ctaHow}
-            </a>
-          </div>
-          <p className="mt-7 text-sm text-muted">{dict.platformsNote}</p>
+          <DownloadButton label={dict.ctaDownload} soonLabel={dict.ctaSoon} />
+          <a href="#how-it-works" className="btn btn-secondary">
+            {dict.ctaHow}
+          </a>
         </div>
 
-        {/* Columna de 7: el mockup sangra por el borde derecho de la
-            ventana y queda recortado por overflow-x-clip de la sección. */}
-        <div className="lg:col-span-7">
-          <div className="w-[125%] origin-top-left rotate-[1.5deg] sm:w-[112%] lg:w-[calc(100%+max(0px,(100vw-80rem)/2)+10rem)]">
-            <div className="relative overflow-hidden rounded-[10px] bg-surface shadow-[0_0_0_1px_rgb(255_214_170/0.1),0_2px_4px_rgb(0_0_0/0.5),0_40px_80px_-24px_rgb(0_0_0/0.85),0_0_120px_-30px_rgb(242_160_61/0.35)]">
-              <OverlayMockup dict={dict} />
-              {/* Luz de borde cálida del marco, por encima del SVG */}
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 rounded-[10px] shadow-[inset_0_1px_0_rgb(255_214_170/0.22),inset_0_0_0_1px_rgb(255_214_170/0.06)]"
-              />
-            </div>
-          </div>
+        {/* Anotación manuscrita (móvil/tablet): debajo, apuntando arriba */}
+        <p className="mt-3 flex items-center justify-center gap-1 font-hand text-2xl leading-none font-bold text-accent lg:hidden">
+          <HandArrow dir="up" className="h-7 w-10" />
+          <span className="-rotate-3">{dict.annotation}</span>
+        </p>
+
+        <p className="mt-6 text-sm text-muted">{dict.platformsNote}</p>
+
+        <div className="mt-16 sm:mt-20">
+          <OverlayCard dict={dict} />
         </div>
       </div>
     </section>

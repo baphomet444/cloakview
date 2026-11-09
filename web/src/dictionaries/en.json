@@ -20,23 +20,37 @@
     "title": "CloakView — Private meeting copilot",
     "hero": {
       "kicker": "For macOS 14.2+",
-      "titleLead": "A meeting copilot",
-      "titleEmphasis": "only you can see",
+      "titleLead": "A meeting copilot only",
+      "titleHand": "you",
+      "titleTail": "can see",
       "subtitle": "CloakView listens to your call, transcribes it live and suggests what to say next — in a private overlay that no one else on the call can see. Your API key, your control.",
       "ctaHow": "How it works",
       "ctaDownload": "Download for macOS",
       "ctaSoon": "Coming soon",
+      "annotation": "your key, your control",
       "platformsNote": "Works alongside Zoom, Google Meet and Microsoft Teams",
-      "mockupAlt": "Illustration of the CloakView overlay on a video call: live transcription and a suggested reply, visible only to the user.",
+      "mockupAlt": "CloakView overlay: live transcript of a call with one highlighted turn, a suggested reply and a listening indicator, visible only to you.",
       "mockup": {
-        "windowTitle": "Weekly sync",
-        "participant1": "You",
-        "participant2": "Alex",
-        "speaking": "speaking",
-        "overlayTitle": "CloakView",
-        "live": "Live transcription",
+        "windowTitle": "CloakView — Weekly sync",
+        "live": "Live",
+        "turns": [
+          {
+            "speaker": "Alex",
+            "text": "We need someone to own the API integration this sprint."
+          },
+          {
+            "speaker": "Sam",
+            "text": "Could it be ready before the Friday demo?"
+          },
+          {
+            "speaker": "You",
+            "text": "Let me check what's already scoped…"
+          }
+        ],
         "suggestionLabel": "Suggested reply",
-        "suggestionText": "Good point — I can take the API integration and have a draft ready by Thursday."
+        "suggestionText": "Good point — I can take the API integration and have a draft ready by Thursday.",
+        "listening": "Listening",
+        "privateNote": "Only visible to you"
       }
     },
     "how": {

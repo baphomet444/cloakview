@@ -20,23 +20,37 @@
     "title": "CloakView — Copiloto privado de reuniones",
     "hero": {
       "kicker": "Para macOS 14.2+",
-      "titleLead": "Un copiloto de reuniones",
-      "titleEmphasis": "que solo tú puedes ver",
+      "titleLead": "Un copiloto de reuniones que solo",
+      "titleHand": "tú",
+      "titleTail": "puedes ver",
       "subtitle": "CloakView escucha tu llamada, la transcribe en vivo y te sugiere qué decir después — en un overlay privado que nadie más en la llamada puede ver. Tu clave, tu control.",
       "ctaHow": "Cómo funciona",
       "ctaDownload": "Descargar para macOS",
       "ctaSoon": "Próximamente",
+      "annotation": "tu clave, tu control",
       "platformsNote": "Funciona junto a Zoom, Google Meet y Microsoft Teams",
-      "mockupAlt": "Ilustración del overlay de CloakView sobre una videollamada: transcripción en vivo y una respuesta sugerida, visibles solo para el usuario.",
+      "mockupAlt": "Overlay de CloakView: transcripción en vivo de una llamada con un turno resaltado, una respuesta sugerida y un indicador de escucha, visible solo para ti.",
       "mockup": {
-        "windowTitle": "Reunión semanal",
-        "participant1": "Tú",
-        "participant2": "Alex",
-        "speaking": "hablando",
-        "overlayTitle": "CloakView",
-        "live": "Transcripción en vivo",
+        "windowTitle": "CloakView — Reunión semanal",
+        "live": "En vivo",
+        "turns": [
+          {
+            "speaker": "Alex",
+            "text": "Necesitamos que alguien se encargue de la integración con la API este sprint."
+          },
+          {
+            "speaker": "Sam",
+            "text": "¿Podría estar lista antes de la demo del viernes?"
+          },
+          {
+            "speaker": "Tú",
+            "text": "Déjame ver qué está ya planificado…"
+          }
+        ],
         "suggestionLabel": "Respuesta sugerida",
-        "suggestionText": "Buen punto — puedo encargarme de la integración con la API y tener un borrador listo para el jueves."
+        "suggestionText": "Buen punto — puedo encargarme de la integración con la API y tener un borrador listo para el jueves.",
+        "listening": "Escuchando",
+        "privateNote": "Solo visible para ti"
       }
     },
     "how": {

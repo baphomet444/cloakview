@@ -2,20 +2,18 @@
 @source "../../..";
 
 :root {
-  /* Fase 9 — "cinemática cálida". Carbón cálido (no azul-negro) con un único
-     acento ámbar/ember, como la luz de una pantalla en una sala a oscuras:
-     el producto es una capa discreta encima de la llamada, no otra landing
-     SaaS fría. Ratios WCAG verificados (check-contrast.py):
-       foreground/background 16.06 · muted/background 6.83
-       accent/background 8.84 · accent-foreground/accent 8.71
-       foreground/surface 14.91 · muted/surface 6.35 · accent/surface 8.21 */
-  --background: #14110e;
-  --surface: #1d1915;
-  --foreground: #f3ece4;
-  --muted: #a69a8d;
-  --accent: #f2a03d;
-  --accent-foreground: #1a1208;
-  --border: #2e2822;
+  /* Fase 10 — negro puro con un único acento naranja. Ratios WCAG
+     (check-contrast.py):
+       foreground/background 18.65 · muted/background 5.75
+       accent/background 7.37 · accent-foreground/accent 7.37
+       foreground/surface 17.26 · muted/surface 5.32 · accent/surface 6.82 */
+  --background: #000000;
+  --surface: #0d0d0d;
+  --foreground: #f5f1ea;
+  --muted: #8a8580;
+  --accent: #ff6b1a;
+  --accent-foreground: #000000;
+  --border: #232323;
 }
 
 @theme inline {
@@ -28,7 +26,8 @@
   --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-inter-tight);
+  --font-hand: var(--font-caveat);
 }
 
 body {
@@ -61,8 +60,8 @@ body::before {
   .elevated {
     background-color: var(--surface);
     box-shadow:
-      inset 0 1px 0 rgb(255 214 170 / 0.07),
-      0 0 0 1px rgb(255 214 170 / 0.06),
+      inset 0 1px 0 rgb(255 255 255 / 0.07),
+      0 0 0 1px rgb(255 255 255 / 0.06),
       0 1px 2px rgb(0 0 0 / 0.5),
       0 18px 40px -16px rgb(0 0 0 / 0.75);
   }
@@ -85,7 +84,7 @@ body::before {
     height: 0.4rem;
     border-radius: 9999px;
     background: var(--accent);
-    box-shadow: 0 0 10px 1px rgb(242 160 61 / 0.7);
+    box-shadow: 0 0 10px 1px rgb(255 107 26 / 0.7);
   }
   @media (prefers-reduced-motion: no-preference) {
     .kicker-dot {
@@ -115,7 +114,7 @@ body::before {
       inset 0 1px 0 rgb(255 255 255 / 0.45),
       inset 0 -2px 0 rgb(0 0 0 / 0.18),
       0 1px 2px rgb(0 0 0 / 0.5),
-      0 8px 24px -8px rgb(242 160 61 / 0.55);
+      0 8px 24px -8px rgb(255 107 26 / 0.55);
   }
   a.btn-primary:hover {
     filter: brightness(1.06);
@@ -125,14 +124,14 @@ body::before {
     background-color: var(--surface);
     color: var(--foreground);
     box-shadow:
-      inset 0 1px 0 rgb(255 214 170 / 0.1),
+      inset 0 1px 0 rgb(255 255 255 / 0.1),
       0 0 0 1px var(--border),
       0 1px 2px rgb(0 0 0 / 0.5);
   }
   .btn-secondary:hover {
     box-shadow:
-      inset 0 1px 0 rgb(255 214 170 / 0.14),
-      0 0 0 1px rgb(242 160 61 / 0.55),
+      inset 0 1px 0 rgb(255 255 255 / 0.14),
+      0 0 0 1px rgb(255 107 26 / 0.55),
       0 1px 2px rgb(0 0 0 / 0.5);
   }
   .btn-sm {
@@ -149,4 +148,44 @@ body::before {
   50% {
     opacity: 0.35;
   }
+}
+
+@keyframes cloak {
+  0%, 100% { opacity: 1; }
+  45% { opacity: 0.12; }
+}
+
+.cloak-letter {
+  animation: cloak 6s ease-in-out infinite;
+}
+
+.cloak-wordmark:hover .cloak-letter {
+  animation-duration: 1.6s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloak-letter { animation: none; opacity: 1; }
+}
+
+/* Fase 10 — rejilla de 1px cada 56px, desvanecida con máscara radial. */
+.hero-grid {
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 56px 56px;
+  background-position: center top;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 75%);
+}
+
+@keyframes listen {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+.listen-bar {
+  transform-origin: bottom;
+  animation: listen 1.1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .listen-bar { animation: none; transform: none; }
 }

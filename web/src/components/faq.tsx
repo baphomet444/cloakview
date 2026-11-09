@@ -5,7 +5,7 @@ export function Faq({ dict }: { dict: Dictionary["home"]["faq"] }) {
   return (
     <section id="faq" className="border-t border-border">
       <div className="mx-auto max-w-3xl px-6 py-24 lg:py-28">
-        <h2 className="font-display text-4xl leading-[0.95] font-semibold tracking-[-0.02em] text-foreground sm:text-5xl">
+        <h2 className="font-display text-4xl leading-[0.92] font-extrabold tracking-[-0.03em] text-foreground sm:text-5xl">
           {dict.title}
         </h2>
         <div className="mt-12 divide-y divide-border border-y border-border">

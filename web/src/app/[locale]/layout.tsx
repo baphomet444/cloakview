@@ -1,4 +1,4 @@
-import { Fraunces, Geist, Geist_Mono } from "next/font/google";
+import { Caveat, Geist, Geist_Mono, Inter_Tight } from "next/font/google";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import "./globals.css";
@@ -17,14 +17,20 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Display de alto contraste para titulares (variable en peso: permite mezclar
-// 300/600). Sin eje opsz y sin preload: los ~150 KB extra competían con el
-// CSS en la ruta crítica y subían el LCP móvil a 3 s. Con display "swap" el
-// titular pinta al instante con el fallback ajustado y luego cambia.
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+// Display: Inter Tight 800 (tracking -0.03em, leading 0.92). Un solo peso
+// para no cargar el eje variable completo en la ruta crítica.
+const interTight = Inter_Tight({
+  variable: "--font-inter-tight",
   subsets: ["latin"],
-  style: ["normal", "italic"],
+  weight: ["800"],
+});
+
+// Manuscrita: Caveat 700, solo para la palabra rotada y las anotaciones.
+// Sin preload: no es el elemento LCP.
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+  weight: ["700"],
   preload: false,
 });
 
@@ -82,7 +88,7 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full`}
+      className={`${geistSans.variable} ${geistMono.variable} ${interTight.variable} ${caveat.variable} h-full`}
     >
       <body className="min-h-full antialiased flex flex-col">
         <NavBar dict={dict} locale={locale} />

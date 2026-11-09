@@ -20,9 +20,19 @@ export function NavBar({ dict, locale }: { dict: Dictionary; locale: Locale }) {
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
         <Link
           href={withLocale("/", locale)}
-          className="font-display text-xl font-semibold tracking-tight text-foreground"
+          className="cloak-wordmark font-display text-xl font-extrabold tracking-[-0.03em] text-foreground"
+          aria-label="CloakView"
         >
-          CloakView
+          {"CloakView".split("").map((letter, i) => (
+            <span
+              key={i}
+              aria-hidden="true"
+              className="cloak-letter inline-block"
+              style={{ animationDelay: `${i * 90}ms` }}
+            >
+              {letter}
+            </span>
+          ))}
         </Link>
 
         <div className="hidden items-center gap-6 text-sm text-muted sm:flex">

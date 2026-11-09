@@ -15,7 +15,7 @@ export function FeaturesGrid({
   return (
     <section>
       <div className="mx-auto max-w-7xl px-6 py-24 lg:py-32">
-        <h2 className="max-w-2xl font-display text-4xl leading-[0.95] font-semibold tracking-[-0.02em] text-foreground sm:text-5xl">
+        <h2 className="max-w-2xl font-display text-4xl leading-[0.92] font-extrabold tracking-[-0.03em] text-foreground sm:text-5xl">
           {dict.title}
         </h2>
         <p className="mt-4 text-lg text-muted">{dict.subtitle}</p>
@@ -27,11 +27,11 @@ export function FeaturesGrid({
             >
               <span
                 aria-hidden="true"
-                className="mb-auto font-display text-sm text-accent italic"
+                className="mb-auto font-display text-sm text-accent"
               >
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <h3 className="font-display text-3xl leading-[1] font-semibold tracking-[-0.01em] text-foreground sm:text-4xl">
+              <h3 className="font-display text-3xl leading-[0.92] font-extrabold tracking-[-0.03em] text-foreground sm:text-4xl">
                 {item.title}
               </h3>
               <p className="mt-3 max-w-md text-lg leading-relaxed text-muted">
