@@ -81,7 +81,7 @@ pub fn run() {
                 answer_task: tokio::sync::Mutex::new(None),
             });
             let hub = app.get_webview_window("hub").ok_or("hub window missing")?;
-            windows_ext::make_overlay(&hub, false).map_err(|e| e.to_string())?;
+            windows_ext::make_overlay(&hub).map_err(|e| e.to_string())?;
             // After the state is managed (the handlers read it). A shortcut that cannot
             // be registered (taken by another app, say) is logged and skipped; it never
             // stops the app from starting.
@@ -101,7 +101,7 @@ pub fn run() {
             if let tauri::RunEvent::Reopen { has_visible_windows, .. } = event {
                 if !has_visible_windows {
                     if let Some(hub) = app.get_webview_window("hub") {
-                        let _ = crate::windows_ext::make_overlay(&hub, false);
+                        let _ = crate::windows_ext::make_overlay(&hub);
                     }
                 }
             }

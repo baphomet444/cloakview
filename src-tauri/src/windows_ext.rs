@@ -6,11 +6,6 @@
 
 use crate::error::AppResult;
 
-/// How long after showing the hub `make_overlay` deactivates the app a second time,
-/// so a Dock click's activation (which lands before `Reopen`) has settled first.
-#[cfg(target_os = "macos")]
-const LATE_DEACTIVATE_DELAY: std::time::Duration = std::time::Duration::from_millis(400);
-
 /// Turns `window` into a true overlay: invisible to screenshots, recordings and screen
 /// sharing, and visible over other apps' full-screen Spaces.
 ///
@@ -27,19 +22,20 @@ const LATE_DEACTIVATE_DELAY: std::time::Duration = std::time::Duration::from_mil
 /// the window (`orderFrontRegardless`, never made key), so a window created hidden
 /// appears only once converted.
 ///
-/// `keep_focus`: `false` (the hub: setup, quick-hide, Dock reopen) deactivates the app
-/// after showing, so showing never takes the user out of their Space; `true` (the
-/// feature windows, which take typing) leaves activation alone.
+/// It never activates the app itself. Reopening from the Dock icon still leaves another
+/// app's full-screen Space: the click activates cloakview before `Reopen` arrives, and
+/// `NSApplication::deactivate` does not undo that (measured with the probe). The global
+/// shortcut reopens without leaving. See `docs/README.md`.
 ///
 /// Must run on the main thread (`setup` does; `commands::promote_overlay` hops there)
 /// and after `tauri_nspanel::init()` is
 /// registered (`to_panel` reads that plugin's state). If it fails, setup fails and the
 /// app does not start — better no overlay than one that leaks into a screen share.
 #[cfg(target_os = "macos")]
-pub fn make_overlay(window: &tauri::WebviewWindow, keep_focus: bool) -> AppResult<()> {
+pub fn make_overlay(window: &tauri::WebviewWindow) -> AppResult<()> {
     use crate::error::AppError;
     use objc2_app_kit::{
-        NSApplication, NSStatusWindowLevel, NSWindow, NSWindowCollectionBehavior, NSWindowSharingType,
+        NSStatusWindowLevel, NSWindow, NSWindowCollectionBehavior, NSWindowSharingType,
         NSWindowStyleMask,
     };
     use objc2_foundation::MainThreadMarker;
@@ -50,7 +46,7 @@ pub fn make_overlay(window: &tauri::WebviewWindow, keep_focus: bool) -> AppResul
         return Err(AppError::Audio("window has no NSWindow".into()));
     }
     // `setup` runs on the main thread; this is only the check.
-    let mtm = MainThreadMarker::new().ok_or_else(|| AppError::Audio("not on main thread".into()))?;
+    MainThreadMarker::new().ok_or_else(|| AppError::Audio("not on main thread".into()))?;
 
     // Swaps the class of the same object in place (`object_setClass`), so `ns_win`
     // still points at it afterwards. Only once per window: a second `to_panel` would
@@ -92,34 +88,6 @@ pub fn make_overlay(window: &tauri::WebviewWindow, keep_focus: bool) -> AppResul
     // when a text field is clicked, without activating the app.
     panel.make_first_responder(Some(panel.content_view()));
     panel.order_front_regardless();
-    // With no key window left (the first reopen after everything was hidden), AppKit
-    // activates the app anyway, which jumps Spaces once. Hand activation back to the
-    // app the user was in. Not for Ask/Notes/Settings: they need the keyboard.
-    if !keep_focus {
-        let app = NSApplication::sharedApplication(mtm);
-        // Experiment: does the app turn active again inside this call, or later?
-        #[cfg(debug_assertions)]
-        eprintln!("[overlay-probe] make_overlay deactivate before active={}", app.isActive());
-        app.deactivate();
-        #[cfg(debug_assertions)]
-        eprintln!("[overlay-probe] make_overlay deactivate after active={}", app.isActive());
-        // Experiment: a Dock click activates the app before `Reopen` arrives, and the
-        // immediate `deactivate` above does not undo it. Try again once the activation
-        // has settled, back on the main thread.
-        let late = window.clone();
-        std::thread::spawn(move || {
-            std::thread::sleep(LATE_DEACTIVATE_DELAY);
-            let _ = late.run_on_main_thread(|| {
-                let Some(mtm) = MainThreadMarker::new() else { return };
-                let app = NSApplication::sharedApplication(mtm);
-                #[cfg(debug_assertions)]
-                eprintln!("[overlay-probe] late deactivate before active={}", app.isActive());
-                app.deactivate();
-                #[cfg(debug_assertions)]
-                eprintln!("[overlay-probe] late deactivate after active={}", app.isActive());
-            });
-        });
-    }
     Ok(())
 }
 
@@ -149,7 +117,7 @@ where
 /// Every other platform has no equivalent here: succeeds without doing anything,
 /// so callers need no `cfg` of their own.
 #[cfg(not(target_os = "macos"))]
-pub fn make_overlay(_window: &tauri::WebviewWindow, _keep_focus: bool) -> AppResult<()> {
+pub fn make_overlay(_window: &tauri::WebviewWindow) -> AppResult<()> {
     Ok(())
 }
 

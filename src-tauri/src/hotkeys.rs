@@ -122,7 +122,7 @@ fn toggle_overlay(app: &AppHandle) -> AppResult<()> {
         .ok_or_else(|| AppError::Audio("hub window missing".into()))?;
     let visible = hub.is_visible().map_err(|e| AppError::Audio(e.to_string()))?;
     if !visible {
-        return windows_ext::make_overlay(&hub, false);
+        return windows_ext::make_overlay(&hub);
     }
     for (label, window) in app.webview_windows() {
         if label != "hub" {
