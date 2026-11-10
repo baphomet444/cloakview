@@ -77,7 +77,11 @@ pub fn make_overlay(window: &tauri::WebviewWindow) -> AppResult<()> {
     // to NSFloatingWindowLevel (3), which the probe caught.
     // SAFETY: same window, main thread, immutable AppKit constant (see above).
     unsafe { (*ns_win.cast::<NSWindow>()).setLevel(NSStatusWindowLevel) };
-    panel.show();
+    // `panel.show()` minus its `make_key_window`: making the panel key activated the
+    // app and jumped Spaces. With `becomes_key_only_if_needed` it turns key on its own
+    // when a text field is clicked, without activating the app.
+    panel.make_first_responder(Some(panel.content_view()));
+    panel.order_front_regardless();
     Ok(())
 }
 
