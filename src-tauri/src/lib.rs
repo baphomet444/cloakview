@@ -64,12 +64,9 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_nspanel::init())
         .invoke_handler(invoke_handler())
         .setup(|app| {
-            // An accessory ("agent") app: no Dock icon, no Cmd-Tab entry. Only these
-            // can put a window into another app's full-screen Space.
-            #[cfg(target_os = "macos")]
-            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
             let s = settings::load_settings(app.handle());
             let data_dir = app.path().app_data_dir()?;
             let db = db::Db::open(&data_dir.join("cloakview.db")).map_err(|e| e.to_string())?;
@@ -82,6 +79,8 @@ pub fn run() {
             });
             let hub = app.get_webview_window("hub").ok_or("hub window missing")?;
             windows_ext::make_overlay(&hub).map_err(|e| e.to_string())?;
+            #[cfg(all(debug_assertions, target_os = "macos"))]
+            windows_ext::spawn_overlay_probe(hub.clone());
             Ok(())
         })
         .run(tauri::generate_context!())
