@@ -6,6 +6,11 @@
 
 use crate::error::AppResult;
 
+/// How long after showing the hub `make_overlay` deactivates the app a second time,
+/// so a Dock click's activation (which lands before `Reopen`) has settled first.
+#[cfg(target_os = "macos")]
+const LATE_DEACTIVATE_DELAY: std::time::Duration = std::time::Duration::from_millis(400);
+
 /// Turns `window` into a true overlay: invisible to screenshots, recordings and screen
 /// sharing, and visible over other apps' full-screen Spaces.
 ///
@@ -98,6 +103,22 @@ pub fn make_overlay(window: &tauri::WebviewWindow, keep_focus: bool) -> AppResul
         app.deactivate();
         #[cfg(debug_assertions)]
         eprintln!("[overlay-probe] make_overlay deactivate after active={}", app.isActive());
+        // Experiment: a Dock click activates the app before `Reopen` arrives, and the
+        // immediate `deactivate` above does not undo it. Try again once the activation
+        // has settled, back on the main thread.
+        let late = window.clone();
+        std::thread::spawn(move || {
+            std::thread::sleep(LATE_DEACTIVATE_DELAY);
+            let _ = late.run_on_main_thread(|| {
+                let Some(mtm) = MainThreadMarker::new() else { return };
+                let app = NSApplication::sharedApplication(mtm);
+                #[cfg(debug_assertions)]
+                eprintln!("[overlay-probe] late deactivate before active={}", app.isActive());
+                app.deactivate();
+                #[cfg(debug_assertions)]
+                eprintln!("[overlay-probe] late deactivate after active={}", app.isActive());
+            });
+        });
     }
     Ok(())
 }
