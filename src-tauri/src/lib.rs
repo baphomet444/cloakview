@@ -94,8 +94,9 @@ pub fn run() {
         .expect("error while building cloakview")
         .run(|app, event| {
             // Clicking the Dock icon after `Close` hid the whole overlay: bring the hub
-            // back. `make_overlay` is idempotent and ends with `panel.show()`, and
-            // `Reopen` is delivered on the main thread, which it requires.
+            // back. `make_overlay` is idempotent and ends in `order_front_regardless`,
+            // never making the hub key, and `Reopen` is delivered on the main thread,
+            // which it requires.
             #[cfg(target_os = "macos")]
             if let tauri::RunEvent::Reopen { has_visible_windows, .. } = event {
                 if !has_visible_windows {

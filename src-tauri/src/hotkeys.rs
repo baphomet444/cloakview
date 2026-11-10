@@ -7,7 +7,7 @@
 //! None of the actions uses Tauri's `show()`/`set_focus()`: both activate the app,
 //! and activating it is what yanks the user out of another app's full-screen Space.
 //! Showing goes through `windows_ext::make_overlay` (idempotent, ends in
-//! `panel.show()`, non-activating), always on the main thread.
+//! `order_front_regardless` and never makes the window key, non-activating), always on the main thread.
 
 use crate::commands;
 use crate::error::{AppError, AppResult};
