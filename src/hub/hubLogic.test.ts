@@ -13,8 +13,10 @@ import {
   errorCopyKey,
   featureWindowOptions,
   featureWindowPosition,
+  hideAll,
   isListening,
   openOrFocus,
+  type HideApi,
   type WindowApi,
 } from "./hubLogic";
 
@@ -215,5 +217,43 @@ describe("openOrFocus", () => {
   it("lets a failure to promote propagate, so the hub shows an error instead of failing silently", async () => {
     const { api } = fake(true, "promote");
     await expect(openOrFocus("ask", api)).rejects.toThrow("no panel");
+  });
+});
+
+describe("hideAll", () => {
+  function fake(failing: readonly string[] = []) {
+    const calls: string[] = [];
+    const api: HideApi = {
+      hideFeature: (kind) => {
+        calls.push(`hide:${kind}`);
+        return failing.includes(kind) ? Promise.reject(new Error(`${kind} gone`)) : Promise.resolve();
+      },
+      hideHub: () => {
+        calls.push("hide:hub");
+        return failing.includes("hub") ? Promise.reject(new Error("hub stuck")) : Promise.resolve();
+      },
+    };
+    return { api, calls };
+  }
+
+  it("hides every feature window, then the hub last", async () => {
+    const { api, calls } = fake();
+    await hideAll(api);
+    expect(calls.slice(0, -1).sort()).toEqual(FEATURE_KINDS.map((k) => `hide:${k}`).sort());
+    expect(calls.at(-1)).toBe("hide:hub");
+    expect(calls).toHaveLength(FEATURE_KINDS.length + 1);
+  });
+
+  it("keeps going when one feature window fails, and still hides the hub", async () => {
+    const { api, calls } = fake(["ask"]);
+    await expect(hideAll(api)).resolves.toBeUndefined();
+    expect(calls).toContain("hide:notes");
+    expect(calls).toContain("hide:settings");
+    expect(calls.at(-1)).toBe("hide:hub");
+  });
+
+  it("lets a failure to hide the hub propagate, so the hub can show an error", async () => {
+    const { api } = fake(["hub"]);
+    await expect(hideAll(api)).rejects.toThrow("hub stuck");
   });
 });

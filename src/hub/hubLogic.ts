@@ -136,3 +136,22 @@ export async function openOrFocus(kind: FeatureKind, api: WindowApi): Promise<vo
   }
   await api.promote(kind);
 }
+
+export interface HideApi {
+  /** Hides the feature window `kind` if it exists; resolves when there is none. */
+  hideFeature(kind: FeatureKind): Promise<void>;
+  /** Hides the hub itself. */
+  hideHub(): Promise<void>;
+}
+
+/**
+ * `Close`: hides the whole overlay, not just the hub. Every feature window is hidden
+ * first, each on its own: a failure on one (say, it closed in the meantime) is
+ * ignored, so it cannot keep the rest on screen. The hub goes last, and a failure
+ * there does propagate, because then the overlay is still visible and the hub should
+ * say so. Like `openOrFocus`, it only talks to the api, never to the DOM or Tauri.
+ */
+export async function hideAll(api: HideApi): Promise<void> {
+  await Promise.allSettled(FEATURE_KINDS.map((kind) => api.hideFeature(kind)));
+  await api.hideHub();
+}

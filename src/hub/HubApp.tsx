@@ -16,9 +16,11 @@ import {
   errorCopyKey,
   featureWindowOptions,
   featureWindowPosition,
+  hideAll,
   isListening,
   openOrFocus,
   type FeatureKind,
+  type HideApi,
   type WindowApi,
 } from "./hubLogic";
 
@@ -55,6 +57,15 @@ async function positionBelowHub(kind: FeatureKind): Promise<{ x: number; y: numb
   );
   return { x: at.x + origin.x, y: at.y + origin.y };
 }
+
+/** The real Tauri windows behind `hideAll` (the `Close` button). */
+const tauriHide: HideApi = {
+  hideFeature: async (kind) => {
+    const window = await WebviewWindow.getByLabel(kind);
+    if (window) await window.hide();
+  },
+  hideHub: () => getCurrentWindow().hide(),
+};
 
 /** The real Tauri windows behind `openOrFocus`. */
 const tauriWindows: WindowApi = {
@@ -216,7 +227,7 @@ export function HubApp() {
           <button
             type="button"
             className="hub-btn"
-            onClick={() => void getCurrentWindow().hide().catch((error: unknown) => setErrorKey(errorCopyKey(error)))}
+            onClick={() => void hideAll(tauriHide).catch((error: unknown) => setErrorKey(errorCopyKey(error)))}
           >
             {t("hub.close")}
           </button>
