@@ -91,7 +91,13 @@ pub fn make_overlay(window: &tauri::WebviewWindow, keep_focus: bool) -> AppResul
     // activates the app anyway, which jumps Spaces once. Hand activation back to the
     // app the user was in. Not for Ask/Notes/Settings: they need the keyboard.
     if !keep_focus {
-        NSApplication::sharedApplication(mtm).deactivate();
+        let app = NSApplication::sharedApplication(mtm);
+        // Experiment: does the app turn active again inside this call, or later?
+        #[cfg(debug_assertions)]
+        eprintln!("[overlay-probe] make_overlay deactivate before active={}", app.isActive());
+        app.deactivate();
+        #[cfg(debug_assertions)]
+        eprintln!("[overlay-probe] make_overlay deactivate after active={}", app.isActive());
     }
     Ok(())
 }
@@ -151,13 +157,14 @@ pub fn spawn_overlay_probe(window: tauri::WebviewWindow) {
             let line = unsafe {
                 let win = &*ptr.cast::<NSWindow>();
                 format!(
-                    "level={} behavior=0x{:x} onActiveSpace={} visible={} occlusionVisible={} activationPolicy={}",
+                    "level={} behavior=0x{:x} onActiveSpace={} visible={} occlusionVisible={} activationPolicy={} active={}",
                     win.level(),
                     win.collectionBehavior().0,
                     win.isOnActiveSpace(),
                     win.isVisible(),
                     win.occlusionState().contains(NSWindowOcclusionState::Visible),
                     NSApplication::sharedApplication(mtm).activationPolicy().0,
+                    NSApplication::sharedApplication(mtm).isActive(),
                 )
             };
             let mut prev = last.lock().unwrap();
