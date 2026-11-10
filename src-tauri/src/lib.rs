@@ -84,8 +84,23 @@ pub fn run() {
             windows_ext::spawn_overlay_probe(hub.clone());
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running cloakview");
+        .build(tauri::generate_context!())
+        .expect("error while building cloakview")
+        .run(|app, event| {
+            // Clicking the Dock icon after `Close` hid the whole overlay: bring the hub
+            // back. `make_overlay` is idempotent and ends with `panel.show()`, and
+            // `Reopen` is delivered on the main thread, which it requires.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { has_visible_windows, .. } = event {
+                if !has_visible_windows {
+                    if let Some(hub) = app.get_webview_window("hub") {
+                        let _ = crate::windows_ext::make_overlay(&hub);
+                    }
+                }
+            }
+            #[cfg(not(target_os = "macos"))]
+            let _ = (app, event);
+        });
 }
 
 #[cfg(test)]
