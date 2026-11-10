@@ -40,25 +40,6 @@ function HandUnderline() {
   );
 }
 
-/** Flecha manuscrita de la anotación. `dir` decide hacia dónde apunta. */
-function HandArrow({ dir, className = "" }: { dir: "right" | "up"; className?: string }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 60 40"
-      className={`h-8 w-12 shrink-0 text-accent ${dir === "up" ? "-rotate-90" : ""} ${className}`}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M4 30 C 18 8, 36 6, 52 18" />
-      <path d="M42 10 L 53 18 L 41 25" />
-    </svg>
-  );
-}
-
 /**
  * Tarjeta de UI del overlay de CloakView, en JSX (no SVG): barra de ventana,
  * transcripción con un turno resaltado, burbuja de sugerencia y pie con el
@@ -171,7 +152,6 @@ export function Hero({ dict }: HeroProps) {
             className="pointer-events-none absolute top-1/2 right-full mr-3 hidden -translate-y-1/2 items-center gap-1 font-hand text-2xl leading-none font-bold whitespace-nowrap text-accent lg:flex"
           >
             <span className="-rotate-6">{dict.annotation}</span>
-            <HandArrow dir="right" />
           </p>
           <DownloadButton label={dict.ctaDownload} soonLabel={dict.ctaSoon} />
           <a href="#how-it-works" className="btn btn-secondary">
@@ -181,7 +161,6 @@ export function Hero({ dict }: HeroProps) {
 
         {/* Anotación manuscrita (móvil/tablet): debajo, apuntando arriba */}
         <p className="mt-3 flex items-center justify-center gap-1 font-hand text-2xl leading-none font-bold text-accent lg:hidden">
-          <HandArrow dir="up" className="h-7 w-10" />
           <span className="-rotate-3">{dict.annotation}</span>
         </p>
 
