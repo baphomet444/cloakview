@@ -1,5 +1,5 @@
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { currentMonitor, getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect, useRef, useState } from "react";
 import { getLocale, localeFromSetting, setLocale, t, type CatalogKey, type Locale } from "../lib/i18n";
 import {
@@ -15,6 +15,7 @@ import {
   FEATURE_WINDOWS,
   errorCopyKey,
   featureWindowOptions,
+  featureWindowPosition,
   isListening,
   openOrFocus,
   type FeatureKind,
@@ -28,17 +29,46 @@ const OPACITY_SAVE_DELAY_MS = 250;
 /** Rust clamps to 0.1..=1.0 as well; below 0.1 the hub would be invisible and impossible to find. */
 const MIN_OPACITY = 0.1;
 
+/**
+ * Where the feature window `kind` opens: below the hub (or above it, near the bottom
+ * edge), so it never covers the hub and takes its clicks.
+ *
+ * Tauri reports the hub and the monitor in *physical* pixels, in global desktop
+ * coordinates, while window options take *logical* pixels. So everything is turned
+ * logical with the monitor's scale factor and made relative to the monitor before
+ * `featureWindowPosition`, and the monitor's origin is added back after; otherwise a
+ * Retina screen (scale 2) or a second monitor would put the window in the wrong place.
+ */
+async function positionBelowHub(kind: FeatureKind): Promise<{ x: number; y: number }> {
+  const hub = getCurrentWindow();
+  const [position, size, monitor] = await Promise.all([hub.outerPosition(), hub.outerSize(), currentMonitor()]);
+  const scale = monitor?.scaleFactor ?? (await hub.scaleFactor());
+  const origin = monitor ? monitor.position.toLogical(scale) : { x: 0, y: 0 };
+  const screen = monitor ? monitor.size.toLogical(scale) : { width: Infinity, height: Infinity };
+  const hubPos = position.toLogical(scale);
+  const hubSize = size.toLogical(scale);
+  const { width, height } = FEATURE_WINDOWS[kind];
+  const at = featureWindowPosition(
+    { x: hubPos.x - origin.x, y: hubPos.y - origin.y, width: hubSize.width, height: hubSize.height },
+    { width, height },
+    { width: screen.width, height: screen.height },
+  );
+  return { x: at.x + origin.x, y: at.y + origin.y };
+}
+
 /** The real Tauri windows behind `openOrFocus`. */
 const tauriWindows: WindowApi = {
   exists: async (label) => (await WebviewWindow.getByLabel(label)) !== null,
   // Created hidden (`visible: false`); resolves on `tauri://created`, so `promote`
   // only ever runs against a window Rust can already find by label.
-  create: (kind) =>
-    new Promise<void>((resolve, reject) => {
-      const created = new WebviewWindow(kind, featureWindowOptions(kind, t(FEATURE_WINDOWS[kind].titleKey)));
+  create: async (kind) => {
+    const at = await positionBelowHub(kind);
+    await new Promise<void>((resolve, reject) => {
+      const created = new WebviewWindow(kind, featureWindowOptions(kind, t(FEATURE_WINDOWS[kind].titleKey), at));
       void created.once("tauri://created", () => resolve());
       void created.once("tauri://error", (event) => reject(new Error(String(event.payload))));
-    }),
+    });
+  },
   promote: (kind) => promoteOverlay(kind),
 };
 
