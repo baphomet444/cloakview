@@ -250,7 +250,7 @@ pub async fn promote_overlay(app: AppHandle, label: String) -> Result<(), IpcErr
     let window = app
         .get_webview_window(&label)
         .ok_or_else(|| AppError::Audio(format!("no window labelled {label:?}")))?;
-    crate::windows_ext::on_main_thread(&app, move |_| crate::windows_ext::make_overlay(&window))
+    crate::windows_ext::on_main_thread(&app, move |_| crate::windows_ext::make_overlay(&window, true))
         .await
         .map_err(IpcError::from)
 }
