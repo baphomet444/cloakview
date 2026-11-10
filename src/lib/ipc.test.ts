@@ -137,6 +137,7 @@ const cases: Case[] = [
   ["get_mic_status", () => ipc.getMicStatus(), undefined],
   ["get_app_info", () => ipc.getAppInfo(), undefined],
   ["open_external", () => ipc.openExternal("https://example.com"), { url: "https://example.com" }],
+  ["promote_overlay", () => ipc.promoteOverlay("ask"), { label: "ask" }],
 ];
 
 describe("wrappers", () => {

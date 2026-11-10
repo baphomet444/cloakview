@@ -77,33 +77,32 @@ export function featureWindowOptions(kind: FeatureKind, title: string): FeatureW
     skipTaskbar: true,
     contentProtected: true,
     visibleOnAllWorkspaces: true,
+    // Created hidden: it is shown by `promote` once it is an overlay panel, so it never
+    // flashes as an ordinary window first.
+    visible: false,
   };
 }
 
-/** The slice of Tauri's `WebviewWindow` that `openOrFocus` needs. */
-export interface WindowHandle {
-  show(): Promise<void>;
-  setFocus(): Promise<void>;
-}
-
 export interface WindowApi {
-  /** The existing window with this label, or `null`. */
-  find(label: string): Promise<WindowHandle | null>;
-  /** Creates the window for `kind`; resolves once it exists, rejects if it could not be created. */
+  /** Whether a window with this label already exists. */
+  exists(label: string): Promise<boolean>;
+  /** Creates the (hidden) window for `kind`; resolves once it exists, rejects if it could not be created. */
   create(kind: FeatureKind): Promise<void>;
+  /** Makes the window for `kind` an overlay panel and shows it (`promoteOverlay`). */
+  promote(kind: FeatureKind): Promise<void>;
 }
 
 /**
  * Brings the window for `kind` to the front, creating it only if there is none.
- * An existing window is shown first because the hub's `Close` merely hides it;
- * focusing a hidden window would otherwise do nothing visible.
+ * Either way it is shown only by `promote`, after it has become an overlay panel:
+ * the window is created hidden, and an existing one (the hub's `Close` merely hides
+ * it) is promoted again rather than shown with Tauri's `show`/`setFocus`.
+ * `setFocus` in particular would activate the app, which is what pulls the user out
+ * of another app's full-screen Space.
  */
 export async function openOrFocus(kind: FeatureKind, api: WindowApi): Promise<void> {
-  const existing = await api.find(kind);
-  if (existing) {
-    await existing.show();
-    await existing.setFocus();
-    return;
+  if (!(await api.exists(kind))) {
+    await api.create(kind);
   }
-  await api.create(kind);
+  await api.promote(kind);
 }

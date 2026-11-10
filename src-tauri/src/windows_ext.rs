@@ -18,7 +18,11 @@ use crate::error::AppResult;
 /// - `CanJoinAllSpaces | FullScreenAuxiliary` lets it follow the user into every Space,
 ///   full-screen ones included.
 ///
-/// Must run on the main thread (`setup` does) and after `tauri_nspanel::init()` is
+/// Idempotent: safe to call again on a window that is already an overlay, and it shows
+/// the window (`panel.show()`), so a window created hidden appears only once converted.
+///
+/// Must run on the main thread (`setup` does; `commands::promote_overlay` hops there)
+/// and after `tauri_nspanel::init()` is
 /// registered (`to_panel` reads that plugin's state). If it fails, setup fails and the
 /// app does not start — better no overlay than one that leaks into a screen share.
 #[cfg(target_os = "macos")]
@@ -29,7 +33,7 @@ pub fn make_overlay(window: &tauri::WebviewWindow) -> AppResult<()> {
         NSWindowStyleMask,
     };
     use objc2_foundation::MainThreadMarker;
-    use tauri_nspanel::WebviewWindowExt;
+    use tauri_nspanel::{ManagerExt, WebviewWindowExt};
 
     let ns_win = window.ns_window().map_err(|e| AppError::Audio(e.to_string()))?;
     if ns_win.is_null() {
@@ -39,8 +43,14 @@ pub fn make_overlay(window: &tauri::WebviewWindow) -> AppResult<()> {
     MainThreadMarker::new().ok_or_else(|| AppError::Audio("not on main thread".into()))?;
 
     // Swaps the class of the same object in place (`object_setClass`), so `ns_win`
-    // still points at it afterwards.
-    let panel = window.to_panel().map_err(|e| AppError::Audio(e.to_string()))?;
+    // still points at it afterwards. Only once per window: a second `to_panel` would
+    // replace the plugin's stored handle, and dropping that handle releases a
+    // reference tauri-nspanel never retained (an over-release). So a window that is
+    // already a panel (a feature window reopened after `Close`) reuses its handle.
+    let panel = match window.get_webview_panel(window.label()) {
+        Ok(panel) => panel,
+        Err(_) => window.to_panel().map_err(|e| AppError::Audio(e.to_string()))?,
+    };
 
     // SAFETY: `ns_win` is the non-null window object Tauri owns for `window` (now an
     // NSPanel subclass, still an NSWindow), which outlives this call; we are on the main

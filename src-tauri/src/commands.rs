@@ -10,7 +10,7 @@ use crate::platform;
 use crate::secrets;
 use crate::settings::{self, SettingsPatch};
 use crate::state::{AppState, Settings};
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 /// Runs `f` against the open database, mapping "not initialized yet" (it's
 /// set up once in `lib.rs`'s `.setup()`, before any command can run) and
@@ -227,6 +227,29 @@ pub fn get_app_info(app: AppHandle) -> AppInfo {
 #[tauri::command]
 pub async fn open_external(url: String) -> Result<(), IpcError> {
     platform::open_external(&url).await.map_err(IpcError::from)
+}
+
+/// Turns the window `label` into an overlay panel like the hub (excluded from capture,
+/// over full-screen Spaces, non-activating) and shows it. The hub calls this for
+/// Ask/Notes/Settings, which it creates hidden. Safe to call again on the same window.
+///
+/// AppKit must be touched on the main thread. The command is `async` (so it runs on a
+/// worker, never on the main thread) and hops there with `run_on_main_thread`: a sync
+/// command blocking on the main thread for work queued to the main thread would
+/// deadlock.
+#[tauri::command]
+pub async fn promote_overlay(app: AppHandle, label: String) -> Result<(), IpcError> {
+    let window = app
+        .get_webview_window(&label)
+        .ok_or_else(|| AppError::Audio(format!("no window labelled {label:?}")))?;
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    app.run_on_main_thread(move || {
+        let _ = tx.send(crate::windows_ext::make_overlay(&window));
+    })
+    .map_err(|e| AppError::Audio(e.to_string()))?;
+    rx.await
+        .map_err(|_| AppError::Audio("main thread dropped the overlay request".into()))?
+        .map_err(IpcError::from)
 }
 
 #[cfg(test)]

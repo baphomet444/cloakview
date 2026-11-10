@@ -15,7 +15,6 @@ import {
   isListening,
   openOrFocus,
   type WindowApi,
-  type WindowHandle,
 } from "./hubLogic";
 
 // hubLogic reaches ipc.ts for `isIpcError`; keep Tauri's runtime out of these node tests.
@@ -111,55 +110,56 @@ describe("featureWindowOptions", () => {
   it.each(FEATURE_KINDS)("%s: stays visible over full-screen apps (visibleOnAllWorkspaces)", (kind) => {
     expect(featureWindowOptions(kind, "Title").visibleOnAllWorkspaces).toBe(true);
   });
+
+  // Shown only by `promote`, once it is an overlay panel, so it never flashes as an
+  // ordinary (capturable, Space-bound) window first.
+  it.each(FEATURE_KINDS)("%s: is created hidden (visible: false)", (kind) => {
+    expect(featureWindowOptions(kind, "Title").visible).toBe(false);
+  });
 });
 
 describe("openOrFocus", () => {
-  function fake(existing: WindowHandle | null) {
+  function fake(exists: boolean, fail?: "create" | "promote") {
     const calls: string[] = [];
     const api: WindowApi = {
-      find: (label) => {
-        calls.push(`find:${label}`);
-        return Promise.resolve(existing);
+      exists: (label) => {
+        calls.push(`exists:${label}`);
+        return Promise.resolve(exists);
       },
       create: (kind) => {
         calls.push(`create:${kind}`);
-        return Promise.resolve();
+        return fail === "create" ? Promise.reject(new Error("denied")) : Promise.resolve();
+      },
+      promote: (kind) => {
+        calls.push(`promote:${kind}`);
+        return fail === "promote" ? Promise.reject(new Error("no panel")) : Promise.resolve();
       },
     };
     return { api, calls };
   }
 
-  it("focuses a window that already exists instead of creating a duplicate, un-hiding it first", async () => {
-    const calls: string[] = [];
-    const handle: WindowHandle = {
-      show: () => {
-        calls.push("show");
-        return Promise.resolve();
-      },
-      setFocus: () => {
-        calls.push("setFocus");
-        return Promise.resolve();
-      },
-    };
-    const { api, calls: apiCalls } = fake(handle);
-
-    await openOrFocus("ask", api);
-
-    expect(apiCalls).toEqual(["find:ask"]); // looked it up by the kind as label, never created
-    expect(calls).toEqual(["show", "setFocus"]); // `Close` only hides, so show before focus
-  });
-
-  it("creates the window when none exists", async () => {
-    const { api, calls } = fake(null);
+  it("creates the window when none exists, then promotes it (which is what shows it)", async () => {
+    const { api, calls } = fake(false);
     await openOrFocus("notes", api);
-    expect(calls).toEqual(["find:notes", "create:notes"]);
+    expect(calls).toEqual(["exists:notes", "create:notes", "promote:notes"]);
   });
 
-  it("lets a failure to create propagate, so the hub can show an error instead of failing silently", async () => {
-    const failing: WindowApi = {
-      find: () => Promise.resolve(null),
-      create: () => Promise.reject(new Error("denied")),
-    };
-    await expect(openOrFocus("settings", failing)).rejects.toThrow("denied");
+  it("promotes an existing window again instead of creating a duplicate", async () => {
+    const { api, calls } = fake(true);
+    await openOrFocus("ask", api);
+    // Looked up by the kind as label, never created; `Close` only hid it, and promote
+    // shows it as a panel (no Tauri show/setFocus, which would activate the app).
+    expect(calls).toEqual(["exists:ask", "promote:ask"]);
+  });
+
+  it("lets a failure to create propagate, and never promotes a window that does not exist", async () => {
+    const { api, calls } = fake(false, "create");
+    await expect(openOrFocus("settings", api)).rejects.toThrow("denied");
+    expect(calls).toEqual(["exists:settings", "create:settings"]);
+  });
+
+  it("lets a failure to promote propagate, so the hub shows an error instead of failing silently", async () => {
+    const { api } = fake(true, "promote");
+    await expect(openOrFocus("ask", api)).rejects.toThrow("no panel");
   });
 });

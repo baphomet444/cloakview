@@ -2,7 +2,14 @@ import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect, useRef, useState } from "react";
 import { getLocale, localeFromSetting, setLocale, t, type CatalogKey, type Locale } from "../lib/i18n";
-import { getSettings, saveSettings, startListen, stopListen, subscribeListenState } from "../lib/ipc";
+import {
+  getSettings,
+  promoteOverlay,
+  saveSettings,
+  startListen,
+  stopListen,
+  subscribeListenState,
+} from "../lib/ipc";
 import type { ListenState } from "../lib/models";
 import {
   FEATURE_WINDOWS,
@@ -23,13 +30,16 @@ const MIN_OPACITY = 0.1;
 
 /** The real Tauri windows behind `openOrFocus`. */
 const tauriWindows: WindowApi = {
-  find: (label) => WebviewWindow.getByLabel(label),
+  exists: async (label) => (await WebviewWindow.getByLabel(label)) !== null,
+  // Created hidden (`visible: false`); resolves on `tauri://created`, so `promote`
+  // only ever runs against a window Rust can already find by label.
   create: (kind) =>
     new Promise<void>((resolve, reject) => {
       const created = new WebviewWindow(kind, featureWindowOptions(kind, t(FEATURE_WINDOWS[kind].titleKey)));
       void created.once("tauri://created", () => resolve());
       void created.once("tauri://error", (event) => reject(new Error(String(event.payload))));
     }),
+  promote: (kind) => promoteOverlay(kind),
 };
 
 /**

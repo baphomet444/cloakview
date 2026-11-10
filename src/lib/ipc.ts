@@ -62,6 +62,7 @@ export interface CommandSignatures {
   get_mic_status: { args: undefined; result: MicStatus };
   get_app_info: { args: undefined; result: AppInfo };
   open_external: { args: { url: string }; result: void };
+  promote_overlay: { args: { label: string }; result: void };
 }
 
 /**
@@ -90,6 +91,7 @@ export const COMMANDS = [
   "get_mic_status",
   "get_app_info",
   "open_external",
+  "promote_overlay",
 ] as const satisfies readonly (keyof CommandSignatures)[];
 
 export type CommandName = (typeof COMMANDS)[number];
@@ -179,6 +181,14 @@ export function getAppInfo(): Promise<AppInfo> {
 /** Rust accepts only `http`/`https` and rejects anything else with `InvalidUrl`. */
 export function openExternal(url: string): Promise<void> {
   return call("open_external", { url });
+}
+
+/**
+ * Turns the window `label` into an overlay panel (excluded from capture, over
+ * full-screen Spaces, non-activating) and shows it. Safe to call again.
+ */
+export function promoteOverlay(label: string): Promise<void> {
+  return call("promote_overlay", { label });
 }
 
 // ---------------------------------------------------------------------------

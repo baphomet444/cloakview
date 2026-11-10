@@ -58,6 +58,7 @@ ipc_commands![
     get_mic_status,
     get_app_info,
     open_external,
+    promote_overlay,
 ];
 
 pub fn run() {
@@ -128,6 +129,8 @@ mod ipc_surface_tests {
         "save_settings",
         "get_app_info",
         "open_external",
+        // windows (not in design.md §5: added for the overlay panels)
+        "promote_overlay",
     ];
 
     #[test]
