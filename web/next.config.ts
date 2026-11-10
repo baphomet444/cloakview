@@ -9,6 +9,16 @@ const nextConfig: NextConfig = {
     // (ajeno a este repo) al detectar el workspace root.
     root: __dirname,
   },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.getcloakview.com" }],
+        destination: "https://getcloakview.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
