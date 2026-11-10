@@ -220,6 +220,8 @@ export interface EventPayloads {
   "answer-done": null;
   "listen-state": ListenState;
   error: string;
+  /** The push-to-ask global shortcut, sent to the hub only. No data. */
+  "push-to-ask": null;
 }
 
 /** Runtime list of the same names, compared by the test with `src-tauri/src/events.rs`. */
@@ -230,6 +232,7 @@ export const EVENTS = [
   "answer-done",
   "listen-state",
   "error",
+  "push-to-ask",
 ] as const satisfies readonly (keyof EventPayloads)[];
 
 export type EventName = (typeof EVENTS)[number];
@@ -258,4 +261,8 @@ export function subscribeListenState(handler: (state: ListenState) => void): Pro
 /** Shared by realtime and answer failures: a plain message string. */
 export function subscribeError(handler: (message: string) => void): Promise<UnlistenFn> {
   return subscribe("error", handler);
+}
+/** Fires when the push-to-ask global shortcut is pressed: the hub opens the Ask window. No data. */
+export function subscribePushToAsk(handler: () => void): Promise<UnlistenFn> {
+  return subscribe("push-to-ask", () => handler());
 }

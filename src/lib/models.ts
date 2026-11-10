@@ -78,6 +78,16 @@ export type NewMessage = {
   model?: string | null;
 };
 
+/**
+ * Global shortcut accelerators. `src-tauri/src/hotkeys.rs` (`Shortcuts`), e.g.
+ * `cmdOrControl+shift+h`. A blank string turns that action off.
+ */
+export type Shortcuts = {
+  quickHide: string;
+  pushToAsk: string;
+  toggleListen: string;
+};
+
 /** `src-tauri/src/state.rs` (`Settings`). `theme` and `language` are free-form strings in Rust. */
 export type Settings = {
   language: string;
@@ -88,6 +98,8 @@ export type Settings = {
   /** Matched against each transcript line to decide `turn-detected`. Seeded by Rust on a clean install. */
   userKeywords: string[];
   userName: string | null;
+  /** Re-registered by Rust whenever a save changes them. */
+  shortcuts: Shortcuts;
 };
 
 /**
@@ -103,6 +115,8 @@ export type SettingsPatch = {
   realtimeModel?: string;
   userKeywords?: string[];
   userName?: string;
+  /** All three at once: it replaces the saved set. */
+  shortcuts?: Shortcuts;
 };
 
 /** Microphone permission. `src-tauri/src/platform.rs` (`MicStatus`): a plain camelCase string. */

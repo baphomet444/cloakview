@@ -18,12 +18,15 @@ pub const ANSWER_DELTA_EVENT: &str = "answer-delta";
 pub const ANSWER_DONE_EVENT: &str = "answer-done";
 pub const LISTEN_STATE_EVENT: &str = "listen-state";
 pub const ERROR_EVENT: &str = "error";
+/// Not in design.md §5: the push-to-ask global shortcut asks the hub to open the Ask
+/// window, so it goes through the same path as the hub's Ask button. No payload.
+pub const PUSH_TO_ASK_EVENT: &str = "push-to-ask";
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    /// design.md §5 names these six and no others. An independent literal
+    /// design.md §5 names the first six; `push-to-ask` (Task 15) is the only addition. An independent literal
     /// copy, so editing a constant above (or the catch-all channels coming
     /// back) trips this instead of silently breaking a frontend listener.
     #[test]
@@ -35,6 +38,7 @@ mod tests {
             ANSWER_DONE_EVENT,
             LISTEN_STATE_EVENT,
             ERROR_EVENT,
+            PUSH_TO_ASK_EVENT,
         ];
         let spec = [
             "transcript-delta",
@@ -43,6 +47,7 @@ mod tests {
             "answer-done",
             "listen-state",
             "error",
+            "push-to-ask",
         ];
         assert_eq!(ours, spec);
 

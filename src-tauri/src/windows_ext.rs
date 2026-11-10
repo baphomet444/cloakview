@@ -81,6 +81,29 @@ pub fn make_overlay(window: &tauri::WebviewWindow) -> AppResult<()> {
     Ok(())
 }
 
+/// Runs `f` on the main thread and waits for its result, from any thread that is
+/// not blocked on the main thread itself (an async command, a spawned task). AppKit,
+/// and so `make_overlay`, may only be touched there.
+///
+/// The wait is a `tokio` oneshot awaited off the main thread. (Tauri runs a task
+/// queued from the main thread inline, so this would not deadlock there either,
+/// but callers here are never on it.)
+pub async fn on_main_thread<T, F>(app: &tauri::AppHandle, f: F) -> AppResult<T>
+where
+    T: Send + 'static,
+    F: FnOnce(&tauri::AppHandle) -> AppResult<T> + Send + 'static,
+{
+    use crate::error::AppError;
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    let handle = app.clone();
+    app.run_on_main_thread(move || {
+        let _ = tx.send(f(&handle));
+    })
+    .map_err(|e| AppError::Audio(e.to_string()))?;
+    rx.await
+        .map_err(|_| AppError::Audio("main thread dropped the request".into()))?
+}
+
 /// Every other platform has no equivalent here: succeeds without doing anything,
 /// so callers need no `cfg` of their own.
 #[cfg(not(target_os = "macos"))]

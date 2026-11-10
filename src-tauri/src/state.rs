@@ -18,6 +18,9 @@ pub struct Settings {
     /// keyword when set. `None` until the user configures it. Read once
     /// per listen session (see `listen.rs`).
     pub user_name: Option<String>,
+    /// Global shortcut accelerators (`hotkeys`). Re-registered on every save that
+    /// changes them.
+    pub shortcuts: crate::hotkeys::Shortcuts,
 }
 
 impl Default for Settings {
@@ -33,6 +36,7 @@ impl Default for Settings {
             // Lowercase because `detect` compares case-insensitively anyway.
             user_keywords: vec!["¿tú qué opinas?".into(), "tú qué opinas".into()],
             user_name: None,
+            shortcuts: crate::hotkeys::Shortcuts::default(),
         }
     }
 }
@@ -84,6 +88,7 @@ mod tests {
         assert_eq!(s.language, "es");
         assert!(!s.user_keywords.is_empty());
         assert_eq!(s.user_name, None);
+        assert_eq!(s.shortcuts, crate::hotkeys::Shortcuts::default());
     }
 
     /// `Settings` goes to the frontend (`get_settings`, `save_settings`) and is persisted
@@ -100,6 +105,7 @@ mod tests {
             realtime_model: "gpt-4o-mini-realtime".into(),
             user_keywords: vec!["opinas".into()],
             user_name: Some("Ana".into()),
+            shortcuts: crate::hotkeys::Shortcuts::default(),
         };
         let json = serde_json::to_value(&s).unwrap();
 
@@ -112,7 +118,12 @@ mod tests {
                 "answersModel": "gpt-4o-mini",
                 "realtimeModel": "gpt-4o-mini-realtime",
                 "userKeywords": ["opinas"],
-                "userName": "Ana"
+                "userName": "Ana",
+                "shortcuts": {
+                    "quickHide": "cmdOrControl+shift+h",
+                    "pushToAsk": "cmdOrControl+shift+space",
+                    "toggleListen": "cmdOrControl+shift+l"
+                }
             })
         );
         for key in json.as_object().unwrap().keys() {

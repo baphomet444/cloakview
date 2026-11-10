@@ -5,6 +5,7 @@ mod db;
 pub mod detect;
 mod error;
 mod events;
+mod hotkeys;
 mod listen;
 mod platform;
 pub mod realtime;
@@ -69,6 +70,7 @@ pub fn run() {
         .invoke_handler(invoke_handler())
         .setup(|app| {
             let s = settings::load_settings(app.handle());
+            let shortcuts = s.shortcuts.clone();
             let data_dir = app.path().app_data_dir()?;
             let db = db::Db::open(&data_dir.join("cloakview.db")).map_err(|e| e.to_string())?;
             app.manage(AppState {
@@ -80,6 +82,10 @@ pub fn run() {
             });
             let hub = app.get_webview_window("hub").ok_or("hub window missing")?;
             windows_ext::make_overlay(&hub).map_err(|e| e.to_string())?;
+            // After the state is managed (the handlers read it). A shortcut that cannot
+            // be registered (taken by another app, say) is logged and skipped; it never
+            // stops the app from starting.
+            hotkeys::register_all(app.handle(), &shortcuts);
             #[cfg(all(debug_assertions, target_os = "macos"))]
             windows_ext::spawn_overlay_probe(hub.clone());
             Ok(())

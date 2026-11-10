@@ -243,6 +243,7 @@ describe("events", () => {
   it.each([
     ["turn-detected", ipc.subscribeTurnDetected],
     ["answer-done", ipc.subscribeAnswerDone],
+    ["push-to-ask", ipc.subscribePushToAsk],
   ] as const)("%s: carries no data, so the handler takes no arguments", async (event, subscribe) => {
     const received = vi.fn();
     await subscribe(received);
@@ -254,7 +255,7 @@ describe("events", () => {
   });
 
   it("has a subscribe wrapper for every event (none forgotten)", () => {
-    const covered = [...subscriptions.map(([event]) => event), "turn-detected", "answer-done"];
+    const covered = [...subscriptions.map(([event]) => event), "turn-detected", "answer-done", "push-to-ask"];
     expect(sorted(covered)).toEqual(sorted(ipc.EVENTS));
   });
 });

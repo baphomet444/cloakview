@@ -9,6 +9,7 @@ import {
   startListen,
   stopListen,
   subscribeListenState,
+  subscribePushToAsk,
 } from "../lib/ipc";
 import type { ListenState } from "../lib/models";
 import {
@@ -136,6 +137,27 @@ export function HubApp() {
       cancelled = true;
       unlisten?.();
     };
+  }, []);
+
+  // The push-to-ask global shortcut: open Ask exactly like the Ask button does
+  // (created hidden below the hub if needed, then `promoteOverlay`; never `show()`).
+  useEffect(() => {
+    let cancelled = false;
+    let unlisten: (() => void) | undefined;
+    subscribePushToAsk(() => void openFeature("ask"))
+      .then((stop) => {
+        if (cancelled) stop();
+        else unlisten = stop;
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) setErrorKey(errorCopyKey(error));
+      });
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+    // `openFeature` only touches refs, state setters and module constants, so the
+    // first render's copy behaves exactly like any later one.
   }, []);
 
   // An error clears itself.

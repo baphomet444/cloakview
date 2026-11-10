@@ -51,6 +51,9 @@ pub struct SettingsPatch {
     /// `Option<String>` can't tell "absent" from "set to null" once
     /// deserialized, so blank is the explicit "clear" signal).
     pub user_name: Option<String>,
+    /// Replaces all three accelerators at once (a missing key inside falls back to its
+    /// default, via `Shortcuts`' `serde(default)`).
+    pub shortcuts: Option<crate::hotkeys::Shortcuts>,
 }
 
 /// Applies the fields present in `patch` to `s`: `opacity` is clamped to
@@ -77,6 +80,9 @@ pub fn apply_patch(s: &mut Settings, patch: SettingsPatch) {
     if let Some(v) = patch.user_name {
         let v = v.trim();
         s.user_name = (!v.is_empty()).then(|| v.to_string());
+    }
+    if let Some(v) = patch.shortcuts {
+        s.shortcuts = v;
     }
 }
 
