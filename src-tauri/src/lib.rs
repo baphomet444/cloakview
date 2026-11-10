@@ -5,6 +5,7 @@ mod db;
 pub mod detect;
 mod error;
 mod events;
+mod hotkeys;
 mod listen;
 mod platform;
 pub mod realtime;
@@ -58,15 +59,18 @@ ipc_commands![
     get_mic_status,
     get_app_info,
     open_external,
+    promote_overlay,
 ];
 
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_nspanel::init())
         .invoke_handler(invoke_handler())
         .setup(|app| {
             let s = settings::load_settings(app.handle());
+            let shortcuts = s.shortcuts.clone();
             let data_dir = app.path().app_data_dir()?;
             let db = db::Db::open(&data_dir.join("cloakview.db")).map_err(|e| e.to_string())?;
             app.manage(AppState {
@@ -78,10 +82,32 @@ pub fn run() {
             });
             let hub = app.get_webview_window("hub").ok_or("hub window missing")?;
             windows_ext::make_overlay(&hub).map_err(|e| e.to_string())?;
+            // After the state is managed (the handlers read it). A shortcut that cannot
+            // be registered (taken by another app, say) is logged and skipped; it never
+            // stops the app from starting.
+            hotkeys::register_all(app.handle(), &shortcuts);
+            #[cfg(all(debug_assertions, target_os = "macos"))]
+            windows_ext::spawn_overlay_probe(hub.clone());
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running cloakview");
+        .build(tauri::generate_context!())
+        .expect("error while building cloakview")
+        .run(|app, event| {
+            // Clicking the Dock icon after `Close` hid the whole overlay: bring the hub
+            // back. `make_overlay` is idempotent and ends in `order_front_regardless`,
+            // never making the hub key, and `Reopen` is delivered on the main thread,
+            // which it requires.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { has_visible_windows, .. } = event {
+                if !has_visible_windows {
+                    if let Some(hub) = app.get_webview_window("hub") {
+                        let _ = crate::windows_ext::make_overlay(&hub);
+                    }
+                }
+            }
+            #[cfg(not(target_os = "macos"))]
+            let _ = (app, event);
+        });
 }
 
 #[cfg(test)]
@@ -125,6 +151,8 @@ mod ipc_surface_tests {
         "save_settings",
         "get_app_info",
         "open_external",
+        // windows (not in design.md §5: added for the overlay panels)
+        "promote_overlay",
     ];
 
     #[test]

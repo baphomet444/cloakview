@@ -10,7 +10,7 @@ use crate::platform;
 use crate::secrets;
 use crate::settings::{self, SettingsPatch};
 use crate::state::{AppState, Settings};
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 /// Runs `f` against the open database, mapping "not initialized yet" (it's
 /// set up once in `lib.rs`'s `.setup()`, before any command can run) and
@@ -56,10 +56,20 @@ pub fn save_settings(
     state: State<AppState>,
     patch: SettingsPatch,
 ) -> Result<Settings, IpcError> {
-    let mut s = state.settings.write().expect("settings lock");
-    settings::apply_patch(&mut s, patch);
-    settings::save_settings(&app, &s).map_err(IpcError::from)?;
-    Ok(s.clone())
+    let saved = {
+        let mut s = state.settings.write().expect("settings lock");
+        let before = s.shortcuts.clone();
+        settings::apply_patch(&mut s, patch);
+        settings::save_settings(&app, &s).map_err(IpcError::from)?;
+        (s.clone(), before)
+    };
+    let (s, before) = saved;
+    // Outside the settings lock. A binding that fails is logged and skipped, never an
+    // error here: the settings are already saved.
+    if s.shortcuts != before {
+        crate::hotkeys::register_all(&app, &s.shortcuts);
+    }
+    Ok(s)
 }
 
 // --- notes (Task 5) ---
@@ -227,6 +237,22 @@ pub fn get_app_info(app: AppHandle) -> AppInfo {
 #[tauri::command]
 pub async fn open_external(url: String) -> Result<(), IpcError> {
     platform::open_external(&url).await.map_err(IpcError::from)
+}
+
+/// Turns the window `label` into an overlay panel like the hub (excluded from capture,
+/// over full-screen Spaces, non-activating) and shows it. The hub calls this for
+/// Ask/Notes/Settings, which it creates hidden. Safe to call again on the same window.
+///
+/// AppKit must be touched on the main thread. The command is `async`, so it runs on a
+/// worker, and hops to the main thread with `windows_ext::on_main_thread`.
+#[tauri::command]
+pub async fn promote_overlay(app: AppHandle, label: String) -> Result<(), IpcError> {
+    let window = app
+        .get_webview_window(&label)
+        .ok_or_else(|| AppError::Audio(format!("no window labelled {label:?}")))?;
+    crate::windows_ext::on_main_thread(&app, move |_| crate::windows_ext::make_overlay(&window))
+        .await
+        .map_err(IpcError::from)
 }
 
 #[cfg(test)]

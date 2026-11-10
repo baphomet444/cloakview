@@ -62,6 +62,7 @@ export interface CommandSignatures {
   get_mic_status: { args: undefined; result: MicStatus };
   get_app_info: { args: undefined; result: AppInfo };
   open_external: { args: { url: string }; result: void };
+  promote_overlay: { args: { label: string }; result: void };
 }
 
 /**
@@ -90,6 +91,7 @@ export const COMMANDS = [
   "get_mic_status",
   "get_app_info",
   "open_external",
+  "promote_overlay",
 ] as const satisfies readonly (keyof CommandSignatures)[];
 
 export type CommandName = (typeof COMMANDS)[number];
@@ -181,6 +183,14 @@ export function openExternal(url: string): Promise<void> {
   return call("open_external", { url });
 }
 
+/**
+ * Turns the window `label` into an overlay panel (excluded from capture, over
+ * full-screen Spaces, non-activating) and shows it. Safe to call again.
+ */
+export function promoteOverlay(label: string): Promise<void> {
+  return call("promote_overlay", { label });
+}
+
 // ---------------------------------------------------------------------------
 // Errors
 // ---------------------------------------------------------------------------
@@ -210,6 +220,8 @@ export interface EventPayloads {
   "answer-done": null;
   "listen-state": ListenState;
   error: string;
+  /** The push-to-ask global shortcut, sent to the hub only. No data. */
+  "push-to-ask": null;
 }
 
 /** Runtime list of the same names, compared by the test with `src-tauri/src/events.rs`. */
@@ -220,6 +232,7 @@ export const EVENTS = [
   "answer-done",
   "listen-state",
   "error",
+  "push-to-ask",
 ] as const satisfies readonly (keyof EventPayloads)[];
 
 export type EventName = (typeof EVENTS)[number];
@@ -248,4 +261,8 @@ export function subscribeListenState(handler: (state: ListenState) => void): Pro
 /** Shared by realtime and answer failures: a plain message string. */
 export function subscribeError(handler: (message: string) => void): Promise<UnlistenFn> {
   return subscribe("error", handler);
+}
+/** Fires when the push-to-ask global shortcut is pressed: the hub opens the Ask window. No data. */
+export function subscribePushToAsk(handler: () => void): Promise<UnlistenFn> {
+  return subscribe("push-to-ask", () => handler());
 }

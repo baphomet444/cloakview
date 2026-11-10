@@ -63,8 +63,13 @@ export type FeatureWindowOptions = NonNullable<ConstructorParameters<typeof Webv
  * `contentProtected` is `NSWindow.sharingType = .none`, the same call.
  * `visibleOnAllWorkspaces` keeps them over other apps' full-screen Spaces.
  * `title` is passed in (already translated) because this module does not touch i18n state.
+ * `at` is where it opens, in logical pixels (see `featureWindowPosition`).
  */
-export function featureWindowOptions(kind: FeatureKind, title: string): FeatureWindowOptions {
+export function featureWindowOptions(
+  kind: FeatureKind,
+  title: string,
+  at: { x: number; y: number },
+): FeatureWindowOptions {
   const { width, height } = FEATURE_WINDOWS[kind];
   return {
     url: `/?win=${kind}`,
@@ -77,33 +82,76 @@ export function featureWindowOptions(kind: FeatureKind, title: string): FeatureW
     skipTaskbar: true,
     contentProtected: true,
     visibleOnAllWorkspaces: true,
+    // Created hidden: it is shown by `promote` once it is an overlay panel, so it never
+    // flashes as an ordinary window first.
+    visible: false,
+    x: at.x,
+    y: at.y,
   };
 }
 
-/** The slice of Tauri's `WebviewWindow` that `openOrFocus` needs. */
-export interface WindowHandle {
-  show(): Promise<void>;
-  setFocus(): Promise<void>;
+/** Gap, in logical pixels, between the hub and a feature window. */
+export const FEATURE_WINDOW_GAP = 8;
+
+/**
+ * Posición de la ventana de feature: alineada con el hub y justo debajo.
+ *
+ * Everything is in logical pixels, relative to the hub's monitor (origin 0,0); the
+ * caller converts. Below the hub if it fits on the screen, above it otherwise; `x`
+ * follows the hub's left edge, kept on screen. It never overlaps the hub, which is
+ * the point: an overlapping panel would sit on top of it and take its clicks. `y` is
+ * also kept from going above the top edge when it fits neither below nor above.
+ */
+export function featureWindowPosition(
+  hub: { x: number; y: number; width: number; height: number },
+  size: { width: number; height: number },
+  screen: { width: number; height: number },
+): { x: number; y: number } {
+  const below = hub.y + hub.height + FEATURE_WINDOW_GAP;
+  const y = below + size.height <= screen.height ? below : Math.max(0, hub.y - size.height - FEATURE_WINDOW_GAP);
+  const x = Math.max(0, Math.min(hub.x, screen.width - size.width));
+  return { x, y };
 }
 
 export interface WindowApi {
-  /** The existing window with this label, or `null`. */
-  find(label: string): Promise<WindowHandle | null>;
-  /** Creates the window for `kind`; resolves once it exists, rejects if it could not be created. */
+  /** Whether a window with this label already exists. */
+  exists(label: string): Promise<boolean>;
+  /** Creates the (hidden) window for `kind`; resolves once it exists, rejects if it could not be created. */
   create(kind: FeatureKind): Promise<void>;
+  /** Makes the window for `kind` an overlay panel and shows it (`promoteOverlay`). */
+  promote(kind: FeatureKind): Promise<void>;
 }
 
 /**
  * Brings the window for `kind` to the front, creating it only if there is none.
- * An existing window is shown first because the hub's `Close` merely hides it;
- * focusing a hidden window would otherwise do nothing visible.
+ * Either way it is shown only by `promote`, after it has become an overlay panel:
+ * the window is created hidden, and an existing one (the hub's `Close` merely hides
+ * it) is promoted again rather than shown with Tauri's `show`/`setFocus`.
+ * `setFocus` in particular would activate the app, which is what pulls the user out
+ * of another app's full-screen Space.
  */
 export async function openOrFocus(kind: FeatureKind, api: WindowApi): Promise<void> {
-  const existing = await api.find(kind);
-  if (existing) {
-    await existing.show();
-    await existing.setFocus();
-    return;
+  if (!(await api.exists(kind))) {
+    await api.create(kind);
   }
-  await api.create(kind);
+  await api.promote(kind);
+}
+
+export interface HideApi {
+  /** Hides the feature window `kind` if it exists; resolves when there is none. */
+  hideFeature(kind: FeatureKind): Promise<void>;
+  /** Hides the hub itself. */
+  hideHub(): Promise<void>;
+}
+
+/**
+ * `Close`: hides the whole overlay, not just the hub. Every feature window is hidden
+ * first, each on its own: a failure on one (say, it closed in the meantime) is
+ * ignored, so it cannot keep the rest on screen. The hub goes last, and a failure
+ * there does propagate, because then the overlay is still visible and the hub should
+ * say so. Like `openOrFocus`, it only talks to the api, never to the DOM or Tauri.
+ */
+export async function hideAll(api: HideApi): Promise<void> {
+  await Promise.allSettled(FEATURE_KINDS.map((kind) => api.hideFeature(kind)));
+  await api.hideHub();
 }

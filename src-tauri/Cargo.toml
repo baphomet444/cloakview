@@ -32,3 +32,4 @@ objc2-core-graphics = "0.3"
 objc2-foundation = "0.3"
 url = "2"
 objc2-av-foundation = { version = "0.3", default-features = false, features = ["std", "AVCaptureDevice", "AVMediaFormat"] }
+tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2", version = "2.0.1" }
