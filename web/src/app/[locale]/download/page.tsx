@@ -2,24 +2,28 @@ import type { Metadata } from "next";
 import { Artifacts } from "@/components/download/artifacts";
 import { getDictionary } from "@/lib/get-dictionary";
 import { siteConfig, type Locale } from "@/site.config";
+import { ogImages, twitterCard } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: Locale }> }): Promise<Metadata> {
   const { locale } = await params;
   const dict = await getDictionary(locale);
   const path = locale === "en" ? "/download" : "/es/download";
   return {
-    title: dict.download.title,
+    // The title already names the product: skip the layout's " · CloakView" suffix.
+    title: { absolute: dict.download.title },
     description: dict.download.description,
     alternates: {
       canonical: path,
-      languages: { en: "/download", es: "/es/download" },
+      languages: { en: "/download", es: "/es/download", "x-default": "/download" },
     },
     openGraph: {
       title: dict.download.title,
       description: dict.download.description,
       url: `${siteConfig.url}${path}`,
       locale: locale === "en" ? "en_US" : "es_ES",
+      images: ogImages(locale, dict.meta.ogAlt),
     },
+    twitter: twitterCard(locale, dict.meta.ogAlt),
   };
 }
 

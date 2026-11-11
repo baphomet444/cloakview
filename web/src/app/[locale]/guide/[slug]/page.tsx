@@ -5,6 +5,7 @@ import { getDictionary } from "@/lib/get-dictionary";
 import { guidePath, guideSlugs, isGuideSlug } from "@/lib/guide";
 import { loadArticle } from "@/lib/guide";
 import { siteConfig, type Locale } from "@/site.config";
+import { ogImages, twitterCard } from "@/lib/seo";
 
 type Params = { params: Promise<{ locale: Locale; slug: string }> };
 export function generateStaticParams() {
@@ -13,12 +14,13 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { locale, slug } = await params;
   if (!isGuideSlug(slug)) notFound();
-  const { guide } = await getDictionary(locale);
+  const { guide, meta } = await getDictionary(locale);
   const article = guide.articles[slug];
   return {
     title: article.title, description: article.description,
-    alternates: { canonical: guidePath(locale, slug), languages: { en: guidePath("en", slug), es: guidePath("es", slug) } },
-    openGraph: { title: article.title, description: article.description, url: `${siteConfig.url}${guidePath(locale, slug)}`, locale: locale === "en" ? "en_US" : "es_ES" },
+    alternates: { canonical: guidePath(locale, slug), languages: { en: guidePath("en", slug), es: guidePath("es", slug), "x-default": guidePath("en", slug) } },
+    openGraph: { title: article.title, description: article.description, url: `${siteConfig.url}${guidePath(locale, slug)}`, locale: locale === "en" ? "en_US" : "es_ES", images: ogImages(locale, meta.ogAlt) },
+    twitter: twitterCard(locale, meta.ogAlt),
   };
 }
 export default async function GuideArticlePage({ params }: Params) {

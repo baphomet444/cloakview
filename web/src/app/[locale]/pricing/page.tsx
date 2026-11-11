@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getDictionary } from "@/lib/get-dictionary";
+import { absoluteUrl, localePath, ogImages, ogLocale, twitterCard } from "@/lib/seo";
 import type { Locale } from "@/site.config";
 import { PricingHero } from "@/components/pricing/pricing-hero";
 import { CostEstimator } from "@/components/pricing/cost-estimator";
@@ -13,9 +14,21 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const dict = await getDictionary(locale);
+  const path = localePath(locale, "/pricing");
   return {
     title: dict.pricing.title,
     description: dict.pricing.description,
+    // Its own canonical: without it the page inherited the layout's, which is the home page.
+    alternates: { canonical: path, languages: { en: "/pricing", es: "/es/pricing", "x-default": "/pricing" } },
+    openGraph: {
+      type: "website",
+      title: dict.pricing.title,
+      description: dict.pricing.description,
+      url: absoluteUrl(locale, "/pricing"),
+      locale: ogLocale(locale),
+      images: ogImages(locale, dict.meta.ogAlt),
+    },
+    twitter: twitterCard(locale, dict.meta.ogAlt),
   };
 }
 

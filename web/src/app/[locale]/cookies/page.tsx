@@ -2,7 +2,7 @@ import { getDictionary } from '@/lib/get-dictionary';
 import { LegalLayout } from '@/components/LegalLayout';
 import { LegalText } from '@/components/legal-text';
 import { Metadata } from 'next';
-import { siteConfig } from '@/site.config';
+import { absoluteUrl, localePath, ogImages, twitterCard } from '@/lib/seo';
 
 interface Props {
   params: Promise<{ locale: 'en' | 'es' }>;
@@ -14,24 +14,28 @@ export async function generateMetadata(
   const params = await props.params;
   const dict = await getDictionary(params.locale);
 
-  const title = `${dict.cookies.title} — CloakView`;
+  const title = dict.cookies.title;
   const description = dict.cookies.description;
 
   return {
     title,
     description,
     alternates: {
+      canonical: localePath(params.locale, '/cookies'),
       languages: {
-        en: '/en/cookies',
+        en: '/cookies',
         es: '/es/cookies',
+        'x-default': '/cookies',
       },
     },
     openGraph: {
       title,
       description,
-      url: `${siteConfig.url}/${params.locale}/cookies`,
+      url: absoluteUrl(params.locale, '/cookies'),
       type: 'website',
+      images: ogImages(params.locale, dict.meta.ogAlt),
     },
+    twitter: twitterCard(params.locale, dict.meta.ogAlt),
   };
 }
 

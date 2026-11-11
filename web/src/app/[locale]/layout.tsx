@@ -1,11 +1,11 @@
 import { Caveat, Geist, Geist_Mono, Inter_Tight } from "next/font/google";
 import { notFound } from "next/navigation";
-import Script from "next/script";
 import type { Metadata } from "next";
 import "./globals.css";
 import { siteConfig, type Locale } from "@/site.config";
 import { getDictionary } from "@/lib/get-dictionary";
-import { generateSoftwareApplicationSchema } from "@/lib/schema-generator";
+import { softwareApplicationJsonLd } from "@/lib/schema-generator";
+import { absoluteUrl, ogImages, ogLocale, twitterCard } from "@/lib/seo";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 
@@ -65,23 +65,18 @@ export async function generateMetadata({
       languages: {
         en: "/",
         es: "/es",
+        "x-default": "/",
       },
     },
     openGraph: {
       type: "website",
-      url: locale === "en" ? siteConfig.url : `${siteConfig.url}/es`,
+      url: absoluteUrl(locale),
       siteName: dict.meta.siteName,
-      locale: locale === "en" ? "en_US" : "es_ES",
+      locale: ogLocale(locale),
       description: siteConfig.description[locale],
-      images: [
-        {
-          url: `${siteConfig.url}/api/og?locale=${locale}`,
-          width: 1200,
-          height: 630,
-          alt: dict.meta.siteName,
-        },
-      ],
+      images: ogImages(locale, dict.meta.ogAlt),
     },
+    twitter: twitterCard(locale, dict.meta.ogAlt),
   };
 }
 
@@ -103,12 +98,10 @@ export default async function LocaleLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${interTight.variable} ${caveat.variable} h-full`}
     >
       <head>
-        <Script
-          id="software-application-schema"
+        {/* A plain tag, not next/script: it must be in the server HTML for crawlers. */}
+        <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(generateSoftwareApplicationSchema(locale)),
-          }}
+          dangerouslySetInnerHTML={{ __html: softwareApplicationJsonLd(locale) }}
         />
       </head>
       <body className="min-h-full antialiased flex flex-col">
