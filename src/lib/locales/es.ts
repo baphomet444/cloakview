@@ -15,6 +15,8 @@ export const es: Catalog = {
   "listen.start": "Iniciar escucha",
   "listen.stop": "Detener",
   "listen.listening": "Escuchando…",
+  "listen.you": "Tú",
+  "listen.interviewer": "Entrevistador",
   "ask.title": "Preguntar",
   "ask.placeholder": "Pregunta algo sobre la conversación…",
   "ask.send": "Enviar",

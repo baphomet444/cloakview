@@ -42,13 +42,14 @@ export function errorCopyKey(error: unknown): CatalogKey {
 }
 
 /** The overlay windows the hub opens. The window label is the kind itself, and the URL is `/?win=<kind>`. */
-export type FeatureKind = "ask" | "notes" | "settings";
+export type FeatureKind = "ask" | "listen" | "notes" | "settings";
 
-export const FEATURE_KINDS: readonly FeatureKind[] = ["ask", "notes", "settings"];
+export const FEATURE_KINDS: readonly FeatureKind[] = ["ask", "listen", "notes", "settings"];
 
 /** Per-window title (a catalog key, never literal text) and starting size. */
 export const FEATURE_WINDOWS: Record<FeatureKind, { titleKey: CatalogKey; width: number; height: number }> = {
   ask: { titleKey: "hub.ask", width: 420, height: 360 },
+  listen: { titleKey: "listen.title", width: 380, height: 360 },
   notes: { titleKey: "hub.notes", width: 420, height: 420 },
   settings: { titleKey: "hub.settings", width: 460, height: 480 },
 };
@@ -113,6 +114,19 @@ export function featureWindowPosition(
   const y = below + size.height <= screen.height ? below : Math.max(0, hub.y - size.height - FEATURE_WINDOW_GAP);
   const x = Math.max(0, Math.min(hub.x, screen.width - size.width));
   return { x, y };
+}
+
+/**
+ * The rectangle a feature window is placed against. The live transcript sits beside
+ * Ask instead of on top of it (both open when listening starts), so it is placed as
+ * if the hub began where Ask ends; the others use the hub itself.
+ */
+export function anchorFor(
+  kind: FeatureKind,
+  hub: { x: number; y: number; width: number; height: number },
+): { x: number; y: number; width: number; height: number } {
+  if (kind !== "listen") return hub;
+  return { ...hub, x: hub.x + FEATURE_WINDOWS.ask.width + FEATURE_WINDOW_GAP };
 }
 
 export interface WindowApi {

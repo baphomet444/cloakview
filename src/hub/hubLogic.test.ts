@@ -70,8 +70,8 @@ describe("errorCopyKey", () => {
 });
 
 describe("feature windows", () => {
-  it("the hub opens exactly ask, notes and settings, and each label is its kind", () => {
-    expect([...FEATURE_KINDS]).toEqual(["ask", "notes", "settings"]);
+  it("the hub opens exactly ask, listen, notes and settings, and each label is its kind", () => {
+    expect([...FEATURE_KINDS]).toEqual(["ask", "listen", "notes", "settings"]);
     expect(Object.keys(FEATURE_WINDOWS).sort()).toEqual([...FEATURE_KINDS].sort());
   });
 

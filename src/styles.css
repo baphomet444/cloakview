@@ -381,6 +381,44 @@ body,
   font-size: 13px;
 }
 
+/* Live transcript: the interviewer in white, the user's own lines in light gray. */
+:root {
+  --tr-them: #ffffff;
+  --tr-mine: #b4b4bd;
+}
+
+:root[data-theme="light"] {
+  --tr-them: #18181b;
+  --tr-mine: #71717a;
+}
+
+.tr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tr-line {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.tr-them {
+  color: var(--tr-them);
+}
+
+.tr-mine {
+  color: var(--tr-mine);
+}
+
+.tr-who {
+  font-weight: 600;
+}
+
 /* Notes */
 .notes-new {
   display: flex;

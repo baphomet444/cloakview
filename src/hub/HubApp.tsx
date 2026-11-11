@@ -17,6 +17,7 @@ import {
 import type { ListenState, SessionSummary } from "../lib/models";
 import {
   FEATURE_WINDOWS,
+  anchorFor,
   errorCopyKey,
   featureWindowOptions,
   featureWindowPosition,
@@ -55,7 +56,7 @@ async function positionBelowHub(kind: FeatureKind): Promise<{ x: number; y: numb
   const hubSize = size.toLogical(scale);
   const { width, height } = FEATURE_WINDOWS[kind];
   const at = featureWindowPosition(
-    { x: hubPos.x - origin.x, y: hubPos.y - origin.y, width: hubSize.width, height: hubSize.height },
+    anchorFor(kind, { x: hubPos.x - origin.x, y: hubPos.y - origin.y, width: hubSize.width, height: hubSize.height }),
     { width, height },
     { width: screen.width, height: screen.height },
   );
@@ -197,10 +198,13 @@ export function HubApp() {
 
   const listening = isListening(listenState);
 
-  // Suggestions show up in Ask, so it has to be open before the first question is
-  // heard. Keyed on the state, not the button, so the global shortcut is covered too.
+  // Suggestions show up in Ask and the conversation in the live transcript, so both
+  // have to be open before the first line is heard. Keyed on the state, not the button, so the global shortcut is covered too.
   useEffect(() => {
-    if (listening) void openFeature("ask");
+    if (listening) {
+      void openFeature("ask");
+      void openFeature("listen");
+    }
     // `openFeature` is safe to call from any render (see the push-to-ask effect).
   }, [listening]);
 

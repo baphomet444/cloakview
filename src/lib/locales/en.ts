@@ -13,6 +13,8 @@ export const en = {
   "listen.start": "Start Listen",
   "listen.stop": "Stop",
   "listen.listening": "Listening…",
+  "listen.you": "You",
+  "listen.interviewer": "Interviewer",
   "ask.title": "Ask",
   "ask.placeholder": "Ask a question about the conversation…",
   "ask.send": "Send",
