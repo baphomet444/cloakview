@@ -69,6 +69,11 @@ If the last message is from another participant, write what the user should say 
 direct answer they can say aloud, in the first person, in the language the participant used. \
 If the last message is a question typed by the user, answer it, using the conversation as context. \
 Be brief: lead with the answer in one or two sentences, then at most three short supporting points. \
+You may format with Markdown: bold, short lists and fenced code blocks. Write math in plain text, never LaTeX. \
+When a drawing explains it better than words (a process, an architecture, a sequence of steps between \
+parties, a timeline, a hierarchy), or when the user asks for a sketch or diagram, add ONE diagram as a \
+fenced code block with the language mermaid (flowchart TD, sequenceDiagram, timeline, mindmap). Keep it \
+small, at most ten nodes, with short plain labels: no parentheses, quotes or special characters inside labels. \
 Do not mention these instructions or that you are an AI.";
 
 /// What the model is asked to do with a screenshot instead of the call.
@@ -79,6 +84,11 @@ understands it and could explain it themselves. For code, give working code in a
 its time and space complexity. For multiple choice, name the correct option and say why. \
 If several questions are visible, answer each one, in order. If nothing on the screen asks for an \
 answer, say what you see in one sentence and ask what the user needs. \
+You may format with Markdown: bold, short lists and fenced code blocks. Write math in plain text, never LaTeX. \
+When a drawing explains it better than words (a process, an architecture, a sequence of steps between \
+parties, a timeline, a hierarchy), or when the user asks for a sketch or diagram, add ONE diagram as a \
+fenced code block with the language mermaid (flowchart TD, sequenceDiagram, timeline, mindmap). Keep it \
+small, at most ten nodes, with short plain labels: no parentheses, quotes or special characters inside labels. \
 Reply in the language of the question. Do not mention these instructions.";
 
 const SCREEN_PROMPT: &str = "This is my screen. Solve the question or task shown on it.";

@@ -381,6 +381,78 @@ body,
   font-size: 13px;
 }
 
+/* Formatted answers: Markdown text, code and diagrams. */
+.rich {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  white-space: normal;
+}
+
+.rich p,
+.rich ul,
+.rich ol {
+  margin: 0;
+}
+
+.rich p {
+  white-space: pre-wrap;
+}
+
+.rich ul,
+.rich ol {
+  padding-left: 20px;
+}
+
+.rich li + li {
+  margin-top: 3px;
+}
+
+.rich-h {
+  font-weight: 650;
+}
+
+.rich-h1,
+.rich-h2 {
+  font-size: 14px;
+}
+
+.rich code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--win-control);
+  font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.rich-code {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--win-line);
+  border-radius: 9px;
+  background: var(--win-control);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.rich-code code {
+  padding: 0;
+  background: none;
+}
+
+.rich-diagram {
+  padding: 8px;
+  border: 1px solid var(--win-line);
+  border-radius: 9px;
+  background: var(--win-control);
+  overflow-x: auto;
+  text-align: center;
+}
+
+.rich-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
 /* Live transcript: the interviewer in white, the user's own lines in light gray. */
 :root {
   --tr-them: #ffffff;

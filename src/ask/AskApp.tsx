@@ -13,6 +13,7 @@ import {
 } from "../lib/ipc";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { errorCopyKey } from "../hub/hubLogic";
+import { RichText } from "../rich/RichText";
 import { WindowFrame } from "../windows/WindowFrame";
 import { useSettingsBoot } from "../windows/useSettingsBoot";
 import { ASK_IDLE, askReducer, isBusy, questionArg } from "./askLogic";
@@ -157,7 +158,9 @@ export function AskApp() {
             {state.phase === "thinking" ? (
               <p className="win-muted">{t("ask.thinking")}</p>
             ) : (
-              <p className="ask-answer">{state.answer}</p>
+              <div className="ask-answer">
+                <RichText text={state.answer} />
+              </div>
             )}
           </section>
         </div>
