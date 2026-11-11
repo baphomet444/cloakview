@@ -8,6 +8,7 @@ import { softwareApplicationJsonLd } from "@/lib/schema-generator";
 import { absoluteUrl, ogImages, ogLocale, twitterCard } from "@/lib/seo";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
+import { AssistantWidget } from "@/components/assistant/assistant-widget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -109,6 +110,7 @@ export default async function LocaleLayout({
         <NavBar dict={dict} locale={locale} />
         <main className="flex-1">{children}</main>
         <Footer dict={dict} locale={locale} />
+        <AssistantWidget dict={dict.assistant} locale={locale} />
       </body>
     </html>
   );

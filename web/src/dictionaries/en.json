@@ -432,7 +432,7 @@
       },
       "dataCollection": {
         "title": "What Data We Collect",
-        "content": "CloakView does not collect, store, or transmit any user data to CloakView servers. Specifically:\n\n• We do not collect meeting audio, transcripts, or personal information.\n• We do not create accounts or user profiles.\n• We do not use cookies, tracking pixels, or analytics.\n• We do not log your API usage or meeting details.\n\nThe only data transmitted outside your Mac is to OpenAI's API, using your own API key, for the purpose of transcription and suggestion generation."
+        "content": "CloakView does not collect, store, or transmit any user data to CloakView servers. Specifically:\n\n• We do not collect meeting audio, transcripts, or personal information.\n• We do not create accounts or user profiles.\n• We do not use cookies, tracking pixels, or analytics.\n• We do not log your API usage or meeting details.\n\nThe only data transmitted outside your Mac is to OpenAI's API, using your own API key, for the purpose of transcription and suggestion generation.\n\nWebsite assistant: if you type a question into the assistant on this website, that question and the conversation shown in the assistant are sent to Vercel's AI Gateway and to Anthropic (Claude) to generate the answer. We do not store these conversations or log their content, and any OpenAI key pasted into the assistant is removed before it is sent. The suggested questions in the assistant are answered without sending anything. This applies only to the website, not to the CloakView app."
       },
       "openaiProcessing": {
         "title": "OpenAI API Usage",
@@ -452,7 +452,7 @@
       },
       "thirdParties": {
         "title": "Third Parties",
-        "content": "CloakView does not share your data with third parties. The only external service is OpenAI's API, which you invoke directly with your own key. We do not have access to, control over, or visibility into OpenAI's processing of your data beyond their published privacy policy."
+        "content": "CloakView does not share your data with third parties. The only external service is OpenAI's API, which you invoke directly with your own key. We do not have access to, control over, or visibility into OpenAI's processing of your data beyond their published privacy policy.\n\nOn this website only, the assistant's typed questions are processed by Vercel (AI Gateway) and Anthropic to generate answers, under their own privacy policies. Do not include personal or sensitive information in them."
       },
       "dataRights": {
         "title": "Your Rights",
@@ -559,5 +559,60 @@
         "content": "If you have questions about cookies or tracking, email us at {{email}}."
       }
     }
+  },
+  "assistant": {
+    "open": "Ask CloakView",
+    "close": "Close assistant",
+    "title": "CloakView assistant",
+    "intro": "Hi! I can walk you through connecting your OpenAI API key, or answer questions about CloakView.",
+    "quickTitle": "Popular questions",
+    "topics": [
+      {
+        "q": "How do I connect my OpenAI API key?",
+        "a": "Four steps:",
+        "steps": [
+          "Sign in to the OpenAI API dashboard (platform.openai.com/api-keys) with your own account, and set up billing and a usage limit there.",
+          "Create a new secret key and copy it once into a safe place. Never paste it in a chat, an issue or a screenshot.",
+          "In CloakView, open Settings → OpenAI API key, paste the key into the masked field and save it.",
+          "Before your meeting, use the connection test if it is available. If it fails, check billing and permissions in your OpenAI account."
+        ],
+        "note": "The key is stored in macOS Keychain on your Mac and is sent only to OpenAI, never to a CloakView server.",
+        "linkLabel": "Read the full API key guide",
+        "href": "/guide/api-key"
+      },
+      {
+        "q": "Where is my key stored? Is it safe?",
+        "a": "The planned app stores your key in macOS Keychain and sends it directly to OpenAI, not to CloakView servers. You can revoke it in your OpenAI account whenever you like; revoking it stops it from working even if a copy remains on your Mac.",
+        "linkLabel": "Where the key is stored",
+        "href": "/guide/api-key#storage"
+      },
+      {
+        "q": "How much does it cost?",
+        "a": "CloakView is free in v1: no subscription and no account. You only pay your own OpenAI API usage, directly to OpenAI at their rates. A ChatGPT subscription does not cover API usage.",
+        "linkLabel": "See monthly estimates",
+        "href": "/pricing"
+      },
+      {
+        "q": "Can others on the call see it?",
+        "a": "The overlay is designed to appear only on your Mac. Test your screen-sharing setup before a sensitive meeting: sharing your entire screen may expose anything else visible on it.",
+        "linkLabel": "Privacy questions",
+        "href": "/faq"
+      },
+      {
+        "q": "When can I download it?",
+        "a": "Not yet. The signed release is still pending; this site will link to the official download as soon as it exists.",
+        "linkLabel": "Follow the changelog",
+        "href": "/changelog"
+      }
+    ],
+    "inputLabel": "Ask anything about CloakView",
+    "placeholder": "Type your question…",
+    "send": "Send",
+    "aiNotice": "Typed questions are answered by AI (Claude, via Vercel) using our guide, and are not stored by us. Never include your API key or private details.",
+    "thinking": "Thinking…",
+    "error": "I can't answer right now. Try the questions above, or contact Support.",
+    "rateLimited": "That's a lot of questions in a short time. Please wait a few minutes and try again.",
+    "supportLabel": "Contact support",
+    "supportHref": "/support"
   }
 }

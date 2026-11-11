@@ -432,7 +432,7 @@
       },
       "dataCollection": {
         "title": "Qué Datos Recopilamos",
-        "content": "CloakView no recopila, almacena ni transmite ningún dato del usuario a servidores de CloakView. Específicamente:\n\n• No recopilamos audio de reuniones, transcripciones ni información personal.\n• No creamos cuentas ni perfiles de usuario.\n• No usamos cookies, píxeles de seguimiento ni análisis.\n• No registramos tu uso de API ni detalles de reuniones.\n\nEl único dato transmitido fuera de tu Mac es hacia la API de OpenAI, usando tu propia clave de API, para propósitos de transcripción y generación de sugerencias."
+        "content": "CloakView no recopila, almacena ni transmite ningún dato del usuario a servidores de CloakView. Específicamente:\n\n• No recopilamos audio de reuniones, transcripciones ni información personal.\n• No creamos cuentas ni perfiles de usuario.\n• No usamos cookies, píxeles de seguimiento ni análisis.\n• No registramos tu uso de API ni detalles de reuniones.\n\nEl único dato transmitido fuera de tu Mac es hacia la API de OpenAI, usando tu propia clave de API, para propósitos de transcripción y generación de sugerencias.\n\nAsistente de la web: si escribes una pregunta en el asistente de esta web, esa pregunta y la conversación que muestra el asistente se envían al AI Gateway de Vercel y a Anthropic (Claude) para generar la respuesta. No guardamos estas conversaciones ni registramos su contenido, y cualquier clave de OpenAI pegada en el asistente se elimina antes de enviarla. Las preguntas sugeridas del asistente se responden sin enviar nada. Esto se aplica solo a la web, no a la app CloakView."
       },
       "openaiProcessing": {
         "title": "Uso de la API de OpenAI",
@@ -452,7 +452,7 @@
       },
       "thirdParties": {
         "title": "Terceros",
-        "content": "CloakView no comparte tus datos con terceros. El único servicio externo es la API de OpenAI, que invocas directamente con tu propia clave. No tenemos acceso, control, ni visibilidad en el procesamiento de tus datos por OpenAI más allá de su política de privacidad publicada."
+        "content": "CloakView no comparte tus datos con terceros. El único servicio externo es la API de OpenAI, que invocas directamente con tu propia clave. No tenemos acceso, control, ni visibilidad en el procesamiento de tus datos por OpenAI más allá de su política de privacidad publicada.\n\nSolo en esta web, las preguntas escritas en el asistente las procesan Vercel (AI Gateway) y Anthropic para generar las respuestas, según sus propias políticas de privacidad. No incluyas en ellas información personal o sensible."
       },
       "dataRights": {
         "title": "Tus Derechos",
@@ -559,5 +559,60 @@
         "content": "Si tienes preguntas sobre cookies o seguimiento, envíanos un correo a {{email}}."
       }
     }
+  },
+  "assistant": {
+    "open": "Pregunta a CloakView",
+    "close": "Cerrar asistente",
+    "title": "Asistente de CloakView",
+    "intro": "¡Hola! Te explico cómo vincular tu clave de API de OpenAI, o respondo dudas sobre CloakView.",
+    "quickTitle": "Preguntas frecuentes",
+    "topics": [
+      {
+        "q": "¿Cómo vinculo mi clave de API de OpenAI?",
+        "a": "Cuatro pasos:",
+        "steps": [
+          "Entra en el panel de la API de OpenAI (platform.openai.com/api-keys) con tu propia cuenta y configura ahí la facturación y un límite de uso.",
+          "Crea una nueva clave secreta y cópiala una vez en un lugar seguro. Nunca la pegues en un chat, un issue ni una captura.",
+          "En CloakView, abre Ajustes → Clave de API de OpenAI, pega la clave en el campo oculto y guárdala.",
+          "Antes de tu reunión, usa la prueba de conexión si está disponible. Si falla, revisa la facturación y los permisos en tu cuenta de OpenAI."
+        ],
+        "note": "La clave se guarda en el Llavero de macOS de tu Mac y solo se envía a OpenAI, nunca a un servidor de CloakView.",
+        "linkLabel": "Leer la guía completa de la clave",
+        "href": "/es/guide/api-key"
+      },
+      {
+        "q": "¿Dónde se guarda mi clave? ¿Es seguro?",
+        "a": "La app prevista guarda la clave en el Llavero de macOS y la envía directamente a OpenAI, no a servidores de CloakView. Puedes revocarla en tu cuenta de OpenAI cuando quieras; al revocarla deja de funcionar aunque quede una copia en tu Mac.",
+        "linkLabel": "Dónde se guarda la clave",
+        "href": "/es/guide/api-key#storage"
+      },
+      {
+        "q": "¿Cuánto cuesta?",
+        "a": "CloakView es gratis en v1: sin suscripción y sin cuenta. Solo pagas tu propio consumo de la API de OpenAI, directamente a OpenAI y a sus tarifas. Una suscripción de ChatGPT no cubre el uso de la API.",
+        "linkLabel": "Ver estimaciones mensuales",
+        "href": "/es/pricing"
+      },
+      {
+        "q": "¿Lo pueden ver los demás en la llamada?",
+        "a": "El overlay está diseñado para aparecer solo en tu Mac. Comprueba cómo compartes pantalla antes de una reunión sensible: compartir la pantalla completa puede mostrar cualquier otro contenido visible.",
+        "linkLabel": "Preguntas de privacidad",
+        "href": "/es/faq"
+      },
+      {
+        "q": "¿Cuándo puedo descargarlo?",
+        "a": "Todavía no. La versión firmada está pendiente; esta web enlazará la descarga oficial en cuanto exista.",
+        "linkLabel": "Seguir las novedades",
+        "href": "/es/changelog"
+      }
+    ],
+    "inputLabel": "Pregunta lo que quieras sobre CloakView",
+    "placeholder": "Escribe tu pregunta…",
+    "send": "Enviar",
+    "aiNotice": "Las preguntas escritas las responde una IA (Claude, vía Vercel) usando nuestra guía, y no las guardamos. Nunca incluyas tu clave de API ni datos privados.",
+    "thinking": "Pensando…",
+    "error": "Ahora no puedo responder. Prueba con las preguntas de arriba o contacta con Soporte.",
+    "rateLimited": "Son muchas preguntas en poco tiempo. Espera unos minutos e inténtalo de nuevo.",
+    "supportLabel": "Contactar con soporte",
+    "supportHref": "/es/support"
   }
 }
