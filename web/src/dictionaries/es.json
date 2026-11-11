@@ -149,7 +149,7 @@
     },
     "download": {
       "title": "Consigue CloakView",
-      "body": "Gratis en v1. Requiere macOS 14.2 o posterior, Apple Silicon o Intel. Firmada y notarizada por Apple. Se distribuye vía GitHub Releases — sin cuenta de por medio.",
+      "body": "Gratis en v1. Requiere macOS 14.2 o posterior en un Mac con Apple Silicon. Firmada y notarizada por Apple. Se distribuye vía GitHub Releases — sin cuenta de por medio.",
       "button": "Descargar para macOS",
       "soon": "Próximamente — el repo de GitHub aún no es público.",
       "note": "Nunca te pediremos tu email para descargar."
@@ -200,7 +200,7 @@
     },
     "cta": {
       "title": "Pruébalo con tu propia clave",
-      "body": "Gratis en v1 para macOS 14.2+, Apple Silicon o Intel. Firmada y notarizada por Apple. Sin cuenta, sin email.",
+      "body": "Gratis en v1 para macOS 14.2+ con Apple Silicon. Firmada y notarizada por Apple. Sin cuenta, sin email.",
       "button": "Descargar para macOS",
       "soon": "Próximamente — el repo de GitHub aún no es público.",
       "note": "Nunca te pediremos tu email para descargar."
@@ -208,10 +208,10 @@
   },
   "download": {
     "title": "Descargar CloakView para macOS",
-    "description": "Elige la versión de CloakView para tu Mac. Descarga desde GitHub Releases y comprueba el SHA-256 cuando esté disponible.",
+    "description": "Descarga CloakView para Mac con Apple Silicon desde GitHub Releases y comprueba su hash SHA-256.",
     "badge": "macOS 14.2+",
     "heading": "Elige tu versión",
-    "intro": "Tu clave sigue siendo tuya. Elige una descarga; todas las opciones permanecen visibles sin importar tu dispositivo. Las descargas abrirán GitHub Releases cuando se publiquen.",
+    "intro": "Tu clave sigue siendo tuya. Elige una descarga; todas las opciones permanecen visibles sin importar tu dispositivo. Las descargas se abren en GitHub Releases.",
     "optionsLabel": "Plataformas disponibles",
     "recommended": "Recomendado para este Mac",
     "notarized": "Firmada y notarizada por Apple",
@@ -253,7 +253,7 @@
   },
   "guide": {
     "title": "Guía",
-    "description": "Configura CloakView, gestiona permisos y tu clave, usa atajos y resuelve problemas habituales. La app y las descargas aún no están publicadas.",
+    "description": "Configura CloakView, gestiona permisos y tu clave, usa atajos y resuelve problemas habituales.",
     "homeLabel": "Inicio",
     "breadcrumbLabel": "Ruta de navegación",
     "onThisPageLabel": "En esta página",
@@ -289,7 +289,7 @@
   "faq": {
     "title": "Preguntas frecuentes",
     "description": "Respuestas sobre privacidad, instalación, costes, compatibilidad y configuración técnica de CloakView.",
-    "intro": "Respuestas claras antes de instalar. La app y el repositorio de GitHub aún no están publicados.",
+    "intro": "Respuestas claras antes de instalar.",
     "guideLink": "Leer la guía",
     "topics": [
       {
@@ -301,7 +301,7 @@
           },
           {
             "q": "¿Dónde se guarda mi clave de API?",
-            "a": "La app prevista guarda la clave en el Llavero de macOS y la envía directamente a OpenAI, no a servidores de CloakView. Puedes revocarla desde tu cuenta de OpenAI.",
+            "a": "La app guarda la clave en el Llavero de macOS y la envía directamente a OpenAI, no a servidores de CloakView. Puedes revocarla desde tu cuenta de OpenAI.",
             "guide": "api-key"
           },
           {
@@ -319,12 +319,12 @@
         "items": [
           {
             "q": "¿Cuándo podré descargar la app?",
-            "a": "Todavía no. El repositorio y los archivos firmados están pendientes; esta web enlazará la versión oficial cuando exista.",
+            "a": "Ya. La versión 0.1.0 está disponible para Mac con Apple Silicon. La página de descarga enlaza la versión oficial en GitHub y muestra su hash SHA-256.",
             "guide": "installation"
           },
           {
             "q": "¿Qué versión de macOS necesito?",
-            "a": "Está previsto macOS 14.2 o posterior. Consulta las notas de lanzamiento para confirmar los requisitos finales antes de instalar.",
+            "a": "macOS 14.2 o posterior, en un Mac con Apple Silicon.",
             "guide": "installation"
           },
           {
@@ -339,7 +339,7 @@
         "items": [
           {
             "q": "¿CloakView es gratis?",
-            "a": "La v1 prevista es gratuita, sin suscripción de CloakView. Pagas tu propio consumo de la API directamente a OpenAI."
+            "a": "CloakView v1 es gratuita, sin suscripción de CloakView. Pagas tu propio consumo de la API directamente a OpenAI."
           },
           {
             "q": "¿Mi suscripción a ChatGPT cubre el uso de la API?",
@@ -362,11 +362,11 @@
           },
           {
             "q": "¿Hay versión para Windows?",
-            "a": "No está prevista una versión para Windows en v1. La página de descargas mostrará la disponibilidad de cada plataforma."
+            "a": "No hay versión para Windows en v1. La página de descargas muestra la disponibilidad de cada plataforma."
           },
           {
             "q": "¿Son compatibles Apple Silicon e Intel?",
-            "a": "Ambas arquitecturas están previstas; todavía no se han publicado archivos para Intel ni Apple Silicon. Instala solo una versión oficial compatible con tu Mac.",
+            "a": "Apple Silicon es compatible. Todavía no hay versión para Intel; la página de descargas la mostrará si se publica. Instala solo una versión oficial compatible con tu Mac.",
             "guide": "installation"
           }
         ]
@@ -582,7 +582,7 @@
       },
       {
         "q": "¿Dónde se guarda mi clave? ¿Es seguro?",
-        "a": "La app prevista guarda la clave en el Llavero de macOS y la envía directamente a OpenAI, no a servidores de CloakView. Puedes revocarla en tu cuenta de OpenAI cuando quieras; al revocarla deja de funcionar aunque quede una copia en tu Mac.",
+        "a": "La app guarda la clave en el Llavero de macOS y la envía directamente a OpenAI, no a servidores de CloakView. Puedes revocarla en tu cuenta de OpenAI cuando quieras; al revocarla deja de funcionar aunque quede una copia en tu Mac.",
         "linkLabel": "Dónde se guarda la clave",
         "href": "/es/guide/api-key#storage"
       },
@@ -600,9 +600,9 @@
       },
       {
         "q": "¿Cuándo puedo descargarlo?",
-        "a": "Todavía no. La versión firmada está pendiente; esta web enlazará la descarga oficial en cuanto exista.",
-        "linkLabel": "Seguir las novedades",
-        "href": "/es/changelog"
+        "a": "Ya. La versión 0.1.0 está disponible para Mac con Apple Silicon (macOS 14.2 o posterior), firmada y notarizada por Apple. No hay versión para Intel ni para Windows.",
+        "linkLabel": "Ir a la página de descarga",
+        "href": "/es/download"
       }
     ],
     "inputLabel": "Pregunta lo que quieras sobre CloakView",

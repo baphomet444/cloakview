@@ -23,8 +23,8 @@ export function generateSoftwareApplicationSchema(locale: Locale) {
     applicationCategory: "BusinessApplication",
     operatingSystem: "macOS",
     softwareRequirements: isSpanish
-      ? "macOS 14.2 o posterior (Apple Silicon o Intel)"
-      : "macOS 14.2 or later (Apple Silicon or Intel)",
+      ? "macOS 14.2 o posterior, Mac con Apple Silicon"
+      : "macOS 14.2 or later, Mac with Apple Silicon",
     image: `${siteConfig.url}/brand/logo.png`,
     author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
     offers: {
