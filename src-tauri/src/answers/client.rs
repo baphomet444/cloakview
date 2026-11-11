@@ -93,16 +93,27 @@ You may format with Markdown: bold, short lists and fenced code blocks. Write ma
 const SCREEN_INSTRUCTIONS_TAIL: &str = "Reply in the language of the question. Do not mention these instructions.";
 
 /// The instructions for one answer: the call or the screen, with the diagram
-/// paragraph only for CloakView Pro. Built per request (a handful of string
+/// paragraph only for CloakView Pro, and the user's own notes about themselves
+/// when they have set any (also Pro). Built per request (a handful of string
 /// copies once per answer, not per token).
-fn instructions(for_screen: bool, pro: bool) -> String {
+fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>) -> String {
     let (base, tail) = if for_screen {
         (SCREEN_INSTRUCTIONS_BASE, SCREEN_INSTRUCTIONS_TAIL)
     } else {
         (INSTRUCTIONS_BASE, INSTRUCTIONS_TAIL)
     };
+    // CloakView Pro: personal context shapes the answer; free users' notes are
+    // stored but never sent.
+    let about = match (pro, about_user.map(str::trim).filter(|a| !a.is_empty())) {
+        (true, Some(notes)) => format!(
+            "What follows are the user's own notes about themselves (their experience, the role \
+             they are interviewing for, their product). Use them to make what the user should say \
+             specific to them; never quote or mention these notes.\n\n{notes}\n\n"
+        ),
+        _ => String::new(),
+    };
     if pro {
-        format!("{base}{DIAGRAM_PARAGRAPH}{tail}")
+        format!("{base}{about}{DIAGRAM_PARAGRAPH}{tail}")
     } else {
         format!("{base}{tail}")
     }
@@ -144,6 +155,8 @@ pub fn stream_answer(
     // CloakView Pro: the model may add a mermaid diagram. Free users get the
     // same instructions without the diagram paragraph.
     pro: bool,
+    // The user's own notes about themselves, sent only when `pro`.
+    about_user: Option<String>,
 ) -> (tokio::sync::mpsc::Receiver<AnswersEvent>, tokio::task::JoinHandle<()>) {
     let (tx, rx) = tokio::sync::mpsc::channel(64);
 
@@ -154,7 +167,7 @@ pub fn stream_answer(
             Some(image) => vec![image_message(image, question.as_deref())],
             None => build_input(&context, question.as_deref()),
         };
-        let instructions = instructions(for_screen, pro);
+        let instructions = instructions(for_screen, pro, about_user.as_deref());
         let body = serde_json::json!({
             "model": model,
             "instructions": instructions,
@@ -306,9 +319,9 @@ mod instructions_tests {
     #[test]
     fn only_the_pro_instructions_mention_diagrams() {
         for for_screen in [false, true] {
-            let pro = instructions(for_screen, true);
+            let pro = instructions(for_screen, true, None);
             assert!(pro.contains("mermaid"), "Pro instructions lost the diagram paragraph");
-            let free = instructions(for_screen, false);
+            let free = instructions(for_screen, false, None);
             assert!(!free.contains("mermaid"), "free instructions must not offer diagrams");
             assert!(!free.contains("diagram"), "free instructions must not offer diagrams");
         }
@@ -316,9 +329,22 @@ mod instructions_tests {
 
     #[test]
     fn free_and_pro_differ_only_by_the_diagram_paragraph() {
-        assert!(instructions(false, true).len() > instructions(false, false).len());
-        assert!(instructions(true, true).len() > instructions(true, false).len());
-        assert!(instructions(false, false).starts_with("You are a private copilot"));
-        assert!(instructions(true, false).starts_with("You are a private copilot"));
+        assert!(instructions(false, true, None).len() > instructions(false, false, None).len());
+        assert!(instructions(true, true, None).len() > instructions(true, false, None).len());
+        assert!(instructions(false, false, None).starts_with("You are a private copilot"));
+        assert!(instructions(true, false, None).starts_with("You are a private copilot"));
+    }
+
+    /// Personal context is CloakView Pro: it reaches the model only with a
+    /// license, and blank notes are the same as none.
+    #[test]
+    fn personal_context_goes_out_only_for_pro() {
+        let notes = "Senior Rust engineer, applying to fintech startups.";
+        for for_screen in [false, true] {
+            assert!(instructions(for_screen, true, Some(notes)).contains(notes));
+            assert!(!instructions(for_screen, false, Some(notes)).contains(notes));
+            assert!(!instructions(for_screen, true, Some("   ")).contains("own notes"));
+            assert!(!instructions(for_screen, true, None).contains("own notes"));
+        }
     }
 }

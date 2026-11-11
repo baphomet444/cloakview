@@ -55,6 +55,8 @@ pub struct SettingsPatch {
     /// default, via `Shortcuts`' `serde(default)`).
     pub shortcuts: Option<crate::hotkeys::Shortcuts>,
     pub include_mic: Option<bool>,
+    /// Replaces the whole notes block; blank clears it.
+    pub personal_context: Option<String>,
 }
 
 /// Applies the fields present in `patch` to `s`: `opacity` is clamped to
@@ -87,6 +89,9 @@ pub fn apply_patch(s: &mut Settings, patch: SettingsPatch) {
     }
     if let Some(v) = patch.include_mic {
         s.include_mic = v;
+    }
+    if let Some(v) = patch.personal_context {
+        s.personal_context = v.trim().to_string();
     }
 }
 
@@ -132,5 +137,14 @@ mod tests {
         // blank -> cleared
         apply_patch(&mut s, SettingsPatch { user_name: Some("   ".into()), ..Default::default() });
         assert_eq!(s.user_name, None);
+    }
+
+    #[test]
+    fn patch_replaces_personal_context_trimmed() {
+        let mut s = Settings::default();
+        apply_patch(&mut s, SettingsPatch { personal_context: Some("  Rust engineer.  ".into()), ..Default::default() });
+        assert_eq!(s.personal_context, "Rust engineer.");
+        apply_patch(&mut s, SettingsPatch { personal_context: Some("  ".into()), ..Default::default() });
+        assert_eq!(s.personal_context, "");
     }
 }

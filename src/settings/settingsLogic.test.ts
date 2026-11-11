@@ -21,6 +21,7 @@ const settings: Settings = {
   userName: null,
   shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "cmdOrControl+shift+space", toggleListen: "", readScreen: "" },
   includeMic: false,
+  personalContext: "",
 };
 
 describe("themeFromSetting", () => {
@@ -53,7 +54,7 @@ describe("maskKey", () => {
 describe("the model and shortcuts draft", () => {
   it("starts from the saved settings and is not dirty", () => {
     const draft = draftFromSettings(settings);
-    expect(draft).toEqual({ answersModel: "gpt-4o-mini", shortcuts: settings.shortcuts });
+    expect(draft).toEqual({ answersModel: "gpt-4o-mini", shortcuts: settings.shortcuts, personalContext: "" });
     expect(isDraftDirty(draft, settings)).toBe(false);
   });
 
@@ -62,6 +63,8 @@ describe("the model and shortcuts draft", () => {
     expect(isDraftDirty({ ...draft, answersModel: " gpt-4o-mini " }, settings)).toBe(false);
     expect(isDraftDirty({ ...draft, answersModel: "gpt-4.1" }, settings)).toBe(true);
     expect(isDraftDirty({ ...draft, shortcuts: { ...draft.shortcuts, toggleListen: "cmdOrControl+shift+l" } }, settings)).toBe(true);
+    expect(isDraftDirty({ ...draft, personalContext: "  Rust engineer.  " }, { ...settings, personalContext: "Rust engineer." })).toBe(false);
+    expect(isDraftDirty({ ...draft, personalContext: "Rust engineer." }, settings)).toBe(true);
   });
 
   it("is invalid with a blank model (Rust would accept it and every answer would fail)", () => {
@@ -77,10 +80,12 @@ describe("the model and shortcuts draft", () => {
     const patch = draftPatch({
       answersModel: "  gpt-4.1 ",
       shortcuts: { quickHide: " cmdOrControl+shift+h ", pushToAsk: "", toggleListen: "alt+l ", readScreen: " alt+s " },
+      personalContext: "  Senior Rust engineer.  ",
     });
     expect(patch).toEqual({
       answersModel: "gpt-4.1",
       shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "", toggleListen: "alt+l", readScreen: "alt+s" },
+      personalContext: "Senior Rust engineer.",
     });
   });
 });

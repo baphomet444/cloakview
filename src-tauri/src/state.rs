@@ -24,6 +24,11 @@ pub struct Settings {
     /// Also transcribe the user's microphone. Off by default: without headphones the
     /// microphone hears the speakers. Read when listening starts.
     pub include_mic: bool,
+    /// The user's own notes about themselves (résumé, job description, product
+    /// docs), appended to the answer instructions so suggestions are tailored to
+    /// them. CloakView Pro: ignored without a license. Goes to OpenAI with each
+    /// answer, like everything else.
+    pub personal_context: String,
 }
 
 impl Default for Settings {
@@ -41,6 +46,7 @@ impl Default for Settings {
             user_name: None,
             shortcuts: crate::hotkeys::Shortcuts::default(),
             include_mic: false,
+            personal_context: String::new(),
         }
     }
 }
@@ -119,6 +125,7 @@ mod tests {
             user_name: Some("Ana".into()),
             shortcuts: crate::hotkeys::Shortcuts::default(),
             include_mic: true,
+            personal_context: String::new(),
         };
         let json = serde_json::to_value(&s).unwrap();
 
@@ -138,7 +145,8 @@ mod tests {
                     "toggleListen": "cmdOrControl+shift+l",
                     "readScreen": "cmdOrControl+shift+s"
                 },
-                "includeMic": true
+                "includeMic": true,
+                "personalContext": ""
             })
         );
         for key in json.as_object().unwrap().keys() {

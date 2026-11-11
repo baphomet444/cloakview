@@ -344,6 +344,23 @@ export function SettingsApp() {
               }}
             />
 
+            <label className="win-label" htmlFor="set-context">
+              {t("settings.personalContext")}
+            </label>
+            <textarea
+              id="set-context"
+              className="win-input win-textarea"
+              rows={4}
+              value={draft.personalContext}
+              placeholder={t("settings.personalContextPlaceholder")}
+              onChange={(event) => {
+                const personalContext = event.currentTarget.value;
+                setJustSaved(false);
+                setDraft((current) => (current === null ? current : { ...current, personalContext }));
+              }}
+            />
+            <p className="win-hint set-span">{t("settings.personalContextHint")}</p>
+
             <h2 className="win-label set-span">{t("settings.shortcuts")}</h2>
             {SHORTCUT_FIELDS.map((field) => (
               <ShortcutField

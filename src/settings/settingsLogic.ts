@@ -24,10 +24,15 @@ export function clampOpacity(value: number): number {
 export type SettingsDraft = {
   answersModel: string;
   shortcuts: Shortcuts;
+  personalContext: string;
 };
 
 export function draftFromSettings(settings: Settings): SettingsDraft {
-  return { answersModel: settings.answersModel, shortcuts: { ...settings.shortcuts } };
+  return {
+    answersModel: settings.answersModel,
+    shortcuts: { ...settings.shortcuts },
+    personalContext: settings.personalContext,
+  };
 }
 
 /** Always all four shortcuts: `SettingsPatch.shortcuts` replaces the saved set. */
@@ -40,6 +45,7 @@ export function draftPatch(draft: SettingsDraft): SettingsPatch {
       toggleListen: draft.shortcuts.toggleListen.trim(),
       readScreen: draft.shortcuts.readScreen.trim(),
     },
+    personalContext: draft.personalContext.trim(),
   };
 }
 
@@ -58,6 +64,7 @@ export function isDraftDirty(draft: SettingsDraft, saved: Settings): boolean {
   const patch = draftPatch(draft);
   return (
     patch.answersModel !== saved.answersModel ||
+    patch.personalContext !== saved.personalContext ||
     patch.shortcuts?.quickHide !== saved.shortcuts.quickHide ||
     patch.shortcuts?.pushToAsk !== saved.shortcuts.pushToAsk ||
     patch.shortcuts?.toggleListen !== saved.shortcuts.toggleListen ||

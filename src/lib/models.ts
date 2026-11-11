@@ -133,6 +133,8 @@ export type Settings = {
   shortcuts: Shortcuts;
   /** Also transcribe the user's microphone (read when listening starts). */
   includeMic: boolean;
+  /** The user's own notes about themselves, sent with each answer (CloakView Pro). */
+  personalContext: string;
 };
 
 /**
@@ -151,6 +153,8 @@ export type SettingsPatch = {
   /** All three at once: it replaces the saved set. */
   shortcuts?: Shortcuts;
   includeMic?: boolean;
+  /** Replaces the whole notes block; blank clears it. */
+  personalContext?: string;
 };
 
 /** Microphone permission. `src-tauri/src/platform.rs` (`MicStatus`): a plain camelCase string. */
