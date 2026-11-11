@@ -68,11 +68,15 @@ pub struct AppState {
     pub session_log: Mutex<crate::session::SessionLog>,
     /// The interview that just ended, kept until the next one so it can be saved to a file.
     pub last_session: Mutex<Option<crate::session::FinishedSession>>,
+    /// The CloakView Pro license, loaded from `license.json` at startup.
+    pub license: RwLock<crate::license::License>,
 }
 
 impl AppState {
-    pub fn is_pro() -> bool {
-        false
+    /// Whether the Pro features are unlocked (`license`). Every Pro gate in
+    /// `commands` asks this.
+    pub fn is_pro(&self) -> bool {
+        self.license.read().expect("license lock").is_pro()
     }
 }
 
@@ -131,7 +135,8 @@ mod tests {
                 "shortcuts": {
                     "quickHide": "cmdOrControl+shift+h",
                     "pushToAsk": "cmdOrControl+shift+space",
-                    "toggleListen": "cmdOrControl+shift+l"
+                    "toggleListen": "cmdOrControl+shift+l",
+                    "readScreen": "cmdOrControl+shift+s"
                 },
                 "includeMic": true
             })

@@ -23,6 +23,10 @@ pub enum AppError {
     InvalidUrl(String),
     #[error("could not open url: {0}")]
     OpenFailed(String),
+    #[error("this feature requires CloakView Pro")]
+    ProRequired,
+    #[error("license error: {0}")]
+    License(String),
 }
 
 pub type AppResult<T> = Result<T, AppError>;
@@ -40,6 +44,8 @@ pub enum IpcError {
     MicPermissionDenied,
     InvalidUrl(String),
     OpenFailed(String),
+    ProRequired,
+    License(String),
 }
 
 impl From<AppError> for IpcError {
@@ -55,6 +61,8 @@ impl From<AppError> for IpcError {
             AppError::MicPermissionDenied => IpcError::MicPermissionDenied,
             AppError::InvalidUrl(m) => IpcError::InvalidUrl(m),
             AppError::OpenFailed(m) => IpcError::OpenFailed(m),
+            AppError::ProRequired => IpcError::ProRequired,
+            AppError::License(m) => IpcError::License(m),
         }
     }
 }
@@ -89,6 +97,12 @@ mod tests {
         let ipc: IpcError = AppError::MissingApiKey.into();
         let json = serde_json::to_value(ipc).unwrap();
         assert_eq!(json["kind"], "MissingApiKey");
+    }
+
+    #[test]
+    fn pro_required_serializes_as_a_bare_kind() {
+        let ipc: IpcError = AppError::ProRequired.into();
+        assert_eq!(serde_json::to_value(ipc).unwrap(), serde_json::json!({"kind": "ProRequired"}));
     }
 
     #[test]

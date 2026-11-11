@@ -41,6 +41,7 @@ describe("errorCopyKey", () => {
   it.each<[IpcError, string]>([
     [{ kind: "MissingApiKey" }, "errors.missingApiKey"],
     [{ kind: "PermissionDenied" }, "errors.permissionDenied"],
+    [{ kind: "ProRequired" }, "errors.proRequired"],
     [{ kind: "InvalidUrl", message: "x" }, "errors.invalidUrl"],
     [{ kind: "OpenFailed", message: "x" }, "errors.openFailed"],
   ])("%j -> %s", (error, key) => {
@@ -48,7 +49,7 @@ describe("errorCopyKey", () => {
   });
 
   it("falls back to the generic copy for kinds the UI does not explain, and for anything that is not an IpcError", () => {
-    for (const kind of ["Keychain", "Db", "Audio", "Network", "Serialize"] as const) {
+    for (const kind of ["Keychain", "Db", "Audio", "Network", "Serialize", "License"] as const) {
       expect(errorCopyKey({ kind, message: "x" })).toBe("errors.generic");
     }
     for (const value of [new Error("boom"), "boom", null, undefined, { kind: "listening" }, {}]) {

@@ -32,6 +32,8 @@ export function errorCopyKey(error: unknown): CatalogKey {
       return "errors.permissionDenied";
     case "MicPermissionDenied":
       return "errors.micPermissionDenied";
+    case "ProRequired":
+      return "errors.proRequired";
     case "InvalidUrl":
       return "errors.invalidUrl";
     case "OpenFailed":

@@ -25,6 +25,7 @@ import {
   type Conversation,
   type ConversationMessage,
   type IpcError,
+  type License,
   type ListenState,
   type MicStatus,
   type NewMessage,
@@ -67,6 +68,9 @@ export interface CommandSignatures {
   finish_session: { args: undefined; result: SessionSummary };
   save_session_txt: { args: undefined; result: string | null };
   read_screen: { args: undefined; result: void };
+  get_license_status: { args: undefined; result: License };
+  activate_license: { args: { key: string }; result: License };
+  deactivate_license: { args: undefined; result: License };
 }
 
 /**
@@ -99,6 +103,9 @@ export const COMMANDS = [
   "finish_session",
   "save_session_txt",
   "read_screen",
+  "get_license_status",
+  "activate_license",
+  "deactivate_license",
 ] as const satisfies readonly (keyof CommandSignatures)[];
 
 export type CommandName = (typeof COMMANDS)[number];
@@ -198,6 +205,19 @@ export function saveSessionTxt(): Promise<string | null> {
   return call("save_session_txt");
 }
 
+// CloakView Pro license
+export function getLicenseStatus(): Promise<License> {
+  return call("get_license_status");
+}
+/** Stores the key and unlocks Pro. Rejects with `License` when the key is blank. */
+export function activateLicense(key: string): Promise<License> {
+  return call("activate_license", { key });
+}
+/** Locks Pro again and deletes the stored key. */
+export function deactivateLicense(): Promise<License> {
+  return call("deactivate_license");
+}
+
 // platform
 export function getMicStatus(): Promise<MicStatus> {
   return call("get_mic_status");
@@ -276,6 +296,8 @@ export interface EventPayloads {
   error: string;
   /** The push-to-ask global shortcut, sent to the hub only. No data. */
   "push-to-ask": null;
+  /** The read-screen global shortcut, sent to the hub only. No data. */
+  "read-screen": null;
 }
 
 /** Runtime list of the same names, compared by the test with `src-tauri/src/events.rs`. */
@@ -288,6 +310,7 @@ export const EVENTS = [
   "listen-state",
   "error",
   "push-to-ask",
+  "read-screen",
 ] as const satisfies readonly (keyof EventPayloads)[];
 
 export type EventName = (typeof EVENTS)[number];
@@ -324,4 +347,8 @@ export function subscribeError(handler: (message: string) => void): Promise<Unli
 /** Fires when the push-to-ask global shortcut is pressed: the hub opens the Ask window. No data. */
 export function subscribePushToAsk(handler: () => void): Promise<UnlistenFn> {
   return subscribe("push-to-ask", () => handler());
+}
+/** Fires when the read-screen global shortcut is pressed: the hub reads the screen. No data. */
+export function subscribeReadScreen(handler: () => void): Promise<UnlistenFn> {
+  return subscribe("read-screen", () => handler());
 }

@@ -141,6 +141,9 @@ const cases: Case[] = [
   ["finish_session", () => ipc.finishSession(), undefined],
   ["save_session_txt", () => ipc.saveSessionTxt(), undefined],
   ["read_screen", () => ipc.readScreen(), undefined],
+  ["get_license_status", () => ipc.getLicenseStatus(), undefined],
+  ["activate_license", () => ipc.activateLicense("ABCD-1234"), { key: "ABCD-1234" }],
+  ["deactivate_license", () => ipc.deactivateLicense(), undefined],
 ];
 
 describe("wrappers", () => {
@@ -248,6 +251,7 @@ describe("events", () => {
     ["turn-detected", ipc.subscribeTurnDetected],
     ["answer-done", ipc.subscribeAnswerDone],
     ["push-to-ask", ipc.subscribePushToAsk],
+    ["read-screen", ipc.subscribeReadScreen],
   ] as const)("%s: carries no data, so the handler takes no arguments", async (event, subscribe) => {
     const received = vi.fn();
     await subscribe(received);
@@ -259,7 +263,7 @@ describe("events", () => {
   });
 
   it("has a subscribe wrapper for every event (none forgotten)", () => {
-    const covered = [...subscriptions.map(([event]) => event), "turn-detected", "answer-done", "push-to-ask"];
+    const covered = [...subscriptions.map(([event]) => event), "turn-detected", "answer-done", "push-to-ask", "read-screen"];
     expect(sorted(covered)).toEqual(sorted(ipc.EVENTS));
   });
 });

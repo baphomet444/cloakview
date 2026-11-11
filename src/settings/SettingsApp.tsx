@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { getLocale, setLocale, t, type CatalogKey, type Locale } from "../lib/i18n";
-import { hasApiKey, saveApiKey, saveSettings } from "../lib/ipc";
-import type { Settings, SettingsPatch, Shortcuts } from "../lib/models";
+import {
+  activateLicense,
+  deactivateLicense,
+  getLicenseStatus,
+  hasApiKey,
+  saveApiKey,
+  saveSettings,
+} from "../lib/ipc";
+import type { License, Settings, SettingsPatch, Shortcuts } from "../lib/models";
 import { errorCopyKey } from "../hub/hubLogic";
 import { WindowFrame } from "../windows/WindowFrame";
 import { applyAppearance, useSettingsBoot } from "../windows/useSettingsBoot";
@@ -12,6 +19,7 @@ import {
   draftIsValid,
   draftPatch,
   isDraftDirty,
+  maskKey,
   themeFromSetting,
   type SettingsDraft,
   type Theme,
@@ -24,6 +32,7 @@ const SHORTCUT_FIELDS: readonly { key: keyof Shortcuts; labelKey: CatalogKey }[]
   { key: "quickHide", labelKey: "settings.shortcutQuickHide" },
   { key: "pushToAsk", labelKey: "settings.shortcutPushToAsk" },
   { key: "toggleListen", labelKey: "settings.shortcutToggleListen" },
+  { key: "readScreen", labelKey: "settings.shortcutReadScreen" },
 ];
 
 const LANGUAGES: readonly { value: Locale; labelKey: CatalogKey }[] = [
@@ -53,6 +62,9 @@ export function SettingsApp() {
   const [keyStored, setKeyStored] = useState<boolean | null>(null);
   const [keyInput, setKeyInput] = useState("");
   const [savingKey, setSavingKey] = useState(false);
+  const [license, setLicense] = useState<License | null>(null);
+  const [licenseInput, setLicenseInput] = useState("");
+  const [savingLicense, setSavingLicense] = useState(false);
   const [draft, setDraft] = useState<SettingsDraft | null>(null);
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
@@ -76,6 +88,13 @@ export function SettingsApp() {
     hasApiKey()
       .then((stored) => {
         if (!cancelled) setKeyStored(stored);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) setErrorKey(errorCopyKey(error));
+      });
+    getLicenseStatus()
+      .then((stored) => {
+        if (!cancelled) setLicense(stored);
       })
       .catch((error: unknown) => {
         if (!cancelled) setErrorKey(errorCopyKey(error));
@@ -116,6 +135,32 @@ export function SettingsApp() {
       setErrorKey(errorCopyKey(error));
     } finally {
       setSavingKey(false);
+    }
+  }
+
+  async function activate(): Promise<void> {
+    const key = licenseInput.trim();
+    if (key === "" || savingLicense) return;
+    setSavingLicense(true);
+    try {
+      setLicense(await activateLicense(key));
+      setLicenseInput("");
+    } catch (error) {
+      setErrorKey(errorCopyKey(error));
+    } finally {
+      setSavingLicense(false);
+    }
+  }
+
+  async function deactivate(): Promise<void> {
+    if (savingLicense) return;
+    setSavingLicense(true);
+    try {
+      setLicense(await deactivateLicense());
+    } catch (error) {
+      setErrorKey(errorCopyKey(error));
+    } finally {
+      setSavingLicense(false);
     }
   }
 
@@ -175,6 +220,49 @@ export function SettingsApp() {
           </p>
         )}
         <p className="win-hint">{t("settings.apiKeyHint")}</p>
+      </section>
+
+      <section className="set-section">
+        <h2 className="win-label">{t("settings.pro")}</h2>
+        {license === null ? (
+          <p className="win-muted">{t("settings.loading")}</p>
+        ) : license.status === "inactive" ? (
+          <>
+            <p className="set-status win-muted">{t("settings.proInactive")}</p>
+            <form
+              className="win-row"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void activate();
+              }}
+            >
+              <input
+                className="win-input win-mono"
+                type="text"
+                autoComplete="off"
+                spellCheck={false}
+                value={licenseInput}
+                placeholder={t("settings.licensePlaceholder")}
+                aria-label={t("settings.licenseKey")}
+                onChange={(event) => setLicenseInput(event.currentTarget.value)}
+              />
+              <button type="submit" className="win-btn win-btn-primary" disabled={savingLicense || licenseInput.trim() === ""}>
+                {t("settings.activate")}
+              </button>
+            </form>
+          </>
+        ) : (
+          <>
+            <p className="set-status set-ok">{t("settings.proActive")}</p>
+            <div className="win-row">
+              <input className="win-input win-mono" readOnly value={maskKey(license.key)} aria-label={t("settings.licenseKey")} />
+              <button type="button" className="win-btn" disabled={savingLicense} onClick={() => void deactivate()}>
+                {t("settings.deactivate")}
+              </button>
+            </div>
+          </>
+        )}
+        <p className="win-hint">{t("settings.proHint")}</p>
       </section>
 
       {settings === null || draft === null || opacity === null ? (

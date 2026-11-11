@@ -86,7 +86,14 @@ export type Shortcuts = {
   quickHide: string;
   pushToAsk: string;
   toggleListen: string;
+  readScreen: string;
 };
+
+/** `src-tauri/src/license.rs` (`License`): a `status` tag with the key as content. */
+export type License =
+  | { status: "inactive" }
+  | { status: "pendingValidation"; key: string }
+  | { status: "active"; key: string };
 
 /** `src-tauri/src/state.rs` (`Settings`). `theme` and `language` are free-form strings in Rust. */
 export type Settings = {
@@ -156,7 +163,7 @@ export type ListenState =
  * tagged (`kind` + `message`) with **no** `rename_all`, so `kind` is the PascalCase variant
  * name. Unit variants send no `message` at all.
  */
-export const IPC_ERROR_UNIT_KINDS = ["MissingApiKey", "PermissionDenied", "MicPermissionDenied"] as const;
+export const IPC_ERROR_UNIT_KINDS = ["MissingApiKey", "PermissionDenied", "MicPermissionDenied", "ProRequired"] as const;
 export const IPC_ERROR_MESSAGE_KINDS = [
   "Keychain",
   "Db",
@@ -165,6 +172,7 @@ export const IPC_ERROR_MESSAGE_KINDS = [
   "Serialize",
   "InvalidUrl",
   "OpenFailed",
+  "License",
 ] as const;
 export type IpcError =
   | { kind: (typeof IPC_ERROR_UNIT_KINDS)[number] }

@@ -1,4 +1,4 @@
-//! Global shortcuts (Task 15): quick-hide, push-to-ask and start/stop listen.
+//! Global shortcuts (Task 15): quick-hide, push-to-ask, start/stop listen and read-screen.
 //!
 //! The accelerators come from `Settings::shortcuts` and are re-registered whenever
 //! the settings are saved; nothing here hard-codes a key. A blank accelerator turns
@@ -11,7 +11,7 @@
 
 use crate::commands;
 use crate::error::{AppError, AppResult};
-use crate::events::PUSH_TO_ASK_EVENT;
+use crate::events::{PUSH_TO_ASK_EVENT, READ_SCREEN_EVENT};
 use crate::state::AppState;
 use crate::windows_ext;
 use tauri::{AppHandle, Emitter, Manager};
@@ -29,6 +29,9 @@ pub struct Shortcuts {
     pub push_to_ask: String,
     /// Starts listening, or stops if a session is running.
     pub toggle_listen: String,
+    /// Reads the screen and answers what is on it (through the hub, the same path as
+    /// its Screen button).
+    pub read_screen: String,
 }
 
 impl Default for Shortcuts {
@@ -37,6 +40,7 @@ impl Default for Shortcuts {
             quick_hide: "cmdOrControl+shift+h".into(),
             push_to_ask: "cmdOrControl+shift+space".into(),
             toggle_listen: "cmdOrControl+shift+l".into(),
+            read_screen: "cmdOrControl+shift+s".into(),
         }
     }
 }
@@ -46,15 +50,17 @@ pub enum Action {
     QuickHide,
     PushToAsk,
     ToggleListen,
+    ReadScreen,
 }
 
 impl Shortcuts {
     /// Every action with its accelerator, in a fixed order.
-    pub fn bindings(&self) -> [(Action, &str); 3] {
+    pub fn bindings(&self) -> [(Action, &str); 4] {
         [
             (Action::QuickHide, self.quick_hide.as_str()),
             (Action::PushToAsk, self.push_to_ask.as_str()),
             (Action::ToggleListen, self.toggle_listen.as_str()),
+            (Action::ReadScreen, self.read_screen.as_str()),
         ]
     }
 }
@@ -107,6 +113,9 @@ fn dispatch(app: AppHandle, action: Action) {
                 .emit_to("hub", PUSH_TO_ASK_EVENT, ())
                 .map_err(|e| AppError::Audio(e.to_string())),
             Action::ToggleListen => toggle_listen(&app).await,
+            Action::ReadScreen => app
+                .emit_to("hub", READ_SCREEN_EVENT, ())
+                .map_err(|e| AppError::Audio(e.to_string())),
         };
         if let Err(e) = result {
             eprintln!("[hotkeys] {action:?} failed: {e}");
@@ -160,6 +169,7 @@ mod tests {
         assert_eq!(s.quick_hide, "cmdOrControl+shift+h");
         assert_eq!(s.push_to_ask, "cmdOrControl+shift+space");
         assert_eq!(s.toggle_listen, "cmdOrControl+shift+l");
+        assert_eq!(s.read_screen, "cmdOrControl+shift+s");
     }
 
     #[test]
@@ -178,7 +188,8 @@ mod tests {
             serde_json::json!({
                 "quickHide": "cmdOrControl+shift+h",
                 "pushToAsk": "cmdOrControl+shift+space",
-                "toggleListen": "cmdOrControl+shift+l"
+                "toggleListen": "cmdOrControl+shift+l",
+                "readScreen": "cmdOrControl+shift+s"
             })
         );
         assert_eq!(serde_json::from_value::<Shortcuts>(json).unwrap(), s);
@@ -203,6 +214,9 @@ mod tests {
     #[test]
     fn bindings_cover_every_action_once() {
         let actions: Vec<Action> = Shortcuts::default().bindings().iter().map(|(a, _)| *a).collect();
-        assert_eq!(actions, vec![Action::QuickHide, Action::PushToAsk, Action::ToggleListen]);
+        assert_eq!(
+            actions,
+            vec![Action::QuickHide, Action::PushToAsk, Action::ToggleListen, Action::ReadScreen]
+        );
     }
 }

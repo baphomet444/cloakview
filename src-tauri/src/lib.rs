@@ -7,6 +7,7 @@ pub mod diag;
 mod error;
 mod events;
 mod hotkeys;
+mod license;
 mod listen;
 mod platform;
 pub mod realtime;
@@ -66,6 +67,9 @@ ipc_commands![
     finish_session,
     save_session_txt,
     read_screen,
+    get_license_status,
+    activate_license,
+    deactivate_license,
 ];
 
 pub fn run() {
@@ -80,6 +84,7 @@ pub fn run() {
             let shortcuts = s.shortcuts.clone();
             let data_dir = app.path().app_data_dir()?;
             let db = db::Db::open(&data_dir.join("cloakview.db")).map_err(|e| e.to_string())?;
+            let license = license::load_from(&license::license_path(&data_dir));
             app.manage(AppState {
                 settings: std::sync::RwLock::new(s),
                 db: std::sync::Mutex::new(Some(db)),
@@ -88,6 +93,7 @@ pub fn run() {
                 answer_task: tokio::sync::Mutex::new(None),
                 session_log: Default::default(),
                 last_session: Default::default(),
+                license: std::sync::RwLock::new(license),
             });
             let hub = app.get_webview_window("hub").ok_or("hub window missing")?;
             windows_ext::make_overlay(&hub).map_err(|e| e.to_string())?;
@@ -167,6 +173,10 @@ mod ipc_surface_tests {
         "save_session_txt",
         // screen reading (not in design.md §5)
         "read_screen",
+        // CloakView Pro licensing (not in design.md §5)
+        "get_license_status",
+        "activate_license",
+        "deactivate_license",
     ];
 
     #[test]

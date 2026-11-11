@@ -13,6 +13,7 @@ import {
   stopListen,
   subscribeListenState,
   subscribePushToAsk,
+  subscribeReadScreen,
   subscribeTurnDetected,
   waitForAskReady,
 } from "../lib/ipc";
@@ -168,6 +169,9 @@ export function HubApp() {
     Promise.all([
       subscribePushToAsk(() => void openFeature("ask")),
       subscribeTurnDetected(() => void openFeature("ask")),
+      // The read-screen global shortcut goes through the hub's own Screen button path,
+      // so the "wait for Ask to be ready" fix covers it too.
+      subscribeReadScreen(() => void readTheScreen()),
     ])
       .then((stops) => {
         const stop = () => stops.forEach((each) => each());

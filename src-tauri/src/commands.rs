@@ -140,6 +140,10 @@ pub async fn start_listen(app: AppHandle, state: State<'_, AppState>) -> Result<
     if guard.is_some() {
         return Ok(()); // already listening; idempotent.
     }
+    if include_mic && !state.is_pro() {
+        // Both-sides listening is a CloakView Pro feature; free listens to the call only.
+        return Err(IpcError::from(AppError::ProRequired));
+    }
     if include_mic && platform::mic_status() != platform::MicStatus::Authorized {
         // Not allowed yet: this shows the system prompt the first time. The user answers it and presses Listen again.
         platform::request_mic_access();
@@ -181,7 +185,8 @@ pub async fn request_answer(
 /// `answer-started` once the screenshot is taken, so Ask shows it is working.
 #[tauri::command]
 pub async fn read_screen(app: AppHandle, state: State<'_, AppState>) -> Result<(), IpcError> {
-    // Fail before taking a screenshot that could not be sent anyway.
+    // Pro gate first: fail before taking a screenshot that could not be sent anyway.
+    state.license.read().expect("license lock").require_pro().map_err(IpcError::from)?;
     secrets::get_api_key().map_err(IpcError::from)?;
     let image = tokio::task::spawn_blocking(crate::screen::capture)
         .await
@@ -220,7 +225,7 @@ async fn start_answer(
             .or_else(|| state.session_log.lock().expect("session log lock").last_heard().map(str::to_string))
             .unwrap_or_default()
     };
-    let (mut rx, handle) = crate::answers::client::stream_answer(api_key, model, context, question, image);
+    let (mut rx, handle) = crate::answers::client::stream_answer(api_key, model, context, question, image, state.is_pro());
     *answer_guard = Some(handle);
     drop(answer_guard);
 
@@ -291,7 +296,9 @@ pub fn finish_session(state: State<AppState>) -> Result<SessionSummary, IpcError
     let Some(mut session) = finished else {
         return Ok(SessionSummary { heard: 0, suggestions: 0, note_saved: false });
     };
-    if session.suggestion_count() > 0 {
+    // Saving the suggested answers as a note is CloakView Pro (meeting notes
+    // collection); free users keep their own manual notes only.
+    if session.suggestion_count() > 0 && state.is_pro() {
         let note = with_db(&state, |db| {
             notes::create(
                 db,
@@ -325,6 +332,8 @@ pub fn finish_session(state: State<AppState>) -> Result<SessionSummary, IpcError
 pub async fn save_session_txt(app: AppHandle, state: State<'_, AppState>) -> Result<Option<String>, IpcError> {
     use tauri_plugin_dialog::DialogExt;
 
+    // Saving the interview to a file is CloakView Pro.
+    state.license.read().expect("license lock").require_pro().map_err(IpcError::from)?;
     let session = state.last_session.lock().expect("last session lock").clone();
     let Some(session) = session else { return Ok(None) };
     let lines: Vec<crate::session::NoteLine> = with_db(&state, |db| {
@@ -347,6 +356,58 @@ pub async fn save_session_txt(app: AppHandle, state: State<'_, AppState>) -> Res
     std::fs::write(&path, text).map_err(|e| IpcError::from(AppError::from(e)))?;
     crate::diag::log("interview saved to a file");
     Ok(Some(path.display().to_string()))
+}
+
+// --- CloakView Pro license ---
+
+/// The stored license, for the Settings window. `Inactive` on a clean install.
+#[tauri::command]
+pub fn get_license_status(state: State<AppState>) -> crate::license::License {
+    state.license.read().expect("license lock").clone()
+}
+
+/// Stores the key and unlocks Pro. The key is kept as `PendingValidation`: the
+/// one-time online check against Lemon Squeezy is not wired yet, and until it
+/// is, a stored key counts as Pro.
+#[tauri::command]
+pub fn activate_license(
+    app: AppHandle,
+    state: State<AppState>,
+    key: String,
+) -> Result<crate::license::License, IpcError> {
+    let key = key.trim();
+    if key.is_empty() {
+        return Err(IpcError::from(AppError::License("the license key is empty".into())));
+    }
+    let license = crate::license::License::PendingValidation(key.into());
+    {
+        let mut stored = state.license.write().expect("license lock");
+        *stored = license.clone();
+    }
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::Serialize(e.to_string()))?;
+    crate::license::save_to(&crate::license::license_path(&dir), &license).map_err(IpcError::from)?;
+    crate::diag::log("license activated (pending online validation)");
+    Ok(license)
+}
+
+/// Locks Pro again and deletes the stored key.
+#[tauri::command]
+pub fn deactivate_license(app: AppHandle, state: State<AppState>) -> Result<crate::license::License, IpcError> {
+    {
+        let mut stored = state.license.write().expect("license lock");
+        *stored = crate::license::License::Inactive;
+    }
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::Serialize(e.to_string()))?;
+    crate::license::save_to(&crate::license::license_path(&dir), &crate::license::License::Inactive)
+        .map_err(IpcError::from)?;
+    crate::diag::log("license deactivated");
+    Ok(crate::license::License::Inactive)
 }
 
 // --- app / platform (design.md §5) ---

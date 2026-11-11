@@ -63,6 +63,7 @@ export const en = {
   "settings.shortcutQuickHide": "Show or hide the overlay",
   "settings.shortcutPushToAsk": "Open Ask",
   "settings.shortcutToggleListen": "Start or stop listening",
+  "settings.shortcutReadScreen": "Read the screen and answer what is on it",
   "settings.shortcutsHint": "Accelerators such as cmdOrControl+shift+h. Leave one blank to turn it off.",
   "settings.save": "Save",
   "settings.saved": "Saved",
@@ -78,7 +79,16 @@ export const en = {
   "errors.invalidUrl": "That address is not valid.",
   "errors.openFailed": "The link could not be opened.",
   "errors.micPermissionDenied": "Allow the microphone for CloakView (popup, or System Settings → Privacy & Security → Microphone), then press Listen again.",
+  "errors.proRequired": "That's a CloakView Pro feature. Add your license key in Settings to unlock it.",
   "errors.generic": "Something went wrong",
+  "settings.pro": "CloakView Pro",
+  "settings.proActive": "Active on this Mac.",
+  "settings.proInactive": "Not activated.",
+  "settings.licenseKey": "License key",
+  "settings.licensePlaceholder": "XXXX-XXXX-XXXX-XXXX",
+  "settings.activate": "Activate",
+  "settings.deactivate": "Deactivate",
+  "settings.proHint": "One-time purchase. The key is stored on this Mac; a one-time online check activates it.",
 };
 
 /**

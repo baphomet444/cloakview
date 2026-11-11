@@ -30,7 +30,7 @@ export function draftFromSettings(settings: Settings): SettingsDraft {
   return { answersModel: settings.answersModel, shortcuts: { ...settings.shortcuts } };
 }
 
-/** Always all three shortcuts: `SettingsPatch.shortcuts` replaces the saved set. */
+/** Always all four shortcuts: `SettingsPatch.shortcuts` replaces the saved set. */
 export function draftPatch(draft: SettingsDraft): SettingsPatch {
   return {
     answersModel: draft.answersModel.trim(),
@@ -38,6 +38,7 @@ export function draftPatch(draft: SettingsDraft): SettingsPatch {
       quickHide: draft.shortcuts.quickHide.trim(),
       pushToAsk: draft.shortcuts.pushToAsk.trim(),
       toggleListen: draft.shortcuts.toggleListen.trim(),
+      readScreen: draft.shortcuts.readScreen.trim(),
     },
   };
 }
@@ -47,12 +48,19 @@ export function draftIsValid(draft: SettingsDraft): boolean {
   return draft.answersModel.trim() !== "";
 }
 
+/** How a stored license key is shown: only its last four characters, so shoulder surfers and screenshots learn nothing. */
+export function maskKey(key: string): string {
+  if (key.length <= 4) return "••••";
+  return `•••• ${key.slice(-4)}`;
+}
+
 export function isDraftDirty(draft: SettingsDraft, saved: Settings): boolean {
   const patch = draftPatch(draft);
   return (
     patch.answersModel !== saved.answersModel ||
     patch.shortcuts?.quickHide !== saved.shortcuts.quickHide ||
     patch.shortcuts?.pushToAsk !== saved.shortcuts.pushToAsk ||
-    patch.shortcuts?.toggleListen !== saved.shortcuts.toggleListen
+    patch.shortcuts?.toggleListen !== saved.shortcuts.toggleListen ||
+    patch.shortcuts?.readScreen !== saved.shortcuts.readScreen
   );
 }
