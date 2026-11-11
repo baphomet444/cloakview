@@ -151,7 +151,7 @@
       "title": "Get CloakView",
       "body": "Free in v1. Requires macOS 14.2 or later on a Mac with Apple Silicon. Signed and notarized by Apple. Distributed via GitHub Releases — no account needed.",
       "button": "Download for macOS",
-      "soon": "Coming soon — the GitHub repo isn't public yet.",
+      "soon": "Coming soon.",
       "note": "We will never ask for your email to download."
     }
   },
@@ -202,16 +202,16 @@
       "title": "Try it with your own key",
       "body": "Free in v1 for macOS 14.2+ on Apple Silicon. Signed and notarized by Apple. No account, no email required.",
       "button": "Download for macOS",
-      "soon": "Coming soon — the GitHub repo isn't public yet.",
+      "soon": "Coming soon.",
       "note": "We will never ask for your email to download."
     }
   },
   "download": {
     "title": "Download CloakView for macOS",
-    "description": "Download CloakView for Macs with Apple Silicon from GitHub Releases, and check its SHA-256 checksum.",
+    "description": "Choose the CloakView build for your Mac. Download from GitHub Releases and check the SHA-256 checksum when available.",
     "badge": "macOS 14.2+",
     "heading": "Choose your build",
-    "intro": "Your key stays yours. Choose a download below; all options remain visible regardless of your device. Downloads open on GitHub Releases.",
+    "intro": "Your key stays yours. Choose a download below; all options remain visible regardless of your device. Downloads will open on GitHub Releases once published.",
     "optionsLabel": "Available platforms",
     "recommended": "Recommended for this Mac",
     "notarized": "Signed and notarized by Apple",
@@ -253,7 +253,7 @@
   },
   "guide": {
     "title": "Guide",
-    "description": "Set up CloakView, manage permissions and your key, use shortcuts, and resolve common issues.",
+    "description": "Set up CloakView, manage permissions and your key, use shortcuts, and resolve common issues. The app and downloads are not yet published.",
     "homeLabel": "Home",
     "breadcrumbLabel": "Breadcrumb",
     "onThisPageLabel": "On this page",
@@ -289,7 +289,7 @@
   "faq": {
     "title": "Frequently asked questions",
     "description": "Answers about privacy, installation, costs, compatibility and technical setup for CloakView.",
-    "intro": "Clear answers before you install.",
+    "intro": "Clear answers before you install. The app and GitHub repository have not been published yet.",
     "guideLink": "Read the guide",
     "topics": [
       {
@@ -301,7 +301,7 @@
           },
           {
             "q": "Where is my API key stored?",
-            "a": "The app stores your key in macOS Keychain and sends it directly to OpenAI, not to CloakView servers. Revoke it in your OpenAI account whenever you like.",
+            "a": "The planned app stores your key in macOS Keychain and sends it directly to OpenAI, not to CloakView servers. Revoke it in your OpenAI account whenever you like.",
             "guide": "api-key"
           },
           {
@@ -319,12 +319,12 @@
         "items": [
           {
             "q": "When can I download the app?",
-            "a": "Now. Version 0.1.0 is available for Macs with Apple Silicon. The download page links to the official GitHub release and shows its SHA-256 checksum.",
+            "a": "Not yet. The repository and signed release artifacts are pending; this site will link to the official release when it exists.",
             "guide": "installation"
           },
           {
             "q": "Which macOS version do I need?",
-            "a": "macOS 14.2 or later, on a Mac with Apple Silicon.",
+            "a": "macOS 14.2 or later is planned. Check the release notes for the final system requirements before installing.",
             "guide": "installation"
           },
           {
@@ -339,7 +339,7 @@
         "items": [
           {
             "q": "Is CloakView free?",
-            "a": "CloakView v1 is free, with no CloakView subscription. You pay your own OpenAI API usage directly to OpenAI."
+            "a": "The planned v1 is free, with no CloakView subscription. You pay your own OpenAI API usage directly to OpenAI."
           },
           {
             "q": "Does a ChatGPT subscription cover API usage?",
@@ -362,11 +362,11 @@
           },
           {
             "q": "Is there a Windows version?",
-            "a": "There is no Windows build in v1. The download page shows the availability of each platform."
+            "a": "No Windows build is planned for v1. The download page will show the availability of each platform."
           },
           {
             "q": "Are Apple Silicon and Intel supported?",
-            "a": "Apple Silicon is supported. There is no Intel build yet; the download page will show one if it is published. Only install an official release matched to your Mac.",
+            "a": "Apple Silicon is supported; the download is not published yet. There is no Intel build planned for the first release. Only install an official release matched to your Mac.",
             "guide": "installation"
           }
         ]
@@ -582,7 +582,7 @@
       },
       {
         "q": "Where is my key stored? Is it safe?",
-        "a": "The app stores your key in macOS Keychain and sends it directly to OpenAI, not to CloakView servers. You can revoke it in your OpenAI account whenever you like; revoking it stops it from working even if a copy remains on your Mac.",
+        "a": "The planned app stores your key in macOS Keychain and sends it directly to OpenAI, not to CloakView servers. You can revoke it in your OpenAI account whenever you like; revoking it stops it from working even if a copy remains on your Mac.",
         "linkLabel": "Where the key is stored",
         "href": "/guide/api-key#storage"
       },
@@ -600,9 +600,9 @@
       },
       {
         "q": "When can I download it?",
-        "a": "Now. Version 0.1.0 is available for Macs with Apple Silicon (macOS 14.2 or later), signed and notarized by Apple. There is no Intel or Windows build.",
-        "linkLabel": "Go to the download page",
-        "href": "/download"
+        "a": "Not yet. The signed release is still pending; this site will link to the official download as soon as it exists.",
+        "linkLabel": "Follow the changelog",
+        "href": "/changelog"
       }
     ],
     "inputLabel": "Ask anything about CloakView",
