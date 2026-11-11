@@ -6,3 +6,10 @@ src-tauri/target/
 *.log
 .worktrees/
 .vercel
+
+# graphify
+graphify-out/
+.graphify_root
+.graphify_python
+.graphify_analysis.json
+needs_update

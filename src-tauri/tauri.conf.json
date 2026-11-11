@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "CloakView",
+  "version": "0.1.0",
+  "identifier": "com.getcloakview.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "hub",
+        "title": "cloakview",
+        "width": 540,
+        "height": 58,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visibleOnAllWorkspaces": true,
+        "resizable": false,
+        "url": "/?win=hub"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "dmg"
+    ],
+    "icon": [
+      "icons/icon.icns"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "14.2",
+      "entitlements": "entitlements.plist",
+      "infoPlist": "Info.plist",
+      "providerShortName": "RRZ966WRYC",
+      "signingIdentity": "Developer ID Application: Lazaro A Hernandez (RRZ966WRYC)",
+      "hardenedRuntime": true
+    }
+  }
+}

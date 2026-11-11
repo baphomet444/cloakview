@@ -1,0 +1,35 @@
+[package]
+name = "cloakview"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "cloakview_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-store = "2"
+tokio = { version = "1", features = ["full"] }
+tokio-util = "0.7"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+rusqlite = { version = "0.31", features = ["bundled"] }
+keyring = { version = "3", features = ["apple-native"] }
+tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
+reqwest = { version = "0.12", features = ["json", "stream"] }
+futures-util = "0.3"
+base64 = "0.22"
+screencapturekit = "0.2"
+screencapturekit-sys = "0.2.8"
+objc2-app-kit = "0.3"
+objc2-core-graphics = "0.3"
+objc2-foundation = "0.3"
+url = "2"
+objc2-av-foundation = { version = "0.3", default-features = false, features = ["std", "AVCaptureDevice", "AVMediaFormat"] }
+tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2", version = "2.0.1" }
