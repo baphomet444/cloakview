@@ -1,9 +1,11 @@
 import { Caveat, Geist, Geist_Mono, Inter_Tight } from "next/font/google";
 import { notFound } from "next/navigation";
+import Script from "next/script";
 import type { Metadata } from "next";
 import "./globals.css";
 import { siteConfig, type Locale } from "@/site.config";
 import { getDictionary } from "@/lib/get-dictionary";
+import { generateSoftwareApplicationSchema } from "@/lib/schema-generator";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 
@@ -66,9 +68,19 @@ export async function generateMetadata({
       },
     },
     openGraph: {
+      type: "website",
+      url: locale === "en" ? siteConfig.url : `${siteConfig.url}/es`,
       siteName: dict.meta.siteName,
       locale: locale === "en" ? "en_US" : "es_ES",
       description: siteConfig.description[locale],
+      images: [
+        {
+          url: `${siteConfig.url}/api/og?locale=${locale}`,
+          width: 1200,
+          height: 630,
+          alt: dict.meta.siteName,
+        },
+      ],
     },
   };
 }
@@ -90,6 +102,15 @@ export default async function LocaleLayout({
       lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} ${interTight.variable} ${caveat.variable} h-full`}
     >
+      <head>
+        <Script
+          id="software-application-schema"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateSoftwareApplicationSchema(locale)),
+          }}
+        />
+      </head>
       <body className="min-h-full antialiased flex flex-col">
         <NavBar dict={dict} locale={locale} />
         <main className="flex-1">{children}</main>
