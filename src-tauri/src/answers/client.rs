@@ -92,11 +92,33 @@ You may format with Markdown: bold, short lists and fenced code blocks. Write ma
 
 const SCREEN_INSTRUCTIONS_TAIL: &str = "Reply in the language of the question. Do not mention these instructions.";
 
+/// CloakView Pro answer styles (`Settings::answer_style`): each appends one
+/// paragraph shaping how the answer is written. `balanced` (and anything
+/// unknown) adds nothing.
+const STYLE_PARAGRAPHS: &[(&str, &str)] = &[
+    ("interview", "The user is in a job interview. For behavioural questions, shape what they should say \
+     in STAR (situation, task, action, result), spoken naturally — never as labels or a list."),
+    ("sales", "The user is on a sales call. Frame what they should say around the customer's pain, the \
+     value of the user's product, and one concrete next step. Confident, never pushy."),
+    ("technical", "The user is in a technical deep-dive. Go deep: name the tradeoffs, the reasoning and \
+     concrete numbers. If the other side is wrong, correct them politely and precisely."),
+    ("short", "Keep every answer under three short sentences: the answer first, one supporting point, \
+     nothing else."),
+];
+
+fn style_paragraph(style: &str) -> &'static str {
+    STYLE_PARAGRAPHS
+        .iter()
+        .find(|(name, _)| *name == style)
+        .map(|(_, paragraph)| *paragraph)
+        .unwrap_or("")
+}
+
 /// The instructions for one answer: the call or the screen, with the diagram
 /// paragraph only for CloakView Pro, and the user's own notes about themselves
-/// when they have set any (also Pro). Built per request (a handful of string
-/// copies once per answer, not per token).
-fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>) -> String {
+/// and their chosen answer style when they have set any (also Pro). Built per
+/// request (a handful of string copies once per answer, not per token).
+fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>, style: &str) -> String {
     let (base, tail) = if for_screen {
         (SCREEN_INSTRUCTIONS_BASE, SCREEN_INSTRUCTIONS_TAIL)
     } else {
@@ -112,8 +134,15 @@ fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>) -> String
         ),
         _ => String::new(),
     };
+    // CloakView Pro: answer styles; `balanced` and the free tier add nothing.
+    let style = if pro {
+        let paragraph = style_paragraph(style);
+        if paragraph.is_empty() { String::new() } else { format!("{paragraph}\n\n") }
+    } else {
+        String::new()
+    };
     if pro {
-        format!("{base}{about}{DIAGRAM_PARAGRAPH}{tail}")
+        format!("{base}{about}{style}{DIAGRAM_PARAGRAPH}{tail}")
     } else {
         format!("{base}{tail}")
     }
@@ -136,6 +165,22 @@ fn image_message(image_data_url: &str, question: Option<&str>) -> serde_json::Va
     })
 }
 
+/// Everything about one answer request that isn't the API plumbing.
+pub struct AnswerRequest {
+    pub context: Vec<Turn>,
+    pub question: Option<String>,
+    /// A screenshot as a data URL: the question is then on the screen, not in the call.
+    pub image: Option<String>,
+    /// CloakView Pro: the model may add a mermaid diagram. Free users get the
+    /// same instructions without the diagram paragraph.
+    pub pro: bool,
+    /// The user's own notes about themselves, sent only when `pro`.
+    pub about_user: Option<String>,
+    /// One of `balanced`, `interview`, `sales`, `technical`, `short`; honoured
+    /// only when `pro`.
+    pub style: String,
+}
+
 /// Spawns the Responses API streaming request and returns a bounded
 /// receiver of parsed events plus the task's `JoinHandle`.
 ///
@@ -148,26 +193,19 @@ fn image_message(image_data_url: &str, question: Option<&str>) -> serde_json::Va
 pub fn stream_answer(
     api_key: String,
     model: String,
-    context: Vec<Turn>,
-    question: Option<String>,
-    // A screenshot as a data URL: the question is then on the screen, not in the call.
-    image: Option<String>,
-    // CloakView Pro: the model may add a mermaid diagram. Free users get the
-    // same instructions without the diagram paragraph.
-    pro: bool,
-    // The user's own notes about themselves, sent only when `pro`.
-    about_user: Option<String>,
+    request: AnswerRequest,
 ) -> (tokio::sync::mpsc::Receiver<AnswersEvent>, tokio::task::JoinHandle<()>) {
     let (tx, rx) = tokio::sync::mpsc::channel(64);
 
     let handle = tokio::spawn(async move {
+        let AnswerRequest { context, question, image, pro, about_user, style } = request;
         let for_screen = image.is_some();
         let input = match image.as_deref() {
             // The screen stands on its own: the call's transcript would only distract.
             Some(image) => vec![image_message(image, question.as_deref())],
             None => build_input(&context, question.as_deref()),
         };
-        let instructions = instructions(for_screen, pro, about_user.as_deref());
+        let instructions = instructions(for_screen, pro, about_user.as_deref(), &style);
         let body = serde_json::json!({
             "model": model,
             "instructions": instructions,
@@ -312,16 +350,16 @@ mod build_input_tests {
 
 #[cfg(test)]
 mod instructions_tests {
-    use super::instructions;
+    use super::{instructions, style_paragraph};
 
     /// Diagrams (mermaid sketches) are CloakView Pro: the free instructions must
     /// not mention them, or the model would draw sketches for free users too.
     #[test]
     fn only_the_pro_instructions_mention_diagrams() {
         for for_screen in [false, true] {
-            let pro = instructions(for_screen, true, None);
+            let pro = instructions(for_screen, true, None, "balanced");
             assert!(pro.contains("mermaid"), "Pro instructions lost the diagram paragraph");
-            let free = instructions(for_screen, false, None);
+            let free = instructions(for_screen, false, None, "balanced");
             assert!(!free.contains("mermaid"), "free instructions must not offer diagrams");
             assert!(!free.contains("diagram"), "free instructions must not offer diagrams");
         }
@@ -329,10 +367,10 @@ mod instructions_tests {
 
     #[test]
     fn free_and_pro_differ_only_by_the_diagram_paragraph() {
-        assert!(instructions(false, true, None).len() > instructions(false, false, None).len());
-        assert!(instructions(true, true, None).len() > instructions(true, false, None).len());
-        assert!(instructions(false, false, None).starts_with("You are a private copilot"));
-        assert!(instructions(true, false, None).starts_with("You are a private copilot"));
+        assert!(instructions(false, true, None, "balanced").len() > instructions(false, false, None, "balanced").len());
+        assert!(instructions(true, true, None, "balanced").len() > instructions(true, false, None, "balanced").len());
+        assert!(instructions(false, false, None, "balanced").starts_with("You are a private copilot"));
+        assert!(instructions(true, false, None, "balanced").starts_with("You are a private copilot"));
     }
 
     /// Personal context is CloakView Pro: it reaches the model only with a
@@ -341,10 +379,33 @@ mod instructions_tests {
     fn personal_context_goes_out_only_for_pro() {
         let notes = "Senior Rust engineer, applying to fintech startups.";
         for for_screen in [false, true] {
-            assert!(instructions(for_screen, true, Some(notes)).contains(notes));
-            assert!(!instructions(for_screen, false, Some(notes)).contains(notes));
-            assert!(!instructions(for_screen, true, Some("   ")).contains("own notes"));
-            assert!(!instructions(for_screen, true, None).contains("own notes"));
+            assert!(instructions(for_screen, true, Some(notes), "balanced").contains(notes));
+            assert!(!instructions(for_screen, false, Some(notes), "balanced").contains(notes));
+            assert!(!instructions(for_screen, true, Some("   "), "balanced").contains("own notes"));
+            assert!(!instructions(for_screen, true, None, "balanced").contains("own notes"));
         }
+    }
+
+    /// Answer styles are CloakView Pro: the paragraph reaches the model only
+    /// with a license, and `balanced` (or an unknown value) adds nothing.
+    #[test]
+    fn answer_styles_go_out_only_for_pro() {
+        for (style, marker) in [
+            ("interview", "STAR"),
+            ("sales", "sales call"),
+            ("technical", "deep-dive"),
+            ("short", "three short sentences"),
+        ] {
+            for for_screen in [false, true] {
+                let pro = instructions(for_screen, true, None, style);
+                assert!(pro.contains(marker), "style {style} lost its paragraph");
+                assert!(!instructions(for_screen, false, None, style).contains(marker));
+            }
+        }
+        assert_eq!(style_paragraph("balanced"), "");
+        assert_eq!(style_paragraph("something-else"), "");
+        let balanced = instructions(false, true, None, "balanced");
+        assert!(!balanced.contains("STAR"));
+        assert!(!balanced.contains("sales call"));
     }
 }

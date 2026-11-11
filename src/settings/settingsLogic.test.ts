@@ -22,6 +22,7 @@ const settings: Settings = {
   shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "cmdOrControl+shift+space", toggleListen: "", readScreen: "" },
   includeMic: false,
   personalContext: "",
+  answerStyle: "balanced",
 };
 
 describe("themeFromSetting", () => {

@@ -29,6 +29,10 @@ pub struct Settings {
     /// them. CloakView Pro: ignored without a license. Goes to OpenAI with each
     /// answer, like everything else.
     pub personal_context: String,
+    /// How the answer should be shaped: `balanced` (the default), `interview`
+    /// (STAR), `sales`, `technical` or `short`. CloakView Pro: ignored without
+    /// a license.
+    pub answer_style: String,
 }
 
 impl Default for Settings {
@@ -47,6 +51,7 @@ impl Default for Settings {
             shortcuts: crate::hotkeys::Shortcuts::default(),
             include_mic: false,
             personal_context: String::new(),
+            answer_style: "balanced".into(),
         }
     }
 }
@@ -126,6 +131,7 @@ mod tests {
             shortcuts: crate::hotkeys::Shortcuts::default(),
             include_mic: true,
             personal_context: String::new(),
+            answer_style: "balanced".into(),
         };
         let json = serde_json::to_value(&s).unwrap();
 
@@ -146,7 +152,8 @@ mod tests {
                     "readScreen": "cmdOrControl+shift+s"
                 },
                 "includeMic": true,
-                "personalContext": ""
+                "personalContext": "",
+                "answerStyle": "balanced"
             })
         );
         for key in json.as_object().unwrap().keys() {

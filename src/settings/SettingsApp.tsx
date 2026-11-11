@@ -45,6 +45,14 @@ const MIC_OPTIONS: readonly { value: "off" | "on"; labelKey: CatalogKey }[] = [
   { value: "on", labelKey: "settings.micOn" },
 ];
 
+const ANSWER_STYLES: readonly { value: string; labelKey: CatalogKey }[] = [
+  { value: "balanced", labelKey: "settings.styleBalanced" },
+  { value: "interview", labelKey: "settings.styleInterview" },
+  { value: "sales", labelKey: "settings.styleSales" },
+  { value: "technical", labelKey: "settings.styleTechnical" },
+  { value: "short", labelKey: "settings.styleShort" },
+];
+
 const THEMES: readonly { value: Theme; labelKey: CatalogKey }[] = [
   { value: "dark", labelKey: "settings.themeDark" },
   { value: "light", labelKey: "settings.themeLight" },
@@ -300,6 +308,17 @@ export function SettingsApp() {
               onChange={(next) => void save({ includeMic: next === "on" })}
             />
             <p className="win-hint set-span">{t("settings.micHint")}</p>
+
+            <span className="win-label" id="set-style-label">
+              {t("settings.answerStyle")}
+            </span>
+            <Segmented
+              id="set-style"
+              options={ANSWER_STYLES}
+              value={settings.answerStyle}
+              onChange={(next) => void save({ answerStyle: next })}
+            />
+            <p className="win-hint set-span">{t("settings.answerStyleHint")}</p>
 
             <label className="win-label" htmlFor="set-opacity">
               {t("settings.opacity")}

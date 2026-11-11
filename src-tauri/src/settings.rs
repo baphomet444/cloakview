@@ -57,6 +57,9 @@ pub struct SettingsPatch {
     pub include_mic: Option<bool>,
     /// Replaces the whole notes block; blank clears it.
     pub personal_context: Option<String>,
+    /// One of `balanced`, `interview`, `sales`, `technical`, `short`. Free-form
+    /// in Rust; anything unknown behaves like `balanced`.
+    pub answer_style: Option<String>,
 }
 
 /// Applies the fields present in `patch` to `s`: `opacity` is clamped to
@@ -92,6 +95,9 @@ pub fn apply_patch(s: &mut Settings, patch: SettingsPatch) {
     }
     if let Some(v) = patch.personal_context {
         s.personal_context = v.trim().to_string();
+    }
+    if let Some(v) = patch.answer_style {
+        s.answer_style = v;
     }
 }
 
@@ -146,5 +152,13 @@ mod tests {
         assert_eq!(s.personal_context, "Rust engineer.");
         apply_patch(&mut s, SettingsPatch { personal_context: Some("  ".into()), ..Default::default() });
         assert_eq!(s.personal_context, "");
+    }
+
+    #[test]
+    fn patch_replaces_answer_style_verbatim() {
+        let mut s = Settings::default();
+        assert_eq!(s.answer_style, "balanced");
+        apply_patch(&mut s, SettingsPatch { answer_style: Some("interview".into()), ..Default::default() });
+        assert_eq!(s.answer_style, "interview");
     }
 }

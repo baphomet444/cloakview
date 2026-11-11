@@ -208,9 +208,9 @@ async fn start_answer(
     image: Option<String>,
 ) -> Result<(), IpcError> {
     let api_key = secrets::get_api_key().map_err(IpcError::from)?;
-    let (model, personal_context) = {
+    let (model, personal_context, answer_style) = {
         let s = state.settings.read().expect("settings lock");
-        (s.answers_model.clone(), s.personal_context.clone())
+        (s.answers_model.clone(), s.personal_context.clone(), s.answer_style.clone())
     };
     // Personal context is CloakView Pro: free users' notes stay on this Mac.
     let about_user = state.is_pro().then_some(personal_context).filter(|c| !c.trim().is_empty());
@@ -230,7 +230,18 @@ async fn start_answer(
             .or_else(|| state.session_log.lock().expect("session log lock").last_heard().map(str::to_string))
             .unwrap_or_default()
     };
-    let (mut rx, handle) = crate::answers::client::stream_answer(api_key, model, context, question, image, state.is_pro(), about_user);
+    let (mut rx, handle) = crate::answers::client::stream_answer(
+        api_key,
+        model,
+        crate::answers::client::AnswerRequest {
+            context,
+            question,
+            image,
+            pro: state.is_pro(),
+            about_user,
+            style: answer_style,
+        },
+    );
     *answer_guard = Some(handle);
     drop(answer_guard);
 

@@ -135,6 +135,8 @@ export type Settings = {
   includeMic: boolean;
   /** The user's own notes about themselves, sent with each answer (CloakView Pro). */
   personalContext: string;
+  /** `balanced`, `interview`, `sales`, `technical` or `short` (CloakView Pro). */
+  answerStyle: string;
 };
 
 /**
@@ -155,6 +157,7 @@ export type SettingsPatch = {
   includeMic?: boolean;
   /** Replaces the whole notes block; blank clears it. */
   personalContext?: string;
+  answerStyle?: string;
 };
 
 /** Microphone permission. `src-tauri/src/platform.rs` (`MicStatus`): a plain camelCase string. */
