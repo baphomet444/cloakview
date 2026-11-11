@@ -29,8 +29,8 @@
 //! would mean this event — the product's core "it's your turn to
 //! speak" signal — never fires at all. Instead, every `Transcript` runs
 //! through `detect::is_user_turn(&turn.text, user_keywords, turn.is_user_turn)`
-//! right after it's buffered and its `"transcript-delta"` is emitted; a
-//! `true` result emits `"turn-detected"` too. The `TurnBoundary` match arm
+//! and `detect::asks_for_reply(&turn.text)` right after it's buffered and its
+//! `"transcript-delta"` is emitted; either being `true` emits `"turn-detected"` too. The `TurnBoundary` match arm
 //! stays wired as a harmless, currently-unreachable fallback in case a
 //! future `parse_frame` change starts producing it — but it is not what
 //! makes the feature work today.
@@ -188,12 +188,15 @@ async fn pump(
                             TRANSCRIPT_DELTA_EVENT,
                             serde_json::to_value(&turn).expect("Turn serializes"),
                         );
+                        // The cue to suggest an answer: the user was addressed
+                        // (keyword or name), or what was said asks for a reply.
                         if crate::detect::is_user_turn(
                             &turn.text,
                             detection.keywords,
                             detection.user_name,
                             turn.is_user_turn,
-                        ) {
+                        ) || crate::detect::asks_for_reply(&turn.text)
+                        {
                             emit(TURN_DETECTED_EVENT, serde_json::Value::Null);
                         }
                     }
@@ -244,6 +247,19 @@ async fn pump_until_cancelled(
     }
 }
 
+/// The diagnostics line for an emitted event. What was said never goes in the
+/// log: a transcript line is recorded by its length only.
+fn diag_entry(event: &str, payload: &serde_json::Value) -> String {
+    if event == TRANSCRIPT_DELTA_EVENT {
+        let chars = payload.get("text").and_then(|t| t.as_str()).map_or(0, |t| t.chars().count());
+        format!("{event} ({chars} chars)")
+    } else if payload.is_null() {
+        event.to_string()
+    } else {
+        format!("{event} {payload}")
+    }
+}
+
 /// Starts a listen session: resolves the key and starts the real
 /// `SckAudioSource` synchronously (see `prepare_session`), then spawns one
 /// task that pumps audio into `realtime::client::run_session` (and its
@@ -263,9 +279,11 @@ pub fn start(model: String, app: tauri::AppHandle) -> AppResult<SessionHandle> {
     let generic_app = app.clone();
 
     let emit_listen_state = move |state: ListenState| {
+        crate::diag::log(&format!("listen-state {state:?}"));
         let _ = listen_state_app.emit(LISTEN_STATE_EVENT, state);
     };
     let emit_generic = move |event: &str, payload: serde_json::Value| {
+        crate::diag::log(&diag_entry(event, &payload));
         let _ = generic_app.emit(event, payload);
     };
 
@@ -375,16 +393,34 @@ mod tests {
     #[tokio::test]
     async fn user_name_fires_turn_detected_and_none_does_not_break() {
         let named = TurnDetection { keywords: &[], user_name: Some("Christian") };
+        // A statement, so only the name can be what triggers it.
         assert_eq!(
-            emitted_names_for("Christian, ¿puedes explicar?", named).await,
+            emitted_names_for("Christian, te toca presentar.", named).await,
             vec![TRANSCRIPT_DELTA_EVENT, TURN_DETECTED_EVENT]
         );
 
         // No name configured (and no keywords): the same line is just a delta.
         let anonymous = TurnDetection { keywords: &[], user_name: None };
         assert_eq!(
-            emitted_names_for("Christian, ¿puedes explicar?", anonymous).await,
+            emitted_names_for("Christian, te toca presentar.", anonymous).await,
             vec![TRANSCRIPT_DELTA_EVENT]
+        );
+    }
+
+    #[test]
+    fn the_diagnostics_log_never_contains_what_was_said() {
+        let turn = serde_json::json!({ "speaker": "remote", "text": "secret plan", "isUserTurn": false });
+        assert_eq!(diag_entry(TRANSCRIPT_DELTA_EVENT, &turn), "transcript-delta (11 chars)");
+        assert_eq!(diag_entry(TURN_DETECTED_EVENT, &serde_json::Value::Null), "turn-detected");
+        assert_eq!(diag_entry(ERROR_EVENT, &serde_json::json!("rate_limit")), "error \"rate_limit\"");
+    }
+
+    #[tokio::test]
+    async fn a_question_fires_turn_detected_without_any_keyword() {
+        let anonymous = TurnDetection { keywords: &[], user_name: None };
+        assert_eq!(
+            emitted_names_for("What was your biggest challenge there?", anonymous).await,
+            vec![TRANSCRIPT_DELTA_EVENT, TURN_DETECTED_EVENT]
         );
     }
 

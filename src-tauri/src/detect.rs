@@ -25,9 +25,56 @@ pub fn is_user_turn(
     keyword_hit || name_hit
 }
 
+/// How a sentence that asks the listener for something tends to start, in
+/// English and Spanish. Compared against the start of each sentence, lowercased.
+const REQUEST_OPENERS: &[&str] = &[
+    "what", "why", "how", "when", "where", "who", "which", "can you", "could you", "would you",
+    "will you", "do you", "did you", "are you", "have you", "is there", "tell me", "explain",
+    "describe", "walk me through", "talk me through", "give me", "show me", "let me know",
+    "qué", "que opinas", "cómo", "como ves", "cuándo", "dónde", "por qué", "quién", "cuál",
+    "puedes", "podrías", "podrias", "cuéntame", "cuentame", "explica", "explícame", "háblame",
+    "hablame", "dime", "describe",
+];
+
+/// Whether what was said asks for a reply: a question, or a request such as
+/// "tell me about…". This is the cue to suggest an answer without being asked.
+///
+/// A question mark anywhere is enough (the transcription punctuates). Without
+/// one, a sentence has to start with a typical opener, as a whole word.
+pub fn asks_for_reply(text: &str) -> bool {
+    if text.contains('?') {
+        return true;
+    }
+    let lower = text.to_lowercase();
+    lower.split(['.', '!', ';', '\n']).any(|sentence| {
+        let sentence = sentence.trim_start_matches(|c: char| !c.is_alphanumeric());
+        REQUEST_OPENERS.iter().any(|opener| {
+            sentence.strip_prefix(opener).is_some_and(|rest| !rest.starts_with(char::is_alphanumeric))
+        })
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn questions_and_requests_ask_for_a_reply() {
+        assert!(asks_for_reply("So, what is your experience with Rust?"));
+        assert!(asks_for_reply("Thanks. Tell me about your last project."));
+        assert!(asks_for_reply("Can you walk us through the numbers"));
+        assert!(asks_for_reply("¿Cuánto tiempo llevas en ese puesto?"));
+        assert!(asks_for_reply("Perfecto. Cuéntame cómo lo resolviste."));
+    }
+
+    #[test]
+    fn statements_do_not_ask_for_a_reply() {
+        assert!(!asks_for_reply("Good morning everyone, let's get started."));
+        assert!(!asks_for_reply("Whatever works for the team is fine."));
+        assert!(!asks_for_reply("However, the deadline moved to Friday."));
+        assert!(!asks_for_reply("Buenos días a todos."));
+        assert!(!asks_for_reply(""));
+    }
 
     #[test]
     fn keyword_case_insensitive_and_empty_ignored() {

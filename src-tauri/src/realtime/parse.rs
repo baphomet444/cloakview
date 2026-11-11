@@ -8,14 +8,19 @@ pub fn parse_frame(json: &str) -> Option<RealtimeEvent> {
     match t {
         "session.started" => Some(RealtimeEvent::SessionStarted),
         "conversation.item.input_audio_transcription.completed" => {
-            let item = v.get("item")?;
-            let text = item
-                .get("content")?
-                .as_array()?
-                .iter()
-                .filter_map(|c| c.get("text")?.as_str())
-                .collect::<Vec<_>>()
-                .join(" ");
+            // The API puts the text in `transcript`. The nested `item.content`
+            // form is what this parser first assumed; it stays as a fallback.
+            let text = match v.get("transcript").and_then(|t| t.as_str()) {
+                Some(transcript) => transcript.to_string(),
+                None => v
+                    .get("item")?
+                    .get("content")?
+                    .as_array()?
+                    .iter()
+                    .filter_map(|c| c.get("text")?.as_str())
+                    .collect::<Vec<_>>()
+                    .join(" "),
+            };
             if text.trim().is_empty() {
                 None
             } else {
@@ -45,6 +50,18 @@ mod tests {
             Some(RealtimeEvent::Transcript { text, .. }) => assert_eq!(text, "Hola, ¿me escuchan?"),
             other => panic!("unexpected {other:?}"),
         }
+    }
+
+    #[test]
+    fn parses_the_transcript_field_of_a_real_completed_event() {
+        let frame = r#"{"type":"conversation.item.input_audio_transcription.completed",
+            "item_id":"item_003","content_index":0,"transcript":" Hello, how are you? "}"#;
+        match parse_frame(frame) {
+            Some(RealtimeEvent::Transcript { text, .. }) => assert_eq!(text, "Hello, how are you?"),
+            other => panic!("unexpected {other:?}"),
+        }
+        let empty = r#"{"type":"conversation.item.input_audio_transcription.completed","transcript":"  "}"#;
+        assert!(parse_frame(empty).is_none());
     }
 
     #[test]

@@ -137,7 +137,11 @@ pub async fn start_listen(app: AppHandle, state: State<'_, AppState>) -> Result<
     if guard.is_some() {
         return Ok(()); // already listening; idempotent.
     }
-    let session = listen::start(model, app).map_err(IpcError::from)?;
+    let session = listen::start(model, app).map_err(|e| {
+        crate::diag::log(&format!("start_listen failed: {e}"));
+        IpcError::from(e)
+    })?;
+    crate::diag::log("start_listen ok");
     *guard = Some(session);
     Ok(())
 }
@@ -178,16 +182,22 @@ pub async fn request_answer(
     // the frontend. `AnswersEvent::Error` shares `"error"` with the
     // realtime side — the spec lists one generic error event, not a
     // separate per-source one.
+    crate::diag::log("answer requested");
     tokio::spawn(async move {
+        // For the diagnostics log: how much was answered, never what.
+        let mut chars = 0usize;
         while let Some(event) = rx.recv().await {
             match event {
                 crate::answers::AnswersEvent::Delta { text } => {
+                    chars += text.chars().count();
                     let _ = app.emit(ANSWER_DELTA_EVENT, text);
                 }
                 crate::answers::AnswersEvent::Done => {
+                    crate::diag::log(&format!("answer done ({chars} chars)"));
                     let _ = app.emit(ANSWER_DONE_EVENT, ());
                 }
                 crate::answers::AnswersEvent::Error { message } => {
+                    crate::diag::log(&format!("answer error: {message}"));
                     let _ = app.emit(ERROR_EVENT, message);
                 }
             }

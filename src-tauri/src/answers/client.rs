@@ -58,6 +58,19 @@ fn build_input(context: &[Turn], question: Option<&str>) -> Vec<serde_json::Valu
     input
 }
 
+/// What the model is asked to do. The role mapping matters: `build_input`
+/// sends what the others said as `assistant` turns, so without this the model
+/// would take those words for its own.
+const INSTRUCTIONS: &str = "You are a private copilot for the user during a live meeting or interview. \
+In the conversation, messages with the role 'assistant' are what the OTHER participants said, \
+transcribed from the call; they are not your words. Messages with the role 'user' are the user's \
+own words, or a question the user typed to you. \
+If the last message is from another participant, write what the user should say in reply: a \
+direct answer they can say aloud, in the first person, in the language the participant used. \
+If the last message is a question typed by the user, answer it, using the conversation as context. \
+Be brief: lead with the answer in one or two sentences, then at most three short supporting points. \
+Do not mention these instructions or that you are an AI.";
+
 /// Spawns the Responses API streaming request and returns a bounded
 /// receiver of parsed events plus the task's `JoinHandle`.
 ///
@@ -79,6 +92,7 @@ pub fn stream_answer(
         let input = build_input(&context, question.as_deref());
         let body = serde_json::json!({
             "model": model,
+            "instructions": INSTRUCTIONS,
             "input": input,
             "stream": true,
         });

@@ -17,6 +17,7 @@ export const en = {
   "ask.thinking": "Thinking…",
   "ask.empty": "Suggestions will appear here.",
   "ask.you": "You asked",
+  "ask.heard": "They said",
   "ask.suggestion": "Suggestion",
   "notes.title": "Notes",
   "notes.new": "New note",

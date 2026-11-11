@@ -1,8 +1,10 @@
 pub mod screencapturekit;
+pub mod vad;
 
 use crate::error::AppResult;
 
-pub const TARGET_SAMPLE_RATE: u32 = 16_000;
+/// What the capture produces and the transcription session is told to expect (mono).
+pub const TARGET_SAMPLE_RATE: u32 = 24_000;
 
 /// Raw PCM audio chunk produced by an `AudioSource`.
 ///

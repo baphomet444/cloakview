@@ -19,6 +19,7 @@ export const es: Catalog = {
   "ask.thinking": "Pensando…",
   "ask.empty": "Las sugerencias aparecerán aquí.",
   "ask.you": "Preguntaste",
+  "ask.heard": "Dijeron",
   "ask.suggestion": "Sugerencia",
   "notes.title": "Notas",
   "notes.new": "Nueva nota",

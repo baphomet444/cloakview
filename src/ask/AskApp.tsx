@@ -1,6 +1,14 @@
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { t, type CatalogKey } from "../lib/i18n";
-import { requestAnswer, stopAnswer, subscribeAnswerDelta, subscribeAnswerDone, subscribeError } from "../lib/ipc";
+import {
+  requestAnswer,
+  stopAnswer,
+  subscribeAnswerDelta,
+  subscribeAnswerDone,
+  subscribeError,
+  subscribeTranscriptDelta,
+  subscribeTurnDetected,
+} from "../lib/ipc";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { errorCopyKey } from "../hub/hubLogic";
 import { WindowFrame } from "../windows/WindowFrame";
@@ -23,6 +31,11 @@ export function AskApp() {
     if (bootErrorKey !== null) setWindowErrorKey(bootErrorKey);
   }, [bootErrorKey]);
   const busy = isBusy(state);
+  // Whether the question on screen was heard on the call rather than typed here.
+  const [heard, setHeard] = useState(false);
+  // The last thing said on the call: `turn-detected` carries no text, and always
+  // follows the `transcript-delta` of the line that caused it.
+  const lastHeard = useRef("");
 
   // The three answer events. Each `subscribe*` resolves to its unlisten function
   // asynchronously, so the cleanup copes with running before that happens.
@@ -33,6 +46,17 @@ export function AskApp() {
     Promise.all([
       subscribeAnswerDelta((text) => dispatch({ type: "delta", text })).then(keep),
       subscribeAnswerDone(() => dispatch({ type: "done" })).then(keep),
+      subscribeTranscriptDelta((turn) => {
+        lastHeard.current = turn.text;
+      }).then(keep),
+      // Something on the call asks for a reply: suggest one without being asked.
+      // The transcript is the context, so no question is sent; a suggestion still
+      // streaming is replaced (Rust aborts the previous request).
+      subscribeTurnDetected(() => {
+        setHeard(true);
+        dispatch({ type: "send", question: lastHeard.current });
+        requestAnswer().catch((error: unknown) => dispatch({ type: "error", key: errorCopyKey(error) }));
+      }).then(keep),
       // Shared with the realtime side; the reducer ignores it unless a question is in flight.
       subscribeError(() => dispatch({ type: "error", key: "errors.generic" })).then(keep),
     ]).catch((error: unknown) => {
@@ -49,6 +73,7 @@ export function AskApp() {
   async function send(): Promise<void> {
     if (busy) return;
     const question = questionArg(input);
+    setHeard(false);
     dispatch({ type: "send", question: question ?? "" });
     setInput("");
     try {
@@ -112,7 +137,7 @@ export function AskApp() {
         <div className="ask-thread" aria-live="polite">
           {state.question !== "" && (
             <section className="ask-block">
-              <h2 className="win-label">{t("ask.you")}</h2>
+              <h2 className="win-label">{t(heard ? "ask.heard" : "ask.you")}</h2>
               <p className="ask-question">{state.question}</p>
             </section>
           )}

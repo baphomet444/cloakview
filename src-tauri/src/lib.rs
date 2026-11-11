@@ -3,6 +3,7 @@ pub mod audio;
 mod commands;
 mod db;
 pub mod detect;
+pub mod diag;
 mod error;
 mod events;
 mod hotkeys;

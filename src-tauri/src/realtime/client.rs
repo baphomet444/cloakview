@@ -1,4 +1,5 @@
-use crate::audio::AudioChunk;
+use crate::audio::vad::{TurnEnd, Vad};
+use crate::audio::{AudioChunk, TARGET_SAMPLE_RATE};
 use crate::error::{AppError, AppResult};
 use crate::realtime::{parse::parse_frame, Backoff, RealtimeEvent};
 use futures_util::{SinkExt, StreamExt};
@@ -6,10 +7,47 @@ use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 use tokio_tungstenite::tungstenite::http;
 
-const URL: &str = "wss://api.openai.com/v1/realtime";
+/// A transcription session: text only, no spoken reply. The model is chosen in
+/// `session.update`, not in the URL (a `?model=` URL opens a conversation
+/// session, which rejects the transcription configuration).
+const URL: &str = "wss://api.openai.com/v1/realtime?intent=transcription";
+/// Transcribes each turn once it is committed. `gpt-live-transcribe` streams
+/// text sooner, but accounts on the lower usage tiers are refused by its rate
+/// limit before any audio is sent; this model works on them.
+const DEFAULT_TRANSCRIPTION_MODEL: &str = "gpt-4o-mini-transcribe";
+
+/// The model for the session. Settings saved by earlier versions name a
+/// conversation model (`gpt-4o-mini-realtime`), which a transcription session
+/// cannot use, so anything that is not a transcription model falls back to the default.
+fn transcription_model(setting: &str) -> &str {
+    let setting = setting.trim();
+    if setting.contains("transcribe") {
+        setting
+    } else {
+        DEFAULT_TRANSCRIPTION_MODEL
+    }
+}
+
+fn session_update(model: &str) -> serde_json::Value {
+    serde_json::json!({
+        "type": "session.update",
+        "session": {
+            "type": "transcription",
+            "audio": {
+                "input": {
+                    "format": { "type": "audio/pcm", "rate": TARGET_SAMPLE_RATE },
+                    "transcription": { "model": transcription_model(model) },
+                    // These models have no server-side turn detection: `Vad` decides.
+                    "turn_detection": null,
+                }
+            }
+        }
+    })
+}
 
 /// Owns the realtime WS session lifecycle: connect, send `session.update`,
-/// pump outgoing audio and incoming frames, reconnect with backoff on
+/// stream the audio of each spoken turn (see `audio::vad`) and commit it when
+/// the speaker pauses, read incoming frames, reconnect with backoff on
 /// drop/error. Returns only on explicit stop (audio channel closed by
 /// Task 11) or when building the request itself fails.
 ///
@@ -27,8 +65,7 @@ pub async fn run_session(
 ) -> AppResult<()> {
     let mut backoff = Backoff::default();
     loop {
-        let url = format!("{URL}?model={model}");
-        let mut req = url
+        let mut req = URL
             .into_client_request()
             .map_err(|e| AppError::Network(e.to_string()))?;
         req.headers_mut().insert(
@@ -37,45 +74,51 @@ pub async fn run_session(
                 .parse()
                 .map_err(|e: http::header::InvalidHeaderValue| AppError::Network(e.to_string()))?,
         );
-        req.headers_mut().insert(
-            "OpenAI-Beta",
-            http::header::HeaderValue::from_static("realtime=v1"),
-        );
 
         match connect_async(req).await {
             Ok((ws, _)) => {
-                backoff.reset();
+                // Not `backoff.reset()` yet: a session the API refuses (rate limit,
+                // unknown model) connects fine and fails right after, and resetting
+                // here would retry it every second. A transcript proves it healthy.
                 let (mut write, mut read) = ws.split();
                 let _ = events_out.try_send(RealtimeEvent::SessionStarted);
 
-                // session.update: VAD turn detection + transcription
-                let session_cfg = serde_json::json!({
-                    "type": "session.update",
-                    "session": {
-                        "input_audio_transcription": { "model": "whisper-1" },
-                        "turn_detection": { "type": "server_vad" },
-                        "input_audio_format": "pcm16",
-                    }
-                });
-                if write.send(session_cfg.to_string().into()).await.is_err() {
+                if write.send(session_update(&model).to_string().into()).await.is_err() {
                     tokio::time::sleep(backoff.next_delay()).await;
                     continue;
                 }
 
-                loop {
+                // A new connection has an empty buffer, so turn tracking starts over too.
+                let mut vad = Vad::default();
+                'session: loop {
                     tokio::select! {
                         chunk = audio_in.recv() => match chunk {
                             Some(c) => {
-                                let b64 = base64::Engine::encode(
-                                    &base64::engine::general_purpose::STANDARD,
-                                    &c.pcm_s16le,
-                                );
-                                let frame = serde_json::json!({
-                                    "type": "input_audio_buffer.append",
-                                    "audio": b64,
-                                });
-                                if write.send(frame.to_string().into()).await.is_err() {
-                                    break;
+                                let turn = vad.push(c);
+                                for chunk in turn.send {
+                                    let b64 = base64::Engine::encode(
+                                        &base64::engine::general_purpose::STANDARD,
+                                        &chunk.pcm_s16le,
+                                    );
+                                    let frame = serde_json::json!({
+                                        "type": "input_audio_buffer.append",
+                                        "audio": b64,
+                                    });
+                                    if write.send(frame.to_string().into()).await.is_err() {
+                                        break 'session;
+                                    }
+                                }
+                                let end = match turn.end {
+                                    TurnEnd::None => None,
+                                    TurnEnd::Commit => Some("input_audio_buffer.commit"),
+                                    TurnEnd::Discard => Some("input_audio_buffer.clear"),
+                                };
+                                if let Some(kind) = end {
+                                    crate::diag::log(kind);
+                                    let frame = serde_json::json!({ "type": kind });
+                                    if write.send(frame.to_string().into()).await.is_err() {
+                                        break;
+                                    }
                                 }
                             }
                             None => return Ok(()), // explicit stop from Task 11
@@ -83,6 +126,9 @@ pub async fn run_session(
                         msg = read.next() => match msg {
                             Some(Ok(tokio_tungstenite::tungstenite::Message::Text(txt))) => {
                                 if let Some(ev) = parse_frame(txt.as_str()) {
+                                    if matches!(ev, RealtimeEvent::Transcript { .. }) {
+                                        backoff.reset();
+                                    }
                                     let stop = matches!(ev, RealtimeEvent::Error { .. });
                                     let _ = events_out.try_send(ev);
                                     if stop {
@@ -97,9 +143,35 @@ pub async fn run_session(
                 }
             }
             Err(e) => {
+                crate::diag::log(&format!("realtime connect failed: {e}"));
                 let _ = events_out.try_send(RealtimeEvent::Error { message: e.to_string() });
             }
         }
         tokio::time::sleep(backoff.next_delay()).await;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn only_transcription_models_are_passed_through() {
+        assert_eq!(transcription_model("gpt-transcribe"), "gpt-transcribe");
+        assert_eq!(transcription_model(" gpt-live-transcribe "), "gpt-live-transcribe");
+        assert_eq!(DEFAULT_TRANSCRIPTION_MODEL, "gpt-4o-mini-transcribe");
+        // What earlier versions saved in settings.
+        assert_eq!(transcription_model("gpt-4o-mini-realtime"), DEFAULT_TRANSCRIPTION_MODEL);
+        assert_eq!(transcription_model(""), DEFAULT_TRANSCRIPTION_MODEL);
+    }
+
+    #[test]
+    fn the_session_is_a_transcription_session_without_server_turn_detection() {
+        let v = session_update("gpt-4o-mini-realtime");
+        let input = &v["session"]["audio"]["input"];
+        assert_eq!(v["session"]["type"], "transcription");
+        assert_eq!(input["format"]["rate"], 24_000);
+        assert_eq!(input["transcription"]["model"], DEFAULT_TRANSCRIPTION_MODEL);
+        assert!(input["turn_detection"].is_null());
     }
 }

@@ -10,6 +10,7 @@ import {
   stopListen,
   subscribeListenState,
   subscribePushToAsk,
+  subscribeTurnDetected,
 } from "../lib/ipc";
 import type { ListenState } from "../lib/models";
 import {
@@ -144,8 +145,13 @@ export function HubApp() {
   useEffect(() => {
     let cancelled = false;
     let unlisten: (() => void) | undefined;
-    subscribePushToAsk(() => void openFeature("ask"))
-      .then((stop) => {
+    // A question heard on the call brings Ask back the same way, in case it was closed.
+    Promise.all([
+      subscribePushToAsk(() => void openFeature("ask")),
+      subscribeTurnDetected(() => void openFeature("ask")),
+    ])
+      .then((stops) => {
+        const stop = () => stops.forEach((each) => each());
         if (cancelled) stop();
         else unlisten = stop;
       })
@@ -177,6 +183,13 @@ export function HubApp() {
   }, [opacity]);
 
   const listening = isListening(listenState);
+
+  // Suggestions show up in Ask, so it has to be open before the first question is
+  // heard. Keyed on the state, not the button, so the global shortcut is covered too.
+  useEffect(() => {
+    if (listening) void openFeature("ask");
+    // `openFeature` is safe to call from any render (see the push-to-ask effect).
+  }, [listening]);
 
   async function toggleListen(): Promise<void> {
     if (busy) return;
