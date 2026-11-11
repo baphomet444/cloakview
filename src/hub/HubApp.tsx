@@ -223,13 +223,13 @@ export function HubApp() {
           >
             {t("hub.listen")}
           </button>
-          <button type="button" className="hub-btn" onClick={() => void openFeature("ask")}>
+          <button type="button" className="hub-btn" title={t("hub.ask")} onClick={() => void openFeature("ask")}>
             {t("hub.ask")}
           </button>
-          <button type="button" className="hub-btn" onClick={() => void openFeature("notes")}>
+          <button type="button" className="hub-btn" title={t("hub.notes")} onClick={() => void openFeature("notes")}>
             {t("hub.notes")}
           </button>
-          <button type="button" className="hub-btn" onClick={() => void openFeature("settings")}>
+          <button type="button" className="hub-btn" title={t("hub.settings")} onClick={() => void openFeature("settings")}>
             {t("hub.settings")}
           </button>
           <input
@@ -249,6 +249,7 @@ export function HubApp() {
           <button
             type="button"
             className="hub-btn"
+            title={t("hub.close")}
             onClick={() => void hideAll(tauriHide).catch((error: unknown) => setErrorKey(errorCopyKey(error)))}
           >
             {t("hub.close")}

@@ -177,37 +177,25 @@ export function SettingsApp() {
       ) : (
         <>
           <section className="set-section set-grid">
-            <label className="win-label" htmlFor="set-language">
+            <span className="win-label" id="set-language-label">
               {t("settings.language")}
-            </label>
-            <select
+            </span>
+            <Segmented
               id="set-language"
-              className="win-input"
+              options={LANGUAGES}
               value={locale}
-              onChange={(event) => changeLanguage(event.currentTarget.value === "es" ? "es" : "en")}
-            >
-              {LANGUAGES.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {t(option.labelKey)}
-                </option>
-              ))}
-            </select>
+              onChange={changeLanguage}
+            />
 
-            <label className="win-label" htmlFor="set-theme">
+            <span className="win-label" id="set-theme-label">
               {t("settings.theme")}
-            </label>
-            <select
+            </span>
+            <Segmented
               id="set-theme"
-              className="win-input"
+              options={THEMES}
               value={theme}
-              onChange={(event) => changeTheme(themeFromSetting(event.currentTarget.value))}
-            >
-              {THEMES.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {t(option.labelKey)}
-                </option>
-              ))}
-            </select>
+              onChange={changeTheme}
+            />
 
             <label className="win-label" htmlFor="set-opacity">
               {t("settings.opacity")}
@@ -279,6 +267,40 @@ export function SettingsApp() {
         </>
       )}
     </WindowFrame>
+  );
+}
+
+/**
+ * A row of toggle buttons in place of a native `<select>`. A `<select>`'s menu is a
+ * separate popup that needs its window to be key; in a non-activating panel it opens and
+ * closes at once. Plain buttons only need the click.
+ */
+function Segmented<V extends string>(props: {
+  id: string;
+  options: readonly { value: V; labelKey: CatalogKey }[];
+  value: V;
+  onChange: (value: V) => void;
+}) {
+  return (
+    <div className="seg" role="radiogroup" aria-labelledby={`${props.id}-label`}>
+      {props.options.map((option) => {
+        const selected = option.value === props.value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            className="seg-btn"
+            onClick={() => {
+              if (!selected) props.onChange(option.value);
+            }}
+          >
+            {t(option.labelKey)}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

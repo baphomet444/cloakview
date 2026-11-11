@@ -12,8 +12,9 @@ body,
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
-/* The hub: a 420x58 floating bar (see tauri.conf.json). Buttons shrink and ellipsize
-   rather than overflow, since Spanish labels are longer than English ones. */
+/* The hub: a 540x58 floating bar (see tauri.conf.json), wide enough for the Spanish
+   labels, the longer ones. Buttons still shrink and ellipsize rather than overflow, as
+   a fallback; each carries its label as a tooltip. */
 .hub {
   box-sizing: border-box;
   display: flex;
@@ -34,7 +35,7 @@ body,
   flex: 1 1 auto;
   min-width: 0;
   height: 34px;
-  padding: 0 8px;
+  padding: 0 6px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 9px;
   background: rgba(255, 255, 255, 0.07);
@@ -281,10 +282,6 @@ body,
   box-shadow: 0 0 0 2px var(--win-accent-soft);
 }
 
-select.win-input {
-  padding-right: 6px;
-}
-
 .win-textarea {
   height: auto;
   padding: 7px 10px;
@@ -457,6 +454,48 @@ select.win-input {
 
 .set-grid > h2.set-span {
   margin-top: 6px;
+}
+
+/* Segmented control (Settings: language, theme): buttons, not a <select>, because a
+   select's popup menu needs a key window and these panels are non-activating. */
+.seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--win-control-line);
+  border-radius: 9px;
+  background: var(--win-control);
+}
+
+.seg-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--win-muted);
+  font: 500 12px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.seg-btn:hover {
+  color: var(--win-fg);
+}
+
+.seg-btn[aria-checked="true"] {
+  background: var(--win-accent);
+  color: var(--win-accent-fg);
+  cursor: default;
+}
+
+.seg-btn:focus-visible {
+  outline: 2px solid var(--win-accent);
+  outline-offset: 1px;
 }
 
 .set-range {
