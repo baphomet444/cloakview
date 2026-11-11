@@ -36,6 +36,18 @@ impl MicStatus {
     }
 }
 
+/// Asks macOS for microphone access: the first time this shows the system prompt.
+/// It does not wait for the answer; the caller reports the permission as missing and
+/// the user presses Listen again. Does nothing once the choice has been made.
+pub fn request_mic_access() {
+    // SAFETY: `AVMediaTypeAudio` is an immutable constant exported by the AVFoundation framework.
+    let Some(audio) = (unsafe { AVMediaTypeAudio }) else { return };
+    let on_answer = block2::RcBlock::new(|_granted: objc2::runtime::Bool| {});
+    // SAFETY: a plain class method taking the audio media type and a completion block,
+    // which macOS may call from any thread; the block captures nothing.
+    unsafe { AVCaptureDevice::requestAccessForMediaType_completionHandler(audio, &on_answer) };
+}
+
 /// Current microphone permission, read from the OS **without opening a
 /// capture stream and without prompting**: `authorizationStatusForMediaType:`
 /// only reports; prompting is a separate `requestAccess…` call this app

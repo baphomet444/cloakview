@@ -31,6 +31,11 @@ const LANGUAGES: readonly { value: Locale; labelKey: CatalogKey }[] = [
   { value: "es", labelKey: "settings.languageEs" },
 ];
 
+const MIC_OPTIONS: readonly { value: "off" | "on"; labelKey: CatalogKey }[] = [
+  { value: "off", labelKey: "settings.micOff" },
+  { value: "on", labelKey: "settings.micOn" },
+];
+
 const THEMES: readonly { value: Theme; labelKey: CatalogKey }[] = [
   { value: "dark", labelKey: "settings.themeDark" },
   { value: "light", labelKey: "settings.themeLight" },
@@ -196,6 +201,17 @@ export function SettingsApp() {
               value={theme}
               onChange={changeTheme}
             />
+
+            <span className="win-label" id="set-mic-label">
+              {t("settings.mic")}
+            </span>
+            <Segmented
+              id="set-mic"
+              options={MIC_OPTIONS}
+              value={settings.includeMic ? "on" : "off"}
+              onChange={(next) => void save({ includeMic: next === "on" })}
+            />
+            <p className="win-hint set-span">{t("settings.micHint")}</p>
 
             <label className="win-label" htmlFor="set-opacity">
               {t("settings.opacity")}

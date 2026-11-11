@@ -47,7 +47,8 @@ export function AskApp() {
       subscribeAnswerDelta((text) => dispatch({ type: "delta", text })).then(keep),
       subscribeAnswerDone(() => dispatch({ type: "done" })).then(keep),
       subscribeTranscriptDelta((turn) => {
-        lastHeard.current = turn.text;
+        // The user's own words (microphone) are not what a suggestion answers.
+        if (!turn.isUserTurn) lastHeard.current = turn.text;
       }).then(keep),
       // Something on the call asks for a reply: suggest one without being asked.
       // The transcript is the context, so no question is sent; a suggestion still

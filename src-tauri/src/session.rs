@@ -14,7 +14,7 @@ const PROMPT_CHARS: usize = 200;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Entry {
     /// A line of the call, as transcribed.
-    Heard { ts: i64, text: String },
+    Heard { ts: i64, text: String, mine: bool },
     /// A suggested answer, with the question (or the last thing heard) it answers.
     Suggestion { ts: i64, prompt: String, text: String },
 }
@@ -57,19 +57,20 @@ impl SessionLog {
         self.started_ms.is_some()
     }
 
-    /// Records a transcribed line. Nothing is recorded outside a session.
-    pub fn heard(&mut self, ts: i64, text: &str) {
+    /// Records a transcribed line, `mine` when it came from the user's microphone.
+    /// Nothing is recorded outside a session.
+    pub fn heard(&mut self, ts: i64, text: &str, mine: bool) {
         let text = text.trim();
         if self.is_open() && !text.is_empty() {
-            self.entries.push(Entry::Heard { ts, text: text.to_string() });
+            self.entries.push(Entry::Heard { ts, text: text.to_string(), mine });
         }
     }
 
-    /// The most recent line heard, which an automatic suggestion answers.
+    /// The most recent thing the other side said, which an automatic suggestion answers.
     pub fn last_heard(&self) -> Option<&str> {
         self.entries.iter().rev().find_map(|e| match e {
-            Entry::Heard { text, .. } => Some(text.as_str()),
-            Entry::Suggestion { .. } => None,
+            Entry::Heard { text, mine: false, .. } => Some(text.as_str()),
+            _ => None,
         })
     }
 
@@ -166,8 +167,9 @@ pub fn render_txt(session: &FinishedSession, notes: &[NoteLine]) -> String {
     out.push_str("\nCONVERSATION\n\n");
     for entry in &session.entries {
         match entry {
-            Entry::Heard { ts, text } => {
-                out.push_str(&format!("[{}] They said: {text}\n\n", elapsed(ts - session.started_ms)));
+            Entry::Heard { ts, text, mine } => {
+                let who = if *mine { "You said" } else { "They said" };
+                out.push_str(&format!("[{}] {who}: {text}\n\n", elapsed(ts - session.started_ms)));
             }
             Entry::Suggestion { ts, prompt, text } => {
                 let to = if prompt.is_empty() { String::new() } else { format!(" (to: \"{prompt}\")") };
@@ -202,7 +204,8 @@ mod tests {
             started_ms: 1_700_000_000_000,
             ended_ms: 1_700_000_000_000 + 38 * 60_000,
             entries: vec![
-                Entry::Heard { ts: 1_700_000_012_000, text: "Tell me about your last project.".into() },
+                Entry::Heard { ts: 1_700_000_012_000, text: "Tell me about your last project.".into(), mine: false },
+                Entry::Heard { ts: 1_700_000_016_000, text: "Sure, one moment.".into(), mine: true },
                 Entry::Suggestion {
                     ts: 1_700_000_020_000,
                     prompt: "Tell me about your last project.".into(),
@@ -216,7 +219,7 @@ mod tests {
     #[test]
     fn nothing_is_recorded_outside_a_session() {
         let mut log = SessionLog::default();
-        log.heard(1, "hello");
+        log.heard(1, "hello", false);
         log.suggestion(2, "q", "a");
         log.begin(0);
         assert!(log.finish(10).is_none());
@@ -226,13 +229,14 @@ mod tests {
     fn a_session_records_in_order_and_finishing_resets_it() {
         let mut log = SessionLog::default();
         log.begin(100);
-        log.heard(110, "  Hello there  ");
-        log.heard(111, "   ");
+        log.heard(110, "  Hello there  ", false);
+        log.heard(111, "   ", false);
+        log.heard(112, "Let me think.", true); // the user's own line is not what a suggestion answers
         assert_eq!(log.last_heard(), Some("Hello there"));
         log.suggestion(120, "Hello there", "Hi!");
         let done = log.finish(200).expect("something was recorded");
         assert_eq!((done.started_ms, done.ended_ms), (100, 200));
-        assert_eq!((done.heard_count(), done.suggestion_count()), (1, 1));
+        assert_eq!((done.heard_count(), done.suggestion_count()), (2, 1));
         assert!(!log.is_open());
         assert!(log.finish(300).is_none());
     }
@@ -241,9 +245,9 @@ mod tests {
     fn restarting_listening_keeps_one_interview() {
         let mut log = SessionLog::default();
         log.begin(100);
-        log.heard(110, "one");
+        log.heard(110, "one", false);
         log.begin(500); // stop + start again
-        log.heard(510, "two");
+        log.heard(510, "two", false);
         assert_eq!(log.finish(600).unwrap().started_ms, 100);
     }
 
@@ -280,6 +284,7 @@ mod tests {
         assert!(txt.starts_with("CloakView - interview record\nDate: "));
         assert!(txt.contains("(38 min)"));
         assert!(txt.contains("[00:12] They said: Tell me about your last project.\n"));
+        assert!(txt.contains("[00:16] You said: Sure, one moment.\n"));
         assert!(txt.contains("[00:20] Suggested answer (to: \"Tell me about your last project.\"):\n    I led a rewrite.\n    It shipped on time.\n"));
         assert!(txt.contains("NOTES\n\nFollow up\nSend the portfolio.\n"));
         assert!(txt.ends_with("Send the portfolio.\n"));

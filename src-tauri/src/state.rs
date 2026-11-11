@@ -21,6 +21,9 @@ pub struct Settings {
     /// Global shortcut accelerators (`hotkeys`). Re-registered on every save that
     /// changes them.
     pub shortcuts: crate::hotkeys::Shortcuts,
+    /// Also transcribe the user's microphone. Off by default: without headphones the
+    /// microphone hears the speakers. Read when listening starts.
+    pub include_mic: bool,
 }
 
 impl Default for Settings {
@@ -37,6 +40,7 @@ impl Default for Settings {
             user_keywords: vec!["¿tú qué opinas?".into(), "tú qué opinas".into()],
             user_name: None,
             shortcuts: crate::hotkeys::Shortcuts::default(),
+            include_mic: false,
         }
     }
 }
@@ -110,6 +114,7 @@ mod tests {
             user_keywords: vec!["opinas".into()],
             user_name: Some("Ana".into()),
             shortcuts: crate::hotkeys::Shortcuts::default(),
+            include_mic: true,
         };
         let json = serde_json::to_value(&s).unwrap();
 
@@ -127,7 +132,8 @@ mod tests {
                     "quickHide": "cmdOrControl+shift+h",
                     "pushToAsk": "cmdOrControl+shift+space",
                     "toggleListen": "cmdOrControl+shift+l"
-                }
+                },
+                "includeMic": true
             })
         );
         for key in json.as_object().unwrap().keys() {

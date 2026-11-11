@@ -132,12 +132,21 @@ pub fn delete_conversation(state: State<AppState>, id: String) -> Result<(), Ipc
 
 #[tauri::command]
 pub async fn start_listen(app: AppHandle, state: State<'_, AppState>) -> Result<(), IpcError> {
-    let model = state.settings.read().expect("settings lock").realtime_model.clone();
+    let (model, include_mic) = {
+        let s = state.settings.read().expect("settings lock");
+        (s.realtime_model.clone(), s.include_mic)
+    };
     let mut guard = state.listen_session.lock().await;
     if guard.is_some() {
         return Ok(()); // already listening; idempotent.
     }
-    let session = listen::start(model, app).map_err(|e| {
+    if include_mic && platform::mic_status() != platform::MicStatus::Authorized {
+        // Not allowed yet: this shows the system prompt the first time. The user answers it and presses Listen again.
+        platform::request_mic_access();
+        crate::diag::log("start_listen: microphone not allowed yet");
+        return Err(IpcError::from(AppError::MicPermissionDenied));
+    }
+    let session = listen::start(model, include_mic, app).map_err(|e| {
         crate::diag::log(&format!("start_listen failed: {e}"));
         IpcError::from(e)
     })?;

@@ -14,7 +14,7 @@ use std::collections::VecDeque;
 /// RMS level (of a 16-bit sample) above which a chunk counts as speech.
 /// System audio is digital silence when nothing plays, so this only has to
 /// clear codec noise, not a room's background.
-const SPEECH_RMS: f64 = 250.0;
+pub(crate) const SPEECH_RMS: f64 = 250.0;
 /// Audio kept from just before speech starts, so the first syllable is not cut.
 const PREROLL_MS: u64 = 300;
 /// A pause this long ends the turn.
@@ -42,8 +42,10 @@ pub struct VadOutput {
     pub end: TurnEnd,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Vad {
+    /// RMS level above which a chunk counts as speech.
+    threshold: f64,
     speaking: bool,
     preroll: VecDeque<AudioChunk>,
     preroll_ms: u64,
@@ -59,7 +61,7 @@ fn duration_ms(chunk: &AudioChunk) -> u64 {
     frames * 1000 / u64::from(chunk.sample_rate.max(1))
 }
 
-fn rms(chunk: &AudioChunk) -> f64 {
+pub(crate) fn rms(chunk: &AudioChunk) -> f64 {
     let samples = chunk.pcm_s16le.as_chunks::<2>().0.iter().map(|b| f64::from(i16::from_le_bytes(*b)));
     let (sum, count) = samples.fold((0.0, 0u64), |(sum, count), s| (sum + s * s, count + 1));
     if count == 0 {
@@ -69,10 +71,29 @@ fn rms(chunk: &AudioChunk) -> f64 {
     }
 }
 
+impl Default for Vad {
+    fn default() -> Self {
+        Self::with_threshold(SPEECH_RMS)
+    }
+}
+
 impl Vad {
+    /// For a source noisier than digital system audio, such as a microphone.
+    pub fn with_threshold(threshold: f64) -> Self {
+        Self {
+            threshold,
+            speaking: false,
+            preroll: VecDeque::new(),
+            preroll_ms: 0,
+            turn_ms: 0,
+            speech_ms: 0,
+            silence_ms: 0,
+        }
+    }
+
     pub fn push(&mut self, chunk: AudioChunk) -> VadOutput {
         let ms = duration_ms(&chunk);
-        let loud = rms(&chunk) >= SPEECH_RMS;
+        let loud = rms(&chunk) >= self.threshold;
 
         if !self.speaking {
             self.preroll_ms += ms;

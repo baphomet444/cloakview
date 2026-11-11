@@ -100,6 +100,8 @@ export type Settings = {
   userName: string | null;
   /** Re-registered by Rust whenever a save changes them. */
   shortcuts: Shortcuts;
+  /** Also transcribe the user's microphone (read when listening starts). */
+  includeMic: boolean;
 };
 
 /**
@@ -117,6 +119,7 @@ export type SettingsPatch = {
   userName?: string;
   /** All three at once: it replaces the saved set. */
   shortcuts?: Shortcuts;
+  includeMic?: boolean;
 };
 
 /** Microphone permission. `src-tauri/src/platform.rs` (`MicStatus`): a plain camelCase string. */
@@ -153,7 +156,7 @@ export type ListenState =
  * tagged (`kind` + `message`) with **no** `rename_all`, so `kind` is the PascalCase variant
  * name. Unit variants send no `message` at all.
  */
-export const IPC_ERROR_UNIT_KINDS = ["MissingApiKey", "PermissionDenied"] as const;
+export const IPC_ERROR_UNIT_KINDS = ["MissingApiKey", "PermissionDenied", "MicPermissionDenied"] as const;
 export const IPC_ERROR_MESSAGE_KINDS = [
   "Keychain",
   "Db",

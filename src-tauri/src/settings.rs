@@ -54,6 +54,7 @@ pub struct SettingsPatch {
     /// Replaces all three accelerators at once (a missing key inside falls back to its
     /// default, via `Shortcuts`' `serde(default)`).
     pub shortcuts: Option<crate::hotkeys::Shortcuts>,
+    pub include_mic: Option<bool>,
 }
 
 /// Applies the fields present in `patch` to `s`: `opacity` is clamped to
@@ -83,6 +84,9 @@ pub fn apply_patch(s: &mut Settings, patch: SettingsPatch) {
     }
     if let Some(v) = patch.shortcuts {
         s.shortcuts = v;
+    }
+    if let Some(v) = patch.include_mic {
+        s.include_mic = v;
     }
 }
 

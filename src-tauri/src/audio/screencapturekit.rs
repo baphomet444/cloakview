@@ -1,4 +1,4 @@
-use crate::audio::{AudioChunk, AudioSource, AudioStatus, TARGET_SAMPLE_RATE};
+use crate::audio::{AudioChunk, AudioSource, AudioStatus, EchoGate, TARGET_SAMPLE_RATE};
 use crate::error::{AppError, AppResult};
 use screencapturekit::sc_stream_configuration::SCStreamConfiguration;
 use screencapturekit_sys::cm_sample_buffer_ref::CMSampleBufferRef;
@@ -22,6 +22,7 @@ use tokio::sync::mpsc::Sender;
 /// buffer, which an audio buffer does not have, and panics on the first one.
 pub struct SckAudioSource {
     stream: Option<Id<UnsafeSCStream>>,
+    gate: EchoGate,
 }
 
 /// `SCStreamOutputType.audio`.
@@ -34,20 +35,21 @@ impl SckAudioSource {
     /// the system prompt, and every time it lists the app under Screen & System
     /// Audio Recording in System Settings so the user can switch it on. macOS
     /// only applies the change after the app is reopened.
-    pub fn new() -> AppResult<Self> {
+    pub fn new(gate: EchoGate) -> AppResult<Self> {
         // Safe to call directly: objc2-core-graphics wraps the C-unwind FFI
         // calls internally, so the exported fns themselves are not `unsafe`.
         if !objc2_core_graphics::CGPreflightScreenCaptureAccess() {
             objc2_core_graphics::CGRequestScreenCaptureAccess();
             return Err(AppError::PermissionDenied);
         }
-        Ok(Self { stream: None })
+        Ok(Self { stream: None, gate })
     }
 }
 
 /// Receives the stream's sample buffers on ScreenCaptureKit's own thread.
 struct AudioOutput {
     out: Sender<AudioStatus>,
+    gate: EchoGate,
     /// Buffers received so far, for the diagnostics log.
     received: std::sync::atomic::AtomicU64,
 }
@@ -70,6 +72,10 @@ impl UnsafeSCStreamOutput for AudioOutput {
             crate::diag::log(&format!("audio buffer #{n} ({} bytes)", pcm.len()));
         }
         let chunk = AudioChunk { pcm_s16le: pcm, sample_rate: TARGET_SAMPLE_RATE, channels: 1 };
+        // Loud system audio means the other side is talking: the microphone should ignore its echo.
+        if crate::audio::vad::rms(&chunk) >= crate::audio::vad::SPEECH_RMS {
+            self.gate.remote_is_loud(crate::db::now_ms());
+        }
         // Never block the capture thread: if the session is behind, this chunk is dropped.
         let _ = self.out.try_send(AudioStatus::Chunk(chunk));
     }
@@ -121,7 +127,8 @@ impl AudioSource for SckAudioSource {
         };
         let filter = UnsafeContentFilter::init(UnsafeInitParams::Display(display));
         let stream = UnsafeSCStream::init(filter, config.into(), ErrorOutput { out: out.clone() });
-        stream.add_stream_output(AudioOutput { out, received: Default::default() }, OUTPUT_TYPE_AUDIO);
+        let output = AudioOutput { out, gate: self.gate.clone(), received: Default::default() };
+        stream.add_stream_output(output, OUTPUT_TYPE_AUDIO);
         stream.start_capture().map_err(AppError::Audio)?;
         self.stream = Some(stream);
         Ok(())

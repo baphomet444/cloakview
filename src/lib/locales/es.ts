@@ -46,6 +46,10 @@ export const es: Catalog = {
   "settings.themeDark": "Oscuro",
   "settings.themeLight": "Claro",
   "settings.opacity": "Opacidad",
+  "settings.mic": "Mi micrófono",
+  "settings.micOff": "No",
+  "settings.micOn": "Sí",
+  "settings.micHint": "Transcribe también lo que dices, para que las sugerencias sepan lo que ya respondiste. Usa auriculares: sin ellos el micrófono también oye los altavoces. Se aplica la próxima vez que pulses Escuchar.",
   "settings.answersModel": "Modelo de respuestas",
   "settings.shortcuts": "Atajos",
   "settings.keyNotSet": "Aún no hay ninguna clave guardada",
@@ -69,5 +73,6 @@ export const es: Catalog = {
   "errors.permissionDenied": "Concede el permiso en Ajustes del Sistema e inténtalo de nuevo.",
   "errors.invalidUrl": "Esa dirección no es válida.",
   "errors.openFailed": "No se pudo abrir el enlace.",
+  "errors.micPermissionDenied": "Permite el micrófono para CloakView (ventana emergente, o Ajustes del Sistema → Privacidad y seguridad → Micrófono) y vuelve a pulsar Escuchar.",
   "errors.generic": "Algo salió mal",
 };

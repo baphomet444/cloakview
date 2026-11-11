@@ -95,6 +95,9 @@ pub struct SessionHandle {
     cancel: CancellationToken,
     handle: JoinHandle<()>,
     src: Box<dyn AudioSource>,
+    /// The microphone, when it was switched on, with the tasks that carry its audio.
+    mic: Option<Box<dyn AudioSource>>,
+    mic_tasks: Vec<JoinHandle<()>>,
     app: tauri::AppHandle,
 }
 
@@ -102,6 +105,12 @@ impl SessionHandle {
     pub async fn stop(mut self) {
         self.cancel.cancel();
         let _ = self.src.stop();
+        if let Some(mic) = self.mic.as_mut() {
+            let _ = mic.stop();
+        }
+        for task in &self.mic_tasks {
+            task.abort();
+        }
         let _ = self.handle.await;
         let _ = self.app.emit(LISTEN_STATE_EVENT, ListenState::Stopped);
     }
@@ -190,12 +199,14 @@ async fn pump(
                         );
                         // The cue to suggest an answer: the user was addressed
                         // (keyword or name), or what was said asks for a reply.
-                        if crate::detect::is_user_turn(
-                            &turn.text,
-                            detection.keywords,
-                            detection.user_name,
-                            turn.is_user_turn,
-                        ) || crate::detect::asks_for_reply(&turn.text)
+                        // The user's own words (the microphone) never ask for a reply.
+                        if !turn.is_user_turn
+                            && (crate::detect::is_user_turn(
+                                &turn.text,
+                                detection.keywords,
+                                detection.user_name,
+                                turn.is_user_turn,
+                            ) || crate::detect::asks_for_reply(&turn.text))
                         {
                             emit(TURN_DETECTED_EVENT, serde_json::Value::Null);
                         }
@@ -265,12 +276,39 @@ fn diag_entry(event: &str, payload: &serde_json::Value) -> String {
 /// task that pumps audio into `realtime::client::run_session` (and its
 /// parsed events back out) until cancelled, a fatal audio error, or the
 /// realtime session itself returns.
-pub fn start(model: String, app: tauri::AppHandle) -> AppResult<SessionHandle> {
-    let src: Box<dyn AudioSource> = Box::new(crate::audio::screencapturekit::SckAudioSource::new()?);
-    let (api_key, src, status_rx) = prepare_session(src)?;
+pub fn start(model: String, include_mic: bool, app: tauri::AppHandle) -> AppResult<SessionHandle> {
+    let gate = crate::audio::EchoGate::default();
+    let src: Box<dyn AudioSource> = Box::new(crate::audio::screencapturekit::SckAudioSource::new(gate.clone())?);
+    let (api_key, mut src, status_rx) = prepare_session(src)?;
 
     let (audio_tx, audio_rx) = mpsc::channel::<AudioChunk>(32);
     let (rt_tx, rt_rx) = mpsc::channel::<RealtimeEvent>(64);
+
+    // The user's own voice: a second source and a second transcription session
+    // whose lines join the same stream of events, labelled as the user's.
+    let mut mic: Option<Box<dyn AudioSource>> = None;
+    let mut mic_tasks = Vec::new();
+    if include_mic {
+        let mut source: Box<dyn AudioSource> = Box::new(crate::audio::mic::MicAudioSource::new(gate));
+        let (mic_status_tx, mut mic_status_rx) = mpsc::channel::<AudioStatus>(32);
+        if let Err(e) = source.start(mic_status_tx) {
+            let _ = src.stop(); // the system audio was already running
+            return Err(e);
+        }
+        let (mic_audio_tx, mic_audio_rx) = mpsc::channel::<AudioChunk>(32);
+        mic_tasks.push(tokio::spawn(async move {
+            while let Some(AudioStatus::Chunk(chunk)) = mic_status_rx.recv().await {
+                if mic_audio_tx.send(chunk).await.is_err() {
+                    break;
+                }
+            }
+        }));
+        let (key, model, events) = (api_key.clone(), model.clone(), rt_tx.clone());
+        mic_tasks.push(tokio::spawn(async move {
+            let _ = realtime::client::run_session(key, model, mic_audio_rx, events, realtime::client::Source::Mine).await;
+        }));
+        mic = Some(source);
+    }
     let cancel = CancellationToken::new();
     let cancel_for_task = cancel.clone();
 
@@ -288,8 +326,9 @@ pub fn start(model: String, app: tauri::AppHandle) -> AppResult<SessionHandle> {
             if let (Some(text), Some(ts)) =
                 (payload.get("text").and_then(|t| t.as_str()), payload.get("ts").and_then(|t| t.as_i64()))
             {
+                let mine = payload.get("isUserTurn").and_then(|t| t.as_bool()).unwrap_or(false);
                 let state = generic_app.state::<crate::state::AppState>();
-                state.session_log.lock().expect("session log lock").heard(ts, text);
+                state.session_log.lock().expect("session log lock").heard(ts, text, mine);
             }
         }
         let _ = generic_app.emit(event, payload);
@@ -305,7 +344,7 @@ pub fn start(model: String, app: tauri::AppHandle) -> AppResult<SessionHandle> {
             (s.user_keywords.clone(), s.user_name.clone())
         };
         let detection = TurnDetection { keywords: &user_keywords, user_name: user_name.as_deref() };
-        let realtime_task = realtime::client::run_session(api_key, model, audio_rx, rt_tx);
+        let realtime_task = realtime::client::run_session(api_key, model, audio_rx, rt_tx, realtime::client::Source::Remote);
         tokio::select! {
             _ = pump_until_cancelled(
                 cancel_for_task, status_rx, audio_tx, rt_rx, &app_state.transcript, detection,
@@ -319,7 +358,7 @@ pub fn start(model: String, app: tauri::AppHandle) -> AppResult<SessionHandle> {
         }
     });
 
-    Ok(SessionHandle { cancel, handle, src, app: app_for_handle })
+    Ok(SessionHandle { cancel, handle, src, mic, mic_tasks, app: app_for_handle })
 }
 
 #[cfg(test)]

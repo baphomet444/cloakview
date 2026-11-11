@@ -7,6 +7,37 @@ use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 use tokio_tungstenite::tungstenite::http;
 
+/// Whose audio a session transcribes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Source {
+    /// The other participants, from the system audio.
+    Remote,
+    /// The user, from the microphone.
+    Mine,
+}
+
+impl Source {
+    /// Loudness that counts as speech. A microphone has a noise floor that digital
+    /// system audio does not, so it needs a higher bar.
+    fn vad(self) -> Vad {
+        match self {
+            Source::Remote => Vad::default(),
+            Source::Mine => Vad::with_threshold(500.0),
+        }
+    }
+
+    /// The microphone's lines are the user's: they become `user` turns in the answer
+    /// context, and are never a cue to suggest a reply.
+    fn label(self, event: RealtimeEvent) -> RealtimeEvent {
+        match (self, event) {
+            (Source::Mine, RealtimeEvent::Transcript { text, .. }) => {
+                RealtimeEvent::Transcript { speaker: "you".into(), text, is_user_turn: true }
+            }
+            (_, event) => event,
+        }
+    }
+}
+
 /// A transcription session: text only, no spoken reply. The model is chosen in
 /// `session.update`, not in the URL (a `?model=` URL opens a conversation
 /// session, which rejects the transcription configuration).
@@ -62,6 +93,7 @@ pub async fn run_session(
     model: String,
     mut audio_in: tokio::sync::mpsc::Receiver<AudioChunk>,
     events_out: tokio::sync::mpsc::Sender<RealtimeEvent>,
+    source: Source,
 ) -> AppResult<()> {
     let mut backoff = Backoff::default();
     loop {
@@ -89,7 +121,7 @@ pub async fn run_session(
                 }
 
                 // A new connection has an empty buffer, so turn tracking starts over too.
-                let mut vad = Vad::default();
+                let mut vad = source.vad();
                 'session: loop {
                     tokio::select! {
                         chunk = audio_in.recv() => match chunk {
@@ -125,7 +157,7 @@ pub async fn run_session(
                         },
                         msg = read.next() => match msg {
                             Some(Ok(tokio_tungstenite::tungstenite::Message::Text(txt))) => {
-                                if let Some(ev) = parse_frame(txt.as_str()) {
+                                if let Some(ev) = parse_frame(txt.as_str()).map(|ev| source.label(ev)) {
                                     if matches!(ev, RealtimeEvent::Transcript { .. }) {
                                         backoff.reset();
                                     }

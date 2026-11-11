@@ -17,6 +17,8 @@ pub enum AppError {
     Serialize(String),
     #[error("screen recording permission denied")]
     PermissionDenied,
+    #[error("microphone permission denied")]
+    MicPermissionDenied,
     #[error("invalid url: {0}")]
     InvalidUrl(String),
     #[error("could not open url: {0}")]
@@ -35,6 +37,7 @@ pub enum IpcError {
     Network(String),
     Serialize(String),
     PermissionDenied,
+    MicPermissionDenied,
     InvalidUrl(String),
     OpenFailed(String),
 }
@@ -49,6 +52,7 @@ impl From<AppError> for IpcError {
             AppError::Network(m) => IpcError::Network(m),
             AppError::Serialize(m) => IpcError::Serialize(m),
             AppError::PermissionDenied => IpcError::PermissionDenied,
+            AppError::MicPermissionDenied => IpcError::MicPermissionDenied,
             AppError::InvalidUrl(m) => IpcError::InvalidUrl(m),
             AppError::OpenFailed(m) => IpcError::OpenFailed(m),
         }

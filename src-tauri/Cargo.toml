@@ -33,5 +33,8 @@ objc2-app-kit = "0.3"
 objc2-core-graphics = "0.3"
 objc2-foundation = "0.3"
 url = "2"
-objc2-av-foundation = { version = "0.3", default-features = false, features = ["std", "AVCaptureDevice", "AVMediaFormat"] }
+objc2-av-foundation = { version = "0.3", default-features = false, features = ["std", "block2", "AVCaptureDevice", "AVMediaFormat"] }
+objc2 = "0.6"
 tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2", version = "2.0.1" }
+cpal = "0.18.2"
+block2 = "0.6.2"

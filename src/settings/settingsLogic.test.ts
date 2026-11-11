@@ -19,6 +19,7 @@ const settings: Settings = {
   userKeywords: [],
   userName: null,
   shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "cmdOrControl+shift+space", toggleListen: "" },
+  includeMic: false,
 };
 
 describe("themeFromSetting", () => {

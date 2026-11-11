@@ -1,3 +1,5 @@
+pub mod mic;
+pub mod pcm;
 pub mod screencapturekit;
 pub mod vad;
 
@@ -5,6 +7,44 @@ use crate::error::AppResult;
 
 /// What the capture produces and the transcription session is told to expect (mono).
 pub const TARGET_SAMPLE_RATE: u32 = 24_000;
+
+/// How long the microphone stays muted after the other side was last loud.
+const ECHO_HANGOVER_MS: i64 = 400;
+
+/// Keeps the microphone from transcribing the call a second time. Without
+/// headphones the microphone hears the speakers, so while system audio is loud
+/// the microphone is treated as silent. Cheap to clone; all clones share state.
+#[derive(Clone, Default)]
+pub struct EchoGate(std::sync::Arc<std::sync::atomic::AtomicI64>);
+
+impl EchoGate {
+    /// The system audio is loud right now.
+    pub fn remote_is_loud(&self, now_ms: i64) {
+        self.0.fetch_max(now_ms + ECHO_HANGOVER_MS, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    pub fn mic_is_muted(&self, now_ms: i64) -> bool {
+        now_ms < self.0.load(std::sync::atomic::Ordering::Relaxed)
+    }
+}
+
+#[cfg(test)]
+mod echo_gate_tests {
+    use super::EchoGate;
+
+    #[test]
+    fn the_microphone_is_muted_while_the_other_side_is_loud_and_shortly_after() {
+        let gate = EchoGate::default();
+        assert!(!gate.mic_is_muted(1_000));
+        gate.remote_is_loud(1_000);
+        assert!(gate.mic_is_muted(1_200));
+        assert!(!gate.mic_is_muted(1_400));
+        // A clone sees the same state.
+        let other = gate.clone();
+        other.remote_is_loud(5_000);
+        assert!(gate.mic_is_muted(5_100));
+    }
+}
 
 /// Raw PCM audio chunk produced by an `AudioSource`.
 ///

@@ -44,6 +44,10 @@ export const en = {
   "settings.themeDark": "Dark",
   "settings.themeLight": "Light",
   "settings.opacity": "Opacity",
+  "settings.mic": "My microphone",
+  "settings.micOff": "Off",
+  "settings.micOn": "On",
+  "settings.micHint": "Also transcribe what you say, so suggestions know what you already answered. Use headphones: without them the microphone also hears the speakers. Applies the next time you press Listen.",
   "settings.answersModel": "Answers model",
   "settings.shortcuts": "Shortcuts",
   "settings.keyNotSet": "No key saved yet",
@@ -67,6 +71,7 @@ export const en = {
   "errors.permissionDenied": "Grant the permission in System Settings and try again.",
   "errors.invalidUrl": "That address is not valid.",
   "errors.openFailed": "The link could not be opened.",
+  "errors.micPermissionDenied": "Allow the microphone for CloakView (popup, or System Settings → Privacy & Security → Microphone), then press Listen again.",
   "errors.generic": "Something went wrong",
 };
 
