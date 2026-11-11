@@ -95,6 +95,30 @@ export type License =
   | { status: "pendingValidation"; key: string }
   | { status: "active"; key: string };
 
+/** `src-tauri/src/session.rs` (`Entry`): one thing that happened during an interview. */
+export type SessionEntry =
+  | { kind: "heard"; ts: number; text: string; mine: boolean }
+  | { kind: "suggestion"; ts: number; prompt: string; text: string };
+
+/** `src-tauri/src/db/sessions.rs` (`SessionSummary`): one past interview in the history list. */
+export type PastSession = {
+  id: string;
+  title: string;
+  startedAt: number;
+  endedAt: number;
+  heard: number;
+  suggestions: number;
+};
+
+/** `src-tauri/src/db/sessions.rs` (`SessionDetail`): a past interview, whole. */
+export type PastSessionDetail = {
+  id: string;
+  title: string;
+  startedAt: number;
+  endedAt: number;
+  entries: SessionEntry[];
+};
+
 /** `src-tauri/src/state.rs` (`Settings`). `theme` and `language` are free-form strings in Rust. */
 export type Settings = {
   language: string;

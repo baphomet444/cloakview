@@ -2,7 +2,7 @@
 //! lives in `db::*`, `secrets`, `settings`, `listen`, `answers`; this file
 //! only adapts those to Tauri's command/state/event plumbing.
 
-use crate::db::{conversations, notes, Db};
+use crate::db::{conversations, notes, sessions, Db};
 use crate::error::{AppError, IpcError};
 use crate::events::{ANSWER_DELTA_EVENT, ANSWER_DONE_EVENT, ANSWER_STARTED_EVENT, ERROR_EVENT};
 use crate::listen;
@@ -317,12 +317,49 @@ pub fn finish_session(state: State<AppState>) -> Result<SessionSummary, IpcError
         suggestions: session.suggestion_count(),
         note_saved: session.auto_note_id.is_some(),
     };
+    // CloakView Pro keeps every interview in the history window. Free users get
+    // the in-memory record and the save offer, but nothing is persisted.
+    if state.is_pro() {
+        match with_db(&state, |db| sessions::save(db, &session)) {
+            Ok(saved) => crate::diag::log(&format!("interview kept in history ({})", saved.id)),
+        // `IpcError` is only `Serialize`; its JSON is the log line (same as hotkeys).
+        Err(e) => crate::diag::log(&format!(
+            "keeping the interview in history failed: {}",
+            serde_json::to_string(&e).unwrap_or_default()
+        )),
+        }
+    }
     crate::diag::log(&format!(
         "interview finished: {} heard, {} suggestions, note saved: {}",
         summary.heard, summary.suggestions, summary.note_saved
     ));
     *state.last_session.lock().expect("last session lock") = Some(session);
     Ok(summary)
+}
+
+// --- session history (CloakView Pro) ---
+
+/// Every past interview, newest first. `query` filters by title and content;
+/// `None` (or blank) lists all.
+#[tauri::command]
+pub fn list_sessions(state: State<AppState>, query: Option<String>) -> Result<Vec<sessions::SessionSummary>, IpcError> {
+    state.license.read().expect("license lock").require_pro().map_err(IpcError::from)?;
+    with_db(&state, |db| sessions::list(db, query.as_deref()))
+}
+
+/// One interview, whole: the conversation and the suggested answers in order.
+#[tauri::command]
+pub fn get_session(state: State<AppState>, id: String) -> Result<sessions::SessionDetail, IpcError> {
+    state.license.read().expect("license lock").require_pro().map_err(IpcError::from)?;
+    with_db(&state, |db| {
+        sessions::get(db, &id)?.ok_or_else(|| AppError::Db(format!("no session {id}")))
+    })
+}
+
+#[tauri::command]
+pub fn delete_session(state: State<AppState>, id: String) -> Result<(), IpcError> {
+    state.license.read().expect("license lock").require_pro().map_err(IpcError::from)?;
+    with_db(&state, |db| sessions::delete(db, &id))
 }
 
 /// Asks where to save the last interview and writes it there as a text file: the

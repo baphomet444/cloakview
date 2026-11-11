@@ -144,6 +144,9 @@ const cases: Case[] = [
   ["get_license_status", () => ipc.getLicenseStatus(), undefined],
   ["activate_license", () => ipc.activateLicense("ABCD-1234"), { key: "ABCD-1234" }],
   ["deactivate_license", () => ipc.deactivateLicense(), undefined],
+  ["list_sessions", () => ipc.listSessions("rewrite"), { query: "rewrite" }],
+  ["get_session", () => ipc.getSession("s1"), { id: "s1" }],
+  ["delete_session", () => ipc.deleteSession("s1"), { id: "s1" }],
 ];
 
 describe("wrappers", () => {

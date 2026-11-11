@@ -70,6 +70,9 @@ ipc_commands![
     get_license_status,
     activate_license,
     deactivate_license,
+    list_sessions,
+    get_session,
+    delete_session,
 ];
 
 pub fn run() {
@@ -177,6 +180,10 @@ mod ipc_surface_tests {
         "get_license_status",
         "activate_license",
         "deactivate_license",
+        // session history (not in design.md §5)
+        "list_sessions",
+        "get_session",
+        "delete_session",
     ];
 
     #[test]

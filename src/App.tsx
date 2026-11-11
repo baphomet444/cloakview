@@ -1,4 +1,5 @@
 import { AskApp } from "./ask/AskApp";
+import { HistoryApp } from "./history/HistoryApp";
 import { HubApp } from "./hub/HubApp";
 import { TranscriptApp } from "./listen/TranscriptApp";
 import { NotesApp } from "./notes/NotesApp";
@@ -9,6 +10,7 @@ export function App(props: { windowKind: string }) {
   if (props.windowKind === "ask") return <AskApp />;
   if (props.windowKind === "listen") return <TranscriptApp />;
   if (props.windowKind === "notes") return <NotesApp />;
+  if (props.windowKind === "history") return <HistoryApp />;
   if (props.windowKind === "settings") return <SettingsApp />;
   return <div data-testid="placeholder">{props.windowKind}</div>;
 }

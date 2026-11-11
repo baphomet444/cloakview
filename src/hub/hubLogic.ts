@@ -44,15 +44,16 @@ export function errorCopyKey(error: unknown): CatalogKey {
 }
 
 /** The overlay windows the hub opens. The window label is the kind itself, and the URL is `/?win=<kind>`. */
-export type FeatureKind = "ask" | "listen" | "notes" | "settings";
+export type FeatureKind = "ask" | "listen" | "notes" | "history" | "settings";
 
-export const FEATURE_KINDS: readonly FeatureKind[] = ["ask", "listen", "notes", "settings"];
+export const FEATURE_KINDS: readonly FeatureKind[] = ["ask", "listen", "notes", "history", "settings"];
 
 /** Per-window title (a catalog key, never literal text) and starting size. */
 export const FEATURE_WINDOWS: Record<FeatureKind, { titleKey: CatalogKey; width: number; height: number }> = {
   ask: { titleKey: "hub.ask", width: 420, height: 360 },
   listen: { titleKey: "listen.title", width: 380, height: 360 },
   notes: { titleKey: "hub.notes", width: 420, height: 420 },
+  history: { titleKey: "hub.history", width: 460, height: 480 },
   settings: { titleKey: "hub.settings", width: 460, height: 480 },
 };
 

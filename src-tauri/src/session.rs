@@ -11,7 +11,11 @@ use chrono::{Local, TimeZone};
 /// How much of the prompt a suggestion quotes, in characters.
 const PROMPT_CHARS: usize = 200;
 
-#[derive(Debug, Clone, PartialEq)]
+/// One thing that happened during the interview. Serialized for the history
+/// window (`db/sessions` stores the list as JSON) with a `kind` tag, so the
+/// frontend gets a plain discriminated union.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Entry {
     /// A line of the call, as transcribed.
     Heard { ts: i64, text: String, mine: bool },

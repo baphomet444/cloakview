@@ -4,6 +4,7 @@ export const en = {
   "hub.screen": "Screen",
   "hub.screenHint": "Read the screen and answer what is on it",
   "hub.notes": "Notes",
+  "hub.history": "History",
   "hub.settings": "Settings",
   "hub.close": "Close",
   "session.savePrompt": "Save this interview as a text file?",
@@ -89,6 +90,15 @@ export const en = {
   "settings.activate": "Activate",
   "settings.deactivate": "Deactivate",
   "settings.proHint": "One-time purchase. The key is stored on this Mac; a one-time online check activates it.",
+  "history.searchPlaceholder": "Search interviews…",
+  "history.search": "Search",
+  "history.empty": "No interviews yet. They appear here after you stop listening.",
+  "history.loading": "Loading history…",
+  "history.lines": "lines",
+  "history.suggestedCount": "suggested",
+  "history.back": "Back",
+  "history.theySaid": "They said",
+  "history.youSaid": "You said",
 };
 
 /**

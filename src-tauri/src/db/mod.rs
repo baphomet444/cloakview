@@ -5,6 +5,8 @@ pub mod notes;
 
 pub mod conversations;
 
+pub mod sessions;
+
 pub(crate) fn now_ms() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -56,6 +58,16 @@ pub fn migrations() -> &'static [&'static str] {
             created_at INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_messages_conv ON conversation_messages(conversation_id);",
+        // The interview record, kept for the history window (CloakView Pro).
+        // `entries` is the session's `Vec<Entry>` as JSON.
+        "CREATE TABLE IF NOT EXISTS sessions (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL DEFAULT '',
+            started_at INTEGER NOT NULL,
+            ended_at INTEGER NOT NULL,
+            entries TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_sessions_started ON sessions(started_at);",
     ]
 }
 

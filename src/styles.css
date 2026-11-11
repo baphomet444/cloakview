@@ -543,6 +543,81 @@ body,
   font-size: 10.5px;
 }
 
+/* History */
+.history-open {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.history-open:hover {
+  text-decoration: underline;
+}
+
+.history-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.history-entries {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.history-entry {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--win-line);
+}
+
+.history-elapsed {
+  flex: 0 0 auto;
+  color: var(--win-muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  padding-top: 2px;
+}
+
+.history-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.history-who {
+  margin: 0 0 2px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--win-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.history-entry.history-line .history-who {
+  color: var(--win-text);
+}
+
+.history-prompt {
+  margin: 0 0 2px;
+  color: var(--win-muted);
+  font-size: 11px;
+}
+
+.history-text p {
+  margin: 0;
+}
+
 /* Settings */
 .set-section {
   padding: 4px 0 14px;

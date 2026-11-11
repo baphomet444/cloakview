@@ -317,6 +317,9 @@ export function HubApp() {
           <button type="button" className="hub-btn" title={t("hub.notes")} onClick={() => void openFeature("notes")}>
             {t("hub.notes")}
           </button>
+          <button type="button" className="hub-btn" title={t("hub.history")} onClick={() => void openFeature("history")}>
+            {t("hub.history")}
+          </button>
           <button type="button" className="hub-btn" title={t("hub.settings")} onClick={() => void openFeature("settings")}>
             {t("hub.settings")}
           </button>

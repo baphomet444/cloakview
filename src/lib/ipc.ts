@@ -32,6 +32,8 @@ import {
   type NewNote,
   type Note,
   type NoteFilter,
+  type PastSession,
+  type PastSessionDetail,
   type SessionSummary,
   type Settings,
   type SettingsPatch,
@@ -71,6 +73,9 @@ export interface CommandSignatures {
   get_license_status: { args: undefined; result: License };
   activate_license: { args: { key: string }; result: License };
   deactivate_license: { args: undefined; result: License };
+  list_sessions: { args: { query?: string }; result: PastSession[] };
+  get_session: { args: { id: string }; result: PastSessionDetail };
+  delete_session: { args: { id: string }; result: void };
 }
 
 /**
@@ -106,6 +111,9 @@ export const COMMANDS = [
   "get_license_status",
   "activate_license",
   "deactivate_license",
+  "list_sessions",
+  "get_session",
+  "delete_session",
 ] as const satisfies readonly (keyof CommandSignatures)[];
 
 export type CommandName = (typeof COMMANDS)[number];
@@ -216,6 +224,19 @@ export function activateLicense(key: string): Promise<License> {
 /** Locks Pro again and deletes the stored key. */
 export function deactivateLicense(): Promise<License> {
   return call("deactivate_license");
+}
+
+// session history (CloakView Pro)
+/** Every past interview, newest first. `query` filters by title and content. Rejects with `ProRequired` without a license. */
+export function listSessions(query?: string): Promise<PastSession[]> {
+  return call("list_sessions", { query });
+}
+/** One past interview, whole. Rejects with `ProRequired` without a license. */
+export function getSession(id: string): Promise<PastSessionDetail> {
+  return call("get_session", { id });
+}
+export function deleteSession(id: string): Promise<void> {
+  return call("delete_session", { id });
 }
 
 // platform
