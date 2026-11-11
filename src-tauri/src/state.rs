@@ -60,6 +60,10 @@ pub struct AppState {
     /// The in-flight `answers::client::stream_answer` task, if any, so
     /// `stop_answer` can abort it.
     pub answer_task: tokio::sync::Mutex<Option<tokio::task::JoinHandle<()>>>,
+    /// The interview being recorded (std mutex: only ever held briefly, never across an await).
+    pub session_log: Mutex<crate::session::SessionLog>,
+    /// The interview that just ended, kept until the next one so it can be saved to a file.
+    pub last_session: Mutex<Option<crate::session::FinishedSession>>,
 }
 
 impl AppState {

@@ -138,6 +138,8 @@ const cases: Case[] = [
   ["get_app_info", () => ipc.getAppInfo(), undefined],
   ["open_external", () => ipc.openExternal("https://example.com"), { url: "https://example.com" }],
   ["promote_overlay", () => ipc.promoteOverlay("ask"), { label: "ask" }],
+  ["finish_session", () => ipc.finishSession(), undefined],
+  ["save_session_txt", () => ipc.saveSessionTxt(), undefined],
 ];
 
 describe("wrappers", () => {

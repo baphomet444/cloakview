@@ -11,6 +11,7 @@ mod listen;
 mod platform;
 pub mod realtime;
 mod secrets;
+mod session;
 mod settings;
 mod state;
 pub mod transcript;
@@ -61,12 +62,15 @@ ipc_commands![
     get_app_info,
     open_external,
     promote_overlay,
+    finish_session,
+    save_session_txt,
 ];
 
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_nspanel::init())
         .invoke_handler(invoke_handler())
         .setup(|app| {
@@ -80,6 +84,8 @@ pub fn run() {
                 transcript: tokio::sync::Mutex::new(Vec::new()),
                 listen_session: tokio::sync::Mutex::new(None),
                 answer_task: tokio::sync::Mutex::new(None),
+                session_log: Default::default(),
+                last_session: Default::default(),
             });
             let hub = app.get_webview_window("hub").ok_or("hub window missing")?;
             windows_ext::make_overlay(&hub).map_err(|e| e.to_string())?;
@@ -154,6 +160,9 @@ mod ipc_surface_tests {
         "open_external",
         // windows (not in design.md §5: added for the overlay panels)
         "promote_overlay",
+        // interview record (not in design.md §5: added with the session export)
+        "finish_session",
+        "save_session_txt",
     ];
 
     #[test]

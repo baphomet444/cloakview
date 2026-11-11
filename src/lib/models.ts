@@ -123,6 +123,16 @@ export type SettingsPatch = {
 export const MIC_STATUSES = ["notDetermined", "authorized", "denied", "restricted"] as const;
 export type MicStatus = (typeof MIC_STATUSES)[number];
 
+/** `finish_session`. `src-tauri/src/commands.rs` (`SessionSummary`): what the interview that just ended held. */
+export type SessionSummary = {
+  /** Lines heard on the call. */
+  heard: number;
+  /** Suggested answers given. */
+  suggestions: number;
+  /** Whether the suggested answers were saved as a note. */
+  noteSaved: boolean;
+};
+
 /** `get_app_info`. `src-tauri/src/commands.rs` (`AppInfo`). */
 export type AppInfo = {
   name: string;

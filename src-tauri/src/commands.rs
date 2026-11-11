@@ -142,6 +142,7 @@ pub async fn start_listen(app: AppHandle, state: State<'_, AppState>) -> Result<
         IpcError::from(e)
     })?;
     crate::diag::log("start_listen ok");
+    state.session_log.lock().expect("session log lock").begin(crate::db::now_ms());
     *guard = Some(session);
     Ok(())
 }
@@ -172,6 +173,11 @@ pub async fn request_answer(
         prev.abort(); // a new question supersedes whatever was still streaming.
     }
 
+    // What this suggestion answers: the typed question, or the last thing heard on the call.
+    let prompt = question
+        .clone()
+        .or_else(|| state.session_log.lock().expect("session log lock").last_heard().map(str::to_string))
+        .unwrap_or_default();
     let (mut rx, handle) = crate::answers::client::stream_answer(api_key, model, context, question);
     *answer_guard = Some(handle);
     drop(answer_guard);
@@ -186,14 +192,21 @@ pub async fn request_answer(
     tokio::spawn(async move {
         // For the diagnostics log: how much was answered, never what.
         let mut chars = 0usize;
+        let mut answer = String::new();
         while let Some(event) = rx.recv().await {
             match event {
                 crate::answers::AnswersEvent::Delta { text } => {
                     chars += text.chars().count();
+                    answer.push_str(&text);
                     let _ = app.emit(ANSWER_DELTA_EVENT, text);
                 }
                 crate::answers::AnswersEvent::Done => {
                     crate::diag::log(&format!("answer done ({chars} chars)"));
+                    app.state::<AppState>().session_log.lock().expect("session log lock").suggestion(
+                        crate::db::now_ms(),
+                        &prompt,
+                        &answer,
+                    );
                     let _ = app.emit(ANSWER_DONE_EVENT, ());
                 }
                 crate::answers::AnswersEvent::Error { message } => {
@@ -213,6 +226,85 @@ pub async fn stop_answer(state: State<'_, AppState>) -> Result<(), IpcError> {
         handle.abort();
     }
     Ok(())
+}
+
+// --- interview record ---
+
+/// What `finish_session` reports, so the hub can offer to save the interview.
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionSummary {
+    pub heard: usize,
+    pub suggestions: usize,
+    /// Whether the suggested answers were saved as a note.
+    pub note_saved: bool,
+}
+
+/// Closes the interview record once listening has stopped: the suggested answers
+/// become a note, and the whole interview is kept for `save_session_txt`. Calling it
+/// again, or with nothing recorded, reports zeros.
+#[tauri::command]
+pub fn finish_session(state: State<AppState>) -> Result<SessionSummary, IpcError> {
+    let finished = state.session_log.lock().expect("session log lock").finish(crate::db::now_ms());
+    let Some(mut session) = finished else {
+        return Ok(SessionSummary { heard: 0, suggestions: 0, note_saved: false });
+    };
+    if session.suggestion_count() > 0 {
+        let note = with_db(&state, |db| {
+            notes::create(
+                db,
+                notes::NewNote {
+                    title: crate::session::title(session.started_ms),
+                    content: crate::session::note_body(&session),
+                    tags: vec!["interview".into()],
+                    folder_id: None,
+                },
+            )
+        })?;
+        session.auto_note_id = Some(note.id);
+    }
+    let summary = SessionSummary {
+        heard: session.heard_count(),
+        suggestions: session.suggestion_count(),
+        note_saved: session.auto_note_id.is_some(),
+    };
+    crate::diag::log(&format!(
+        "interview finished: {} heard, {} suggestions, note saved: {}",
+        summary.heard, summary.suggestions, summary.note_saved
+    ));
+    *state.last_session.lock().expect("last session lock") = Some(session);
+    Ok(summary)
+}
+
+/// Asks where to save the last interview and writes it there as a text file: the
+/// conversation, then the notes written while it ran. Resolves to the path, or `None`
+/// if the user closed the dialog.
+#[tauri::command]
+pub async fn save_session_txt(app: AppHandle, state: State<'_, AppState>) -> Result<Option<String>, IpcError> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let session = state.last_session.lock().expect("last session lock").clone();
+    let Some(session) = session else { return Ok(None) };
+    let lines: Vec<crate::session::NoteLine> = with_db(&state, |db| {
+        Ok(notes::list(db, notes::NoteFilter::default())?
+            .into_iter()
+            .filter(|n| n.updated_at >= session.started_ms && session.auto_note_id.as_deref() != Some(n.id.as_str()))
+            .map(|n| crate::session::NoteLine { title: n.title, content: n.content })
+            .collect())
+    })?;
+    let text = crate::session::render_txt(&session, &lines);
+    let name = crate::session::file_name(session.started_ms);
+
+    let picked = tokio::task::spawn_blocking(move || {
+        app.dialog().file().set_file_name(name).add_filter("Text", &["txt"]).blocking_save_file()
+    })
+    .await
+    .map_err(|e| IpcError::from(AppError::Audio(e.to_string())))?;
+    let Some(picked) = picked else { return Ok(None) };
+    let path = picked.into_path().map_err(|e| IpcError::from(AppError::OpenFailed(e.to_string())))?;
+    std::fs::write(&path, text).map_err(|e| IpcError::from(AppError::from(e)))?;
+    crate::diag::log("interview saved to a file");
+    Ok(Some(path.display().to_string()))
 }
 
 // --- app / platform (design.md §5) ---

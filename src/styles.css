@@ -80,6 +80,17 @@ body,
   min-width: 0;
 }
 
+/* The offer to save the interview takes over the bar, like an error does. */
+.hub-prompt {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 6px;
+  font: 500 12px/1.3 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .hub-error button {
   display: block;
   width: 100%;

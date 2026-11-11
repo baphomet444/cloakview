@@ -31,6 +31,7 @@ import {
   type NewNote,
   type Note,
   type NoteFilter,
+  type SessionSummary,
   type Settings,
   type SettingsPatch,
   type Turn,
@@ -63,6 +64,8 @@ export interface CommandSignatures {
   get_app_info: { args: undefined; result: AppInfo };
   open_external: { args: { url: string }; result: void };
   promote_overlay: { args: { label: string }; result: void };
+  finish_session: { args: undefined; result: SessionSummary };
+  save_session_txt: { args: undefined; result: string | null };
 }
 
 /**
@@ -92,6 +95,8 @@ export const COMMANDS = [
   "get_app_info",
   "open_external",
   "promote_overlay",
+  "finish_session",
+  "save_session_txt",
 ] as const satisfies readonly (keyof CommandSignatures)[];
 
 export type CommandName = (typeof COMMANDS)[number];
@@ -169,6 +174,16 @@ export function requestAnswer(question?: string): Promise<void> {
 }
 export function stopAnswer(): Promise<void> {
   return call("stop_answer");
+}
+
+// interview record
+/** Call once listening has stopped: saves the suggested answers as a note and keeps the interview for `saveSessionTxt`. */
+export function finishSession(): Promise<SessionSummary> {
+  return call("finish_session");
+}
+/** Asks where to save the last interview and writes it there. Resolves to the path, or `null` if the dialog was closed. */
+export function saveSessionTxt(): Promise<string | null> {
+  return call("save_session_txt");
 }
 
 // platform

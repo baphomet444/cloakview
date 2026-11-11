@@ -3,8 +3,10 @@ import { currentMonitor, getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect, useRef, useState } from "react";
 import { getLocale, localeFromSetting, setLocale, t, type CatalogKey, type Locale } from "../lib/i18n";
 import {
+  finishSession,
   getSettings,
   promoteOverlay,
+  saveSessionTxt,
   saveSettings,
   startListen,
   stopListen,
@@ -12,7 +14,7 @@ import {
   subscribePushToAsk,
   subscribeTurnDetected,
 } from "../lib/ipc";
-import type { ListenState } from "../lib/models";
+import type { ListenState, SessionSummary } from "../lib/models";
 import {
   FEATURE_WINDOWS,
   errorCopyKey,
@@ -97,6 +99,9 @@ export function HubApp() {
   const [busy, setBusy] = useState(false);
   const [errorKey, setErrorKey] = useState<CatalogKey | null>(null);
   const [opacity, setOpacity] = useState(1);
+  // The interview that just ended, while the bar offers to save it.
+  const [ended, setEnded] = useState<SessionSummary | null>(null);
+  const [saving, setSaving] = useState(false);
   const opacityEdited = useRef(false);
   const opening = useRef(new Set<FeatureKind>());
 
@@ -126,6 +131,14 @@ export function HubApp() {
     subscribeListenState((state) => {
       setListenState(state);
       if (state.kind === "error") setErrorKey("errors.generic");
+      // Stopping from the button or from the shortcut both end up here.
+      if (state.kind === "stopped") {
+        finishSession()
+          .then((summary) => {
+            if (summary.heard > 0) setEnded(summary);
+          })
+          .catch((error: unknown) => setErrorKey(errorCopyKey(error)));
+      }
     })
       .then((stop) => {
         if (cancelled) stop();
@@ -204,6 +217,19 @@ export function HubApp() {
     }
   }
 
+  async function saveInterview(): Promise<void> {
+    if (saving) return;
+    setSaving(true);
+    try {
+      // `null` means the dialog was closed: the offer stays, in case it was a slip.
+      if ((await saveSessionTxt()) !== null) setEnded(null);
+    } catch (error) {
+      setErrorKey(errorCopyKey(error));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function openFeature(kind: FeatureKind): Promise<void> {
     if (opening.current.has(kind)) return; // a second click while it is being created must not make a duplicate
     opening.current.add(kind);
@@ -224,6 +250,16 @@ export function HubApp() {
             {t(errorKey)}
           </button>
         </div>
+      ) : ended !== null ? (
+        <>
+          <span className="hub-prompt">{t("session.savePrompt")}</span>
+          <button type="button" className="hub-btn" disabled={saving} onClick={() => void saveInterview()}>
+            {t("session.save")}
+          </button>
+          <button type="button" className="hub-btn" disabled={saving} onClick={() => setEnded(null)}>
+            {t("session.dismiss")}
+          </button>
+        </>
       ) : (
         <>
           <button

@@ -284,6 +284,14 @@ pub fn start(model: String, app: tauri::AppHandle) -> AppResult<SessionHandle> {
     };
     let emit_generic = move |event: &str, payload: serde_json::Value| {
         crate::diag::log(&diag_entry(event, &payload));
+        if event == TRANSCRIPT_DELTA_EVENT {
+            if let (Some(text), Some(ts)) =
+                (payload.get("text").and_then(|t| t.as_str()), payload.get("ts").and_then(|t| t.as_i64()))
+            {
+                let state = generic_app.state::<crate::state::AppState>();
+                state.session_log.lock().expect("session log lock").heard(ts, text);
+            }
+        }
         let _ = generic_app.emit(event, payload);
     };
 
