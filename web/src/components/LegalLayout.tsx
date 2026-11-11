@@ -24,7 +24,7 @@ export function LegalLayout({
       <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
         {/* Header */}
         <header className="mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
+          <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight mb-4">
             {title}
           </h1>
 

@@ -8,7 +8,7 @@ export function CostEstimator({
   return (
     <section className="border-t border-border">
       <div className="mx-auto max-w-5xl px-6 py-20">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">
+        <h2 className="font-display text-3xl font-bold tracking-tight text-foreground">
           {dict.title}
         </h2>
         <p className="mt-3 text-lg text-muted">{dict.subtitle}</p>

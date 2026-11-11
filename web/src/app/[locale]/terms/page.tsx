@@ -53,7 +53,7 @@ export default async function TermsPage(props: Props) {
       <section className="space-y-8">
         {/* Acceptance */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">{t.sections.acceptance.title}</h2>
+          <h2 className="font-display text-2xl font-bold mb-4">{t.sections.acceptance.title}</h2>
           <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {t.sections.acceptance.content}
           </p>
@@ -61,7 +61,7 @@ export default async function TermsPage(props: Props) {
 
         {/* License */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">{t.sections.license.title}</h2>
+          <h2 className="font-display text-2xl font-bold mb-4">{t.sections.license.title}</h2>
           <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {t.sections.license.content}
           </p>
@@ -69,7 +69,7 @@ export default async function TermsPage(props: Props) {
 
         {/* Your API Key */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">{t.sections.yourApiKey.title}</h2>
+          <h2 className="font-display text-2xl font-bold mb-4">{t.sections.yourApiKey.title}</h2>
           <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {t.sections.yourApiKey.content}
           </p>
@@ -77,7 +77,7 @@ export default async function TermsPage(props: Props) {
 
         {/* Liability */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">{t.sections.liability.title}</h2>
+          <h2 className="font-display text-2xl font-bold mb-4">{t.sections.liability.title}</h2>
           <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {t.sections.liability.content}
           </p>
@@ -85,7 +85,7 @@ export default async function TermsPage(props: Props) {
 
         {/* Legal Entity */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">{t.sections.legalEntity.title}</h2>
+          <h2 className="font-display text-2xl font-bold mb-4">{t.sections.legalEntity.title}</h2>
           <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {t.sections.legalEntity.content}
           </p>
@@ -93,7 +93,7 @@ export default async function TermsPage(props: Props) {
 
         {/* Intellectual Property */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">{t.sections.intellectualProperty.title}</h2>
+          <h2 className="font-display text-2xl font-bold mb-4">{t.sections.intellectualProperty.title}</h2>
           <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {t.sections.intellectualProperty.content}
           </p>
@@ -101,7 +101,7 @@ export default async function TermsPage(props: Props) {
 
         {/* Indemnification */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">{t.sections.indemnification.title}</h2>
+          <h2 className="font-display text-2xl font-bold mb-4">{t.sections.indemnification.title}</h2>
           <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {t.sections.indemnification.content}
           </p>
@@ -109,7 +109,7 @@ export default async function TermsPage(props: Props) {
 
         {/* Modifications */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">{t.sections.modifications.title}</h2>
+          <h2 className="font-display text-2xl font-bold mb-4">{t.sections.modifications.title}</h2>
           <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {t.sections.modifications.content}
           </p>
@@ -117,7 +117,7 @@ export default async function TermsPage(props: Props) {
 
         {/* Governing */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">{t.sections.governing.title}</h2>
+          <h2 className="font-display text-2xl font-bold mb-4">{t.sections.governing.title}</h2>
           <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {t.sections.governing.content}
           </p>
@@ -125,7 +125,7 @@ export default async function TermsPage(props: Props) {
 
         {/* Severability */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">{t.sections.severability.title}</h2>
+          <h2 className="font-display text-2xl font-bold mb-4">{t.sections.severability.title}</h2>
           <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {t.sections.severability.content}
           </p>
@@ -133,7 +133,7 @@ export default async function TermsPage(props: Props) {
 
         {/* Entire Agreement */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">{t.sections.entireAgreement.title}</h2>
+          <h2 className="font-display text-2xl font-bold mb-4">{t.sections.entireAgreement.title}</h2>
           <p className="text-muted whitespace-pre-wrap leading-relaxed">
             {t.sections.entireAgreement.content}
           </p>

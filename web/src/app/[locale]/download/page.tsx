@@ -34,7 +34,7 @@ export default async function DownloadPage({ params }: { params: Promise<{ local
     <>
       <section className="mx-auto max-w-5xl px-6 py-20">
         <p className="inline-block rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-wide text-muted">{dict.download.badge}</p>
-        <h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-tight text-foreground sm:text-5xl">{dict.download.heading}</h1>
+        <h1 className="font-display mt-6 max-w-3xl text-4xl font-bold tracking-tight text-foreground sm:text-5xl">{dict.download.heading}</h1>
         <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted">{dict.download.intro}</p>
       </section>
       <Artifacts dict={dict.download} />

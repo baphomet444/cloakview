@@ -21,7 +21,7 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
   const { locale } = await params;
   const { support } = await getDictionary(locale);
   return <div className="mx-auto max-w-4xl px-6 py-16">
-    <h1 className="text-4xl font-semibold tracking-tight">{support.title}</h1>
+    <h1 className="font-display text-4xl font-semibold tracking-tight">{support.title}</h1>
     <p className="mt-4 mb-12 text-lg text-muted">{support.intro}</p>
     <SupportContent support={support} locale={locale} />
   </div>;

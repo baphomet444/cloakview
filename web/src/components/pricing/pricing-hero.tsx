@@ -11,7 +11,7 @@ export function PricingHero({
         <p className="inline-block rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-wide text-muted">
           {dict.badge}
         </p>
-        <h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+        <h1 className="font-display mt-6 max-w-3xl text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
           {dict.title}
         </h1>
         <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted">

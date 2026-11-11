@@ -26,7 +26,7 @@
   --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-inter-tight);
+  --font-display: var(--font-unbounded);
   --font-hand: var(--font-caveat);
 }
 

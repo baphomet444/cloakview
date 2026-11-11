@@ -47,7 +47,7 @@ export default async function PricingPage({
       <RoadmapNote dict={dict.pricing.roadmap} />
       <section className="border-t border-border">
         <div className="mx-auto max-w-5xl px-6 py-20 text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-foreground">
+          <h2 className="font-display text-3xl font-bold tracking-tight text-foreground">
             {dict.pricing.cta.title}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-muted">

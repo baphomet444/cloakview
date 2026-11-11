@@ -132,7 +132,7 @@ export function Hero({ dict }: HeroProps) {
           {dict.kicker}
         </p>
 
-        <h1 className="mt-7 font-display text-5xl leading-[0.92] font-extrabold tracking-[-0.03em] text-balance text-foreground sm:text-7xl md:text-8xl lg:text-9xl">
+        <h1 className="mt-7 font-display text-[2.5rem] min-[360px]:text-5xl leading-[0.92] font-extrabold tracking-[-0.03em] text-balance text-foreground sm:text-7xl md:text-8xl lg:text-9xl">
           {dict.titleLead}{" "}
           <span className="relative isolate inline-block -rotate-2 px-[0.04em] font-hand text-[1.08em] leading-[0.8] font-bold tracking-normal text-accent">
             {dict.titleHand}

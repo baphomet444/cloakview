@@ -69,7 +69,7 @@ export function Artifacts({ dict }: { dict: DownloadCopy }) {
         {dict.artifacts.map((artifact, index) => (
           <article key={artifact.name} className={`rounded-xl border p-6 ${index === 0 && isArm ? "border-accent bg-surface" : "border-border bg-surface"}`}>
             {index === 0 && isArm && <p className="mb-3 text-sm font-medium text-accent">{dict.recommended}</p>}
-            <h2 className="text-xl font-semibold text-foreground">{artifact.name}</h2>
+            <h2 className="font-display text-xl font-semibold text-foreground">{artifact.name}</h2>
             <p className="mt-2 min-h-12 text-sm leading-relaxed text-muted">{artifact.description}</p>
             {index < 2 && <p className="mt-4 text-sm text-foreground">{dict.notarized}</p>}
             <div className="mt-6">

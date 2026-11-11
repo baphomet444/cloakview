@@ -1,4 +1,4 @@
-import { Caveat, Geist, Geist_Mono, Inter_Tight } from "next/font/google";
+import { Caveat, Geist, Geist_Mono, Unbounded } from "next/font/google";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import "./globals.css";
@@ -19,12 +19,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Display: Inter Tight 800 (tracking -0.03em, leading 0.92). Un solo peso
-// para no cargar el eje variable completo en la ruta crítica.
-const interTight = Inter_Tight({
-  variable: "--font-inter-tight",
+// Display: Unbounded 700, la misma que la imagen para redes (opengraph-image.tsx),
+// para todos los títulos (`font-display`). Un solo peso para no cargar el eje variable
+// completo en la ruta crítica; next/font la descarga al compilar y la sirve el propio sitio.
+const unbounded = Unbounded({
+  variable: "--font-unbounded",
   subsets: ["latin"],
-  weight: ["800"],
+  weight: ["700"],
 });
 
 // Manuscrita: Caveat 700, solo para la palabra rotada y las anotaciones.
@@ -95,7 +96,7 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} ${interTight.variable} ${caveat.variable} h-full`}
+      className={`${geistSans.variable} ${geistMono.variable} ${unbounded.variable} ${caveat.variable} h-full`}
     >
       <head>
         {/* A plain tag, not next/script: it must be in the server HTML for crawlers. */}

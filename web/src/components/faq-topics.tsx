@@ -9,7 +9,7 @@ export function FaqTopics({ faq, locale }: { faq: Dictionary["faq"]; locale: Loc
   const [open, setOpen] = useState<string | null>(null);
   return <div className="space-y-12">
     {faq.topics.map((topic, topicIndex) => <section key={topic.title} aria-labelledby={`topic-${topicIndex}`}>
-      <h2 id={`topic-${topicIndex}`} className="mb-5 text-2xl font-semibold">{topic.title}</h2>
+      <h2 id={`topic-${topicIndex}`} className="font-display mb-5 text-2xl font-semibold">{topic.title}</h2>
       <div className="space-y-3">{topic.items.map((item, itemIndex) => {
         const id = `faq-${topicIndex}-${itemIndex}`;
         const expanded = open === id;
