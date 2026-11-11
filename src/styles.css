@@ -91,3 +91,388 @@ body,
   text-align: left;
   cursor: pointer;
 }
+
+/* ------------------------------------------------------------------------------------
+   Feature windows (Ask, Notes, Settings): the hub's language — dark translucent panel,
+   14px outer / 9px control radius, 12px system type — with the orange brand accent on
+   the border and the primary action. `data-theme` and `--win-opacity` are set on <html>
+   from the saved settings (useSettingsBoot.ts).
+   ------------------------------------------------------------------------------------ */
+:root {
+  --win-bg: rgba(24, 24, 27, 0.94);
+  --win-fg: #f4f4f5;
+  --win-muted: #a1a1aa;
+  --win-line: rgba(255, 255, 255, 0.12);
+  --win-control: rgba(255, 255, 255, 0.07);
+  --win-control-hover: rgba(255, 255, 255, 0.14);
+  --win-control-line: rgba(255, 255, 255, 0.16);
+  --win-accent: #ff6b1a;
+  --win-accent-fg: #1a0a00;
+  --win-accent-soft: rgba(255, 107, 26, 0.55);
+  --win-danger: #fecaca;
+  --win-ok: #86efac;
+  --win-opacity: 1;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --win-bg: rgba(250, 250, 250, 0.96);
+  --win-fg: #18181b;
+  --win-muted: #52525b;
+  --win-line: rgba(0, 0, 0, 0.1);
+  --win-control: rgba(0, 0, 0, 0.04);
+  --win-control-hover: rgba(0, 0, 0, 0.08);
+  --win-control-line: rgba(0, 0, 0, 0.16);
+  --win-accent: #e85a0c;
+  --win-accent-fg: #ffffff;
+  --win-danger: #b91c1c;
+  --win-ok: #15803d;
+}
+
+.win {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid var(--win-accent-soft);
+  border-radius: 14px;
+  background: var(--win-bg);
+  color: var(--win-fg);
+  font: 400 12px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  opacity: var(--win-opacity);
+  overflow: hidden;
+}
+
+.win *,
+.win *::before,
+.win *::after {
+  box-sizing: border-box;
+}
+
+.win-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  height: 40px;
+  padding: 0 8px 0 14px;
+  border-bottom: 1px solid var(--win-line);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.win-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.win-title::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--win-accent);
+  vertical-align: 1px;
+}
+
+.win-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px 14px;
+  overflow-y: auto;
+}
+
+.win-foot {
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  border-top: 1px solid var(--win-line);
+}
+
+.win-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.win-row-end {
+  justify-content: flex-end;
+}
+
+.win-btn {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--win-control-line);
+  border-radius: 9px;
+  background: var(--win-control);
+  color: inherit;
+  font: 500 12px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.win-btn:hover {
+  background: var(--win-control-hover);
+}
+
+.win-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.win-btn-primary {
+  border-color: var(--win-accent);
+  background: var(--win-accent);
+  color: var(--win-accent-fg);
+}
+
+.win-btn-primary:hover:not(:disabled) {
+  background: var(--win-accent);
+  filter: brightness(1.08);
+}
+
+.win-btn-quiet {
+  height: 26px;
+  padding: 0 9px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--win-muted);
+}
+
+.win-btn-quiet:hover {
+  color: var(--win-danger);
+}
+
+.win-close {
+  height: 26px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--win-muted);
+}
+
+.win-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--win-control-line);
+  border-radius: 9px;
+  background: var(--win-control);
+  color: inherit;
+  font: inherit;
+}
+
+.win-input::placeholder {
+  color: var(--win-muted);
+}
+
+.win-input:focus {
+  outline: none;
+  border-color: var(--win-accent);
+  box-shadow: 0 0 0 2px var(--win-accent-soft);
+}
+
+select.win-input {
+  padding-right: 6px;
+}
+
+.win-textarea {
+  height: auto;
+  padding: 7px 10px;
+  resize: vertical;
+}
+
+.win-mono {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11.5px;
+}
+
+.win-btn:focus-visible,
+.set-range:focus-visible,
+.win-error:focus-visible {
+  outline: 2px solid var(--win-accent);
+  outline-offset: 1px;
+}
+
+.win-label {
+  margin: 0;
+  color: var(--win-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.win-label-quiet {
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.win-hint {
+  margin: 6px 0 0;
+  color: var(--win-muted);
+  font-size: 11px;
+}
+
+.win-muted {
+  color: var(--win-muted);
+}
+
+.win-empty {
+  margin: 24px 0;
+  color: var(--win-muted);
+  text-align: center;
+}
+
+/* An error line under the title bar; clicking it dismisses it. */
+.win-error {
+  flex: 0 0 auto;
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--win-line);
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--win-danger);
+  font: 500 12px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Ask */
+.ask-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ask-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ask-question,
+.ask-answer {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.ask-answer {
+  font-size: 13px;
+}
+
+/* Notes */
+.notes-new {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--win-line);
+}
+
+.notes-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notes-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--win-line);
+}
+
+.notes-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.notes-heading {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.notes-content {
+  margin: 2px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notes-when {
+  display: block;
+  margin-top: 3px;
+  color: var(--win-muted);
+  font-size: 10.5px;
+}
+
+/* Settings */
+.set-section {
+  padding: 4px 0 14px;
+  border-bottom: 1px solid var(--win-line);
+}
+
+.set-section + .set-section {
+  padding-top: 14px;
+}
+
+.set-section:last-child {
+  border-bottom: 0;
+}
+
+.set-section > .win-label:first-child {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.set-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.set-span {
+  grid-column: 1 / -1;
+}
+
+.set-grid > h2.set-span {
+  margin-top: 6px;
+}
+
+.set-range {
+  width: 100%;
+  accent-color: var(--win-accent);
+}
+
+.set-status {
+  margin: 6px 0 0;
+  font-size: 11px;
+}
+
+.win-row .set-status {
+  margin: 0;
+}
+
+.set-ok {
+  color: var(--win-ok);
+}
