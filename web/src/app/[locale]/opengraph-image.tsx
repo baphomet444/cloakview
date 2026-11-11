@@ -12,8 +12,13 @@ export const contentType = "image/png";
 // Written out with "see": alt text is read aloud, and an eye icon is not.
 export const alt = "CloakView — the meeting copilot that only you can see";
 
-// The renderer's bundled font is Geist (the site's typeface) in its regular weight only,
-// so there are no font weights here: they would have no effect.
+// Unbounded (SIL OFL, licence in assets/fonts), read from disk like the logo so a render
+// never depends on a font CDN. Two weights: bold for the name and the feature line.
+const FONT = "Unbounded";
+const fonts = [
+  { name: FONT, data: await readFile(join(process.cwd(), "assets/fonts/unbounded-latin-400-normal.woff")), weight: 400 as const, style: "normal" as const },
+  { name: FONT, data: await readFile(join(process.cwd(), "assets/fonts/unbounded-latin-700-normal.woff")), weight: 700 as const, style: "normal" as const },
+];
 
 // Read from disk and inlined, never fetched from the live site: the deployed site may
 // not have this file yet (a preview, or the first deploy that adds it), and the image
@@ -55,15 +60,16 @@ export default async function Image({ params }: { params: Promise<{ locale: stri
           backgroundColor: "#0a0a0a",
           backgroundImage: "radial-gradient(circle at 85% 15%, rgba(255,107,26,0.18), transparent 55%)",
           color: "#ffffff",
+          fontFamily: FONT,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 36 }}>
           {/* width/height as attributes: the image renderer needs them to size an <img>. */}
           <img src={logo} width={LOGO_PX} height={LOGO_PX} alt="" />
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 76, letterSpacing: -2, lineHeight: 1.05 }}>{meta.siteName}</div>
+            <div style={{ fontSize: 72, fontWeight: 700, letterSpacing: -1, lineHeight: 1.05 }}>{meta.siteName}</div>
             {/* The slogan ends in an eye instead of the word "see" ("ver"), as on the logo. */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 34, color: "#b4b4b4", marginTop: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 26, color: "#b4b4b4", marginTop: 14 }}>
               <span>{meta.ogTagline}</span>
               <Eye />
             </div>
@@ -71,13 +77,13 @@ export default async function Image({ params }: { params: Promise<{ locale: stri
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <div style={{ fontSize: 30, color: "#ff6b1a" }}>{meta.ogFeatures}</div>
-          <div style={{ fontSize: 24, color: "#8a8a8a" }}>{meta.ogFootnote}</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: "#ff6b1a" }}>{meta.ogFeatures}</div>
+          <div style={{ fontSize: 18, color: "#8a8a8a" }}>{meta.ogFootnote}</div>
         </div>
 
-        <div style={{ display: "flex", fontSize: 22, color: "#6b6b6b" }}>{domain}</div>
+        <div style={{ display: "flex", fontSize: 18, color: "#6b6b6b" }}>{domain}</div>
       </div>
     ),
-    size,
+    { ...size, fonts },
   );
 }
