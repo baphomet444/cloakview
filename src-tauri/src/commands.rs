@@ -4,7 +4,7 @@
 
 use crate::db::{conversations, notes, Db};
 use crate::error::{AppError, IpcError};
-use crate::events::{ANSWER_DELTA_EVENT, ANSWER_DONE_EVENT, ERROR_EVENT};
+use crate::events::{ANSWER_DELTA_EVENT, ANSWER_DONE_EVENT, ANSWER_STARTED_EVENT, ERROR_EVENT};
 use crate::listen;
 use crate::platform;
 use crate::secrets;
@@ -173,6 +173,35 @@ pub async fn request_answer(
     state: State<'_, AppState>,
     question: Option<String>,
 ) -> Result<(), IpcError> {
+    start_answer(app, &state, question, None).await
+}
+
+/// Reads the screen: takes one screenshot of the main display and streams the answer
+/// to the question or task on it, over the same events as `request_answer`. Emits
+/// `answer-started` once the screenshot is taken, so Ask shows it is working.
+#[tauri::command]
+pub async fn read_screen(app: AppHandle, state: State<'_, AppState>) -> Result<(), IpcError> {
+    // Fail before taking a screenshot that could not be sent anyway.
+    secrets::get_api_key().map_err(IpcError::from)?;
+    let image = tokio::task::spawn_blocking(crate::screen::capture)
+        .await
+        .map_err(|e| IpcError::from(AppError::Audio(e.to_string())))?
+        .map_err(|e| {
+            crate::diag::log(&format!("read_screen failed: {e}"));
+            IpcError::from(e)
+        })?;
+    crate::diag::log(&format!("screen captured ({} KB)", image.len() * 3 / 4 / 1024));
+    let _ = app.emit(ANSWER_STARTED_EVENT, "screen");
+    start_answer(app, &state, None, Some(image)).await
+}
+
+/// The shared body of `request_answer` and `read_screen`.
+async fn start_answer(
+    app: AppHandle,
+    state: &State<'_, AppState>,
+    question: Option<String>,
+    image: Option<String>,
+) -> Result<(), IpcError> {
     let api_key = secrets::get_api_key().map_err(IpcError::from)?;
     let model = state.settings.read().expect("settings lock").answers_model.clone();
     let context: Vec<crate::transcript::Turn> = state.transcript.lock().await.clone();
@@ -183,11 +212,15 @@ pub async fn request_answer(
     }
 
     // What this suggestion answers: the typed question, or the last thing heard on the call.
-    let prompt = question
-        .clone()
-        .or_else(|| state.session_log.lock().expect("session log lock").last_heard().map(str::to_string))
-        .unwrap_or_default();
-    let (mut rx, handle) = crate::answers::client::stream_answer(api_key, model, context, question);
+    let prompt = if image.is_some() {
+        "(read from the screen)".to_string()
+    } else {
+        question
+            .clone()
+            .or_else(|| state.session_log.lock().expect("session log lock").last_heard().map(str::to_string))
+            .unwrap_or_default()
+    };
+    let (mut rx, handle) = crate::answers::client::stream_answer(api_key, model, context, question, image);
     *answer_guard = Some(handle);
     drop(answer_guard);
 

@@ -12,7 +12,7 @@ body,
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 
-/* The hub: a 540x58 floating bar (see tauri.conf.json), wide enough for the Spanish
+/* The hub: a 610x58 floating bar (see tauri.conf.json), wide enough for the Spanish
    labels, the longer ones. Buttons still shrink and ellipsize rather than overflow, as
    a fallback; each carries its label as a tooltip. */
 .hub {

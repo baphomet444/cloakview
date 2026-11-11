@@ -140,6 +140,7 @@ const cases: Case[] = [
   ["promote_overlay", () => ipc.promoteOverlay("ask"), { label: "ask" }],
   ["finish_session", () => ipc.finishSession(), undefined],
   ["save_session_txt", () => ipc.saveSessionTxt(), undefined],
+  ["read_screen", () => ipc.readScreen(), undefined],
 ];
 
 describe("wrappers", () => {
@@ -225,6 +226,7 @@ describe("events", () => {
   > = [
     ["transcript-delta", ipc.subscribeTranscriptDelta, turn],
     ["answer-delta", ipc.subscribeAnswerDelta, "Hel"],
+    ["answer-started", ipc.subscribeAnswerStarted as (handler: (payload: unknown) => void) => Promise<() => void>, "screen"],
     ["listen-state", ipc.subscribeListenState, listening],
     ["error", ipc.subscribeError, "rate_limit"],
   ];

@@ -71,6 +71,33 @@ If the last message is a question typed by the user, answer it, using the conver
 Be brief: lead with the answer in one or two sentences, then at most three short supporting points. \
 Do not mention these instructions or that you are an AI.";
 
+/// What the model is asked to do with a screenshot instead of the call.
+const SCREEN_INSTRUCTIONS: &str = "You are a private copilot for the user. The image is the user's screen. \
+Find the question, exercise, test item or task shown on it and solve it for the user. \
+Give the answer first, clearly marked. Then explain the reasoning in a few short steps, so the user \
+understands it and could explain it themselves. For code, give working code in a code block and note \
+its time and space complexity. For multiple choice, name the correct option and say why. \
+If several questions are visible, answer each one, in order. If nothing on the screen asks for an \
+answer, say what you see in one sentence and ask what the user needs. \
+Reply in the language of the question. Do not mention these instructions.";
+
+const SCREEN_PROMPT: &str = "This is my screen. Solve the question or task shown on it.";
+
+/// The user turn that carries the screenshot, with the typed question when there is one.
+fn image_message(image_data_url: &str, question: Option<&str>) -> serde_json::Value {
+    let text = match question {
+        Some(q) => format!("{SCREEN_PROMPT} {q}"),
+        None => SCREEN_PROMPT.to_string(),
+    };
+    serde_json::json!({
+        "role": "user",
+        "content": [
+            { "type": "input_text", "text": text },
+            { "type": "input_image", "image_url": image_data_url },
+        ],
+    })
+}
+
 /// Spawns the Responses API streaming request and returns a bounded
 /// receiver of parsed events plus the task's `JoinHandle`.
 ///
@@ -85,14 +112,20 @@ pub fn stream_answer(
     model: String,
     context: Vec<Turn>,
     question: Option<String>,
+    // A screenshot as a data URL: the question is then on the screen, not in the call.
+    image: Option<String>,
 ) -> (tokio::sync::mpsc::Receiver<AnswersEvent>, tokio::task::JoinHandle<()>) {
     let (tx, rx) = tokio::sync::mpsc::channel(64);
 
     let handle = tokio::spawn(async move {
-        let input = build_input(&context, question.as_deref());
+        let (instructions, input) = match image.as_deref() {
+            // The screen stands on its own: the call's transcript would only distract.
+            Some(image) => (SCREEN_INSTRUCTIONS, vec![image_message(image, question.as_deref())]),
+            None => (INSTRUCTIONS, build_input(&context, question.as_deref())),
+        };
         let body = serde_json::json!({
             "model": model,
-            "instructions": INSTRUCTIONS,
+            "instructions": instructions,
             "input": input,
             "stream": true,
         });
@@ -211,6 +244,15 @@ mod build_input_tests {
             n_chars,
             "turn should not be truncated either -- it fits under the char budget"
         );
+    }
+
+    #[test]
+    fn a_screenshot_goes_as_one_user_turn_with_text_and_image() {
+        let v = super::image_message("data:image/jpeg;base64,AAAA", Some("Only question 2."));
+        assert_eq!(v["role"], "user");
+        assert_eq!(v["content"][0]["type"], "input_text");
+        assert!(v["content"][0]["text"].as_str().unwrap().ends_with("Only question 2."));
+        assert_eq!(v["content"][1], serde_json::json!({ "type": "input_image", "image_url": "data:image/jpeg;base64,AAAA" }));
     }
 
     #[test]

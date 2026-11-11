@@ -1,10 +1,12 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { t, type CatalogKey } from "../lib/i18n";
 import {
+  announceAskReady,
   requestAnswer,
   stopAnswer,
   subscribeAnswerDelta,
   subscribeAnswerDone,
+  subscribeAnswerStarted,
   subscribeError,
   subscribeTranscriptDelta,
   subscribeTurnDetected,
@@ -31,8 +33,8 @@ export function AskApp() {
     if (bootErrorKey !== null) setWindowErrorKey(bootErrorKey);
   }, [bootErrorKey]);
   const busy = isBusy(state);
-  // Whether the question on screen was heard on the call rather than typed here.
-  const [heard, setHeard] = useState(false);
+  // Where the question on screen came from: typed here, heard on the call, or read from the screen.
+  const [source, setSource] = useState<"typed" | "heard" | "screen">("typed");
   // The last thing said on the call: `turn-detected` carries no text, and always
   // follows the `transcript-delta` of the line that caused it.
   const lastHeard = useRef("");
@@ -53,16 +55,24 @@ export function AskApp() {
       // Something on the call asks for a reply: suggest one without being asked.
       // The transcript is the context, so no question is sent; a suggestion still
       // streaming is replaced (Rust aborts the previous request).
+      // Rust took a screenshot and is answering what is on it.
+      subscribeAnswerStarted(() => {
+        setSource("screen");
+        dispatch({ type: "send", question: t("ask.screenQuestion") });
+      }).then(keep),
       subscribeTurnDetected(() => {
-        setHeard(true);
+        setSource("heard");
         dispatch({ type: "send", question: lastHeard.current });
         requestAnswer().catch((error: unknown) => dispatch({ type: "error", key: errorCopyKey(error) }));
       }).then(keep),
       // Shared with the realtime side; the reducer ignores it unless a question is in flight.
       subscribeError(() => dispatch({ type: "error", key: "errors.generic" })).then(keep),
-    ]).catch((error: unknown) => {
-      if (!cancelled) setWindowErrorKey(errorCopyKey(error));
-    });
+    ])
+      // Every listener is registered: an answer started from now on will be shown.
+      .then(() => announceAskReady())
+      .catch((error: unknown) => {
+        if (!cancelled) setWindowErrorKey(errorCopyKey(error));
+      });
     return () => {
       cancelled = true;
       stops.forEach((stop) => stop());
@@ -74,7 +84,7 @@ export function AskApp() {
   async function send(): Promise<void> {
     if (busy) return;
     const question = questionArg(input);
-    setHeard(false);
+    setSource("typed");
     dispatch({ type: "send", question: question ?? "" });
     setInput("");
     try {
@@ -138,7 +148,7 @@ export function AskApp() {
         <div className="ask-thread" aria-live="polite">
           {state.question !== "" && (
             <section className="ask-block">
-              <h2 className="win-label">{t(heard ? "ask.heard" : "ask.you")}</h2>
+              <h2 className="win-label">{t(source === "heard" ? "ask.heard" : source === "screen" ? "ask.screen" : "ask.you")}</h2>
               <p className="ask-question">{state.question}</p>
             </section>
           )}

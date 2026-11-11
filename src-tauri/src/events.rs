@@ -16,6 +16,9 @@ pub const TRANSCRIPT_DELTA_EVENT: &str = "transcript-delta";
 pub const TURN_DETECTED_EVENT: &str = "turn-detected";
 pub const ANSWER_DELTA_EVENT: &str = "answer-delta";
 pub const ANSWER_DONE_EVENT: &str = "answer-done";
+/// Not in design.md §5: an answer the user did not type is starting (today: one read
+/// from the screen), so Ask can show it. Payload: what it answers (`"screen"`).
+pub const ANSWER_STARTED_EVENT: &str = "answer-started";
 pub const LISTEN_STATE_EVENT: &str = "listen-state";
 pub const ERROR_EVENT: &str = "error";
 /// Not in design.md §5: the push-to-ask global shortcut asks the hub to open the Ask
@@ -36,6 +39,7 @@ mod tests {
             TURN_DETECTED_EVENT,
             ANSWER_DELTA_EVENT,
             ANSWER_DONE_EVENT,
+            ANSWER_STARTED_EVENT,
             LISTEN_STATE_EVENT,
             ERROR_EVENT,
             PUSH_TO_ASK_EVENT,
@@ -45,6 +49,7 @@ mod tests {
             "turn-detected",
             "answer-delta",
             "answer-done",
+            "answer-started",
             "listen-state",
             "error",
             "push-to-ask",

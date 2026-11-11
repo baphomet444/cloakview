@@ -6,6 +6,7 @@ import {
   finishSession,
   getSettings,
   promoteOverlay,
+  readScreen,
   saveSessionTxt,
   saveSettings,
   startListen,
@@ -13,6 +14,7 @@ import {
   subscribeListenState,
   subscribePushToAsk,
   subscribeTurnDetected,
+  waitForAskReady,
 } from "../lib/ipc";
 import type { ListenState, SessionSummary } from "../lib/models";
 import {
@@ -29,6 +31,8 @@ import {
   type WindowApi,
 } from "./hubLogic";
 
+/** The longest the hub waits for a new Ask window to load before reading the screen anyway. */
+const ASK_READY_TIMEOUT_MS = 4000;
 /** How long an error replaces the bar before it goes away on its own. */
 const ERROR_DISMISS_MS = 6000;
 /** Wait for the slider to settle before writing `settings.json`, instead of on every tick. */
@@ -103,6 +107,7 @@ export function HubApp() {
   // The interview that just ended, while the bar offers to save it.
   const [ended, setEnded] = useState<SessionSummary | null>(null);
   const [saving, setSaving] = useState(false);
+  const [reading, setReading] = useState(false);
   const opacityEdited = useRef(false);
   const opening = useRef(new Set<FeatureKind>());
 
@@ -221,6 +226,23 @@ export function HubApp() {
     }
   }
 
+  async function readTheScreen(): Promise<void> {
+    if (reading) return;
+    setReading(true);
+    setErrorKey(null);
+    try {
+      // Ask first, and loaded: an answer that starts before Ask is listening is never shown.
+      const loaded = (await tauriWindows.exists("ask")) ? Promise.resolve() : waitForAskReady(ASK_READY_TIMEOUT_MS);
+      await openOrFocus("ask", tauriWindows);
+      await loaded;
+      await readScreen();
+    } catch (error) {
+      setErrorKey(errorCopyKey(error));
+    } finally {
+      setReading(false);
+    }
+  }
+
   async function saveInterview(): Promise<void> {
     if (saving) return;
     setSaving(true);
@@ -278,6 +300,15 @@ export function HubApp() {
           </button>
           <button type="button" className="hub-btn" title={t("hub.ask")} onClick={() => void openFeature("ask")}>
             {t("hub.ask")}
+          </button>
+          <button
+            type="button"
+            className="hub-btn"
+            disabled={reading}
+            title={t("hub.screenHint")}
+            onClick={() => void readTheScreen()}
+          >
+            {t("hub.screen")}
           </button>
           <button type="button" className="hub-btn" title={t("hub.notes")} onClick={() => void openFeature("notes")}>
             {t("hub.notes")}

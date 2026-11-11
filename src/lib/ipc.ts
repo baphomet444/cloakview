@@ -17,7 +17,7 @@
  *    use `isIpcError` to narrow a caught value.
  */
 import { invoke, type InvokeArgs } from "@tauri-apps/api/core";
-import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { emit, listen, once, type UnlistenFn } from "@tauri-apps/api/event";
 import {
   IPC_ERROR_MESSAGE_KINDS,
   IPC_ERROR_UNIT_KINDS,
@@ -66,6 +66,7 @@ export interface CommandSignatures {
   promote_overlay: { args: { label: string }; result: void };
   finish_session: { args: undefined; result: SessionSummary };
   save_session_txt: { args: undefined; result: string | null };
+  read_screen: { args: undefined; result: void };
 }
 
 /**
@@ -97,6 +98,7 @@ export const COMMANDS = [
   "promote_overlay",
   "finish_session",
   "save_session_txt",
+  "read_screen",
 ] as const satisfies readonly (keyof CommandSignatures)[];
 
 export type CommandName = (typeof COMMANDS)[number];
@@ -176,6 +178,16 @@ export function stopAnswer(): Promise<void> {
   return call("stop_answer");
 }
 
+// screen reading
+/**
+ * Takes one screenshot and answers the question or task on it. The answer streams over
+ * `answer-started`, then `answer-delta` / `answer-done` / `error`. Rejects with
+ * `MissingApiKey` or `PermissionDenied` (screen recording off).
+ */
+export function readScreen(): Promise<void> {
+  return call("read_screen");
+}
+
 // interview record
 /** Call once listening has stopped: saves the suggested answers as a note and keeps the interview for `saveSessionTxt`. */
 export function finishSession(): Promise<SessionSummary> {
@@ -207,6 +219,31 @@ export function promoteOverlay(label: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Window to window (frontend only: Rust neither emits nor reads this)
+// ---------------------------------------------------------------------------
+
+const ASK_READY_EVENT = "ask-ready";
+
+/** Ask calls this once it is listening for answers, so the hub can tell a freshly created Ask is loaded. */
+export function announceAskReady(): Promise<void> {
+  return emit(ASK_READY_EVENT);
+}
+
+/**
+ * Resolves when Ask announces itself, or after `timeoutMs` at the latest: an answer
+ * started before Ask is listening would never be shown. Call it before creating the window.
+ */
+export function waitForAskReady(timeoutMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, timeoutMs);
+    void once(ASK_READY_EVENT, () => {
+      clearTimeout(timer);
+      resolve();
+    }).catch(() => undefined);
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Errors
 // ---------------------------------------------------------------------------
 
@@ -233,6 +270,8 @@ export interface EventPayloads {
   "turn-detected": null;
   "answer-delta": string;
   "answer-done": null;
+  /** An answer the user did not type is starting. The payload says what it answers. */
+  "answer-started": "screen";
   "listen-state": ListenState;
   error: string;
   /** The push-to-ask global shortcut, sent to the hub only. No data. */
@@ -245,6 +284,7 @@ export const EVENTS = [
   "turn-detected",
   "answer-delta",
   "answer-done",
+  "answer-started",
   "listen-state",
   "error",
   "push-to-ask",
@@ -269,6 +309,10 @@ export function subscribeAnswerDelta(handler: (text: string) => void): Promise<U
 }
 export function subscribeAnswerDone(handler: () => void): Promise<UnlistenFn> {
   return subscribe("answer-done", () => handler());
+}
+/** An answer nobody typed a question for is starting (today: one read from the screen). */
+export function subscribeAnswerStarted(handler: (source: "screen") => void): Promise<UnlistenFn> {
+  return subscribe("answer-started", handler);
 }
 export function subscribeListenState(handler: (state: ListenState) => void): Promise<UnlistenFn> {
   return subscribe("listen-state", handler);

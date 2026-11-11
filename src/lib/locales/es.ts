@@ -3,6 +3,8 @@ import type { Catalog } from "./en";
 export const es: Catalog = {
   "hub.listen": "Escuchar",
   "hub.ask": "Preguntar",
+  "hub.screen": "Pantalla",
+  "hub.screenHint": "Leer la pantalla y responder lo que hay en ella",
   "hub.notes": "Notas",
   "hub.settings": "Ajustes",
   "hub.close": "Cerrar",
@@ -25,6 +27,8 @@ export const es: Catalog = {
   "ask.empty": "Las sugerencias aparecerán aquí.",
   "ask.you": "Preguntaste",
   "ask.heard": "Dijeron",
+  "ask.screen": "De tu pantalla",
+  "ask.screenQuestion": "La pregunta o tarea de tu pantalla",
   "ask.suggestion": "Sugerencia",
   "notes.title": "Notas",
   "notes.new": "Nueva nota",

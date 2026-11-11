@@ -1,6 +1,8 @@
 export const en = {
   "hub.listen": "Listen",
   "hub.ask": "Ask",
+  "hub.screen": "Screen",
+  "hub.screenHint": "Read the screen and answer what is on it",
   "hub.notes": "Notes",
   "hub.settings": "Settings",
   "hub.close": "Close",
@@ -23,6 +25,8 @@ export const en = {
   "ask.empty": "Suggestions will appear here.",
   "ask.you": "You asked",
   "ask.heard": "They said",
+  "ask.screen": "From your screen",
+  "ask.screenQuestion": "The question or task on your screen",
   "ask.suggestion": "Suggestion",
   "notes.title": "Notes",
   "notes.new": "New note",

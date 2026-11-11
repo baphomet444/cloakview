@@ -10,6 +10,7 @@ mod hotkeys;
 mod listen;
 mod platform;
 pub mod realtime;
+mod screen;
 mod secrets;
 mod session;
 mod settings;
@@ -64,6 +65,7 @@ ipc_commands![
     promote_overlay,
     finish_session,
     save_session_txt,
+    read_screen,
 ];
 
 pub fn run() {
@@ -163,6 +165,8 @@ mod ipc_surface_tests {
         // interview record (not in design.md §5: added with the session export)
         "finish_session",
         "save_session_txt",
+        // screen reading (not in design.md §5)
+        "read_screen",
     ];
 
     #[test]
