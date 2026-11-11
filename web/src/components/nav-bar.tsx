@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Dictionary } from "@/lib/get-dictionary";
 import type { Locale } from "@/site.config";
+import { MobileMenu } from "@/components/mobile-menu";
 
 function withLocale(path: string, locale: Locale) {
   if (locale === "en") return path;
@@ -59,26 +60,7 @@ export function NavBar({ dict, locale }: { dict: Dictionary; locale: Locale }) {
           </Link>
         </div>
 
-        <details className="relative sm:hidden">
-          <summary
-            aria-label={dict.nav.menu}
-            className="tap-target inline-flex cursor-pointer list-none items-center justify-center rounded-[3px] border border-border px-2 text-foreground [&::-webkit-details-marker]:hidden"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 18 18"
-              aria-hidden="true"
-              className="fill-none stroke-current"
-            >
-              <path
-                d="M2 5h14M2 9h14M2 13h14"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-            </svg>
-          </summary>
-          <div className="absolute right-0 top-full z-20 mt-2 flex w-48 flex-col gap-1 rounded-[3px] border border-border bg-surface p-2 text-sm shadow-lg">
+        <MobileMenu label={dict.nav.menu}>
             {links.map((link) => (
               <Link
                 key={link.href}
@@ -100,8 +82,7 @@ export function NavBar({ dict, locale }: { dict: Dictionary; locale: Locale }) {
             >
               {dict.nav.download}
             </Link>
-          </div>
-        </details>
+        </MobileMenu>
       </nav>
     </header>
   );
