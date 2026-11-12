@@ -725,6 +725,17 @@ body,
   outline-offset: 1px;
 }
 
+/* The answer styles are six: in the grid's right column each would get ~38px and
+   read as "Te…". Full width and wrapped, three per row, every label fits. */
+.seg-styles {
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+}
+
+.seg-styles .seg-btn {
+  flex: 1 1 30%;
+}
+
 .set-range {
   width: 100%;
   accent-color: var(--win-accent);

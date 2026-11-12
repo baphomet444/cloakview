@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import capabilityJson from "../../src-tauri/capabilities/default.json?raw";
 import { en } from "../lib/locales/en";
 import { es } from "../lib/locales/es";
 import {
@@ -83,6 +84,13 @@ describe("feature windows", () => {
       expect(es, `es lacks ${titleKey}`).toHaveProperty([titleKey]);
       expect(width).toBeGreaterThan(0);
       expect(height).toBeGreaterThan(0);
+    }
+  });
+
+  it("every overlay window is in the Tauri capability, or its own buttons (Close, drag) are denied", () => {
+    const capability = JSON.parse(capabilityJson) as { windows: string[] };
+    for (const label of ["hub", ...FEATURE_KINDS]) {
+      expect(capability.windows, `default.json capability lacks "${label}"`).toContain(label);
     }
   });
 });

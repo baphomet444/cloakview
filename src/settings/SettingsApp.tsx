@@ -343,6 +343,7 @@ export function SettingsApp() {
             </span>
             <Segmented
               id="set-style"
+              className="seg-styles"
               options={ANSWER_STYLES}
               value={settings.answerStyle}
               onChange={(next) => void save({ answerStyle: next })}
@@ -457,12 +458,14 @@ export function SettingsApp() {
  */
 function Segmented<V extends string>(props: {
   id: string;
+  /** Extra classes on the group, e.g. `seg-styles` to wrap a long option list onto two rows. */
+  className?: string;
   options: readonly { value: V; labelKey: CatalogKey }[];
   value: V;
   onChange: (value: V) => void;
 }) {
   return (
-    <div className="seg" role="radiogroup" aria-labelledby={`${props.id}-label`}>
+    <div className={props.className === undefined ? "seg" : `seg ${props.className}`} role="radiogroup" aria-labelledby={`${props.id}-label`}>
       {props.options.map((option) => {
         const selected = option.value === props.value;
         return (
