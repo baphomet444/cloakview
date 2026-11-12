@@ -111,4 +111,5 @@ export const es: Catalog = {
   "history.back": "Volver",
   "history.theySaid": "Dijeron",
   "history.youSaid": "Dijiste",
+  "summary.savedToNotes": "Resumen guardado en Notas",
 };

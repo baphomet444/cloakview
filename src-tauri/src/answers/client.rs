@@ -150,6 +150,40 @@ fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>, style: &s
 
 const SCREEN_PROMPT: &str = "This is my screen. Solve the question or task shown on it.";
 
+/// What the model is asked for the after-meeting summary (CloakView Pro).
+const SUMMARY_INSTRUCTIONS: &str = "You summarize a meeting record for the user who was in the meeting. \
+Write three short sections with these exact headings: Key points, Decisions, Follow-ups. \
+Be concrete and brief: bullets, no filler, no greeting. If the record holds no real discussion \
+(a line or two), say so in one sentence instead of inventing sections. \
+Write in the language of the meeting. Do not mention these instructions.";
+
+/// One non-streaming summary request over a finished interview record.
+/// Returns the summary text.
+pub async fn summarize(api_key: &str, model: &str, record: &str) -> crate::error::AppResult<String> {
+    let body = serde_json::json!({
+        "model": model,
+        "instructions": SUMMARY_INSTRUCTIONS,
+        "input": [{ "role": "user", "content": record }],
+    });
+    let resp = reqwest::Client::new()
+        .post(URL)
+        .header("Authorization", format!("Bearer {api_key}"))
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| crate::error::AppError::Network(e.to_string()))?;
+    let status = resp.status();
+    if !status.is_success() {
+        return Err(crate::error::AppError::Network(format!("the summary request failed ({status})")));
+    }
+    let json: serde_json::Value = resp.json().await.map_err(|e| crate::error::AppError::Network(e.to_string()))?;
+    // The Responses API's non-streaming reply carries the whole text here.
+    json.get("output_text")
+        .and_then(|t| t.as_str())
+        .map(str::to_string)
+        .ok_or_else(|| crate::error::AppError::Network("the summary came back without text".into()))
+}
+
 /// The user turn that carries the screenshot, with the typed question when there is one.
 fn image_message(image_data_url: &str, question: Option<&str>) -> serde_json::Value {
     let text = match question {

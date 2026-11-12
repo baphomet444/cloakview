@@ -305,9 +305,11 @@ pub struct SessionSummary {
 
 /// Closes the interview record once listening has stopped: the suggested answers
 /// become a note, and the whole interview is kept for `save_session_txt`. Calling it
-/// again, or with nothing recorded, reports zeros.
+/// again, or with nothing recorded, reports zeros. CloakView Pro also gets the
+/// after-meeting summary: generated in the background and saved as a note when
+/// it is ready (`summary-saved`).
 #[tauri::command]
-pub fn finish_session(state: State<AppState>) -> Result<SessionSummary, IpcError> {
+pub fn finish_session(app: AppHandle, state: State<AppState>) -> Result<SessionSummary, IpcError> {
     let finished = state.session_log.lock().expect("session log lock").finish(crate::db::now_ms());
     let Some(mut session) = finished else {
         return Ok(SessionSummary { heard: 0, suggestions: 0, note_saved: false });
@@ -344,6 +346,11 @@ pub fn finish_session(state: State<AppState>) -> Result<SessionSummary, IpcError
             serde_json::to_string(&e).unwrap_or_default()
         )),
         }
+        // The after-meeting summary, generated in the background: it takes a few
+        // seconds and nothing may wait for it.
+        if session.heard_count() > 0 {
+            spawn_summary(app, &state, &session);
+        }
     }
     crate::diag::log(&format!(
         "interview finished: {} heard, {} suggestions, note saved: {}",
@@ -351,6 +358,50 @@ pub fn finish_session(state: State<AppState>) -> Result<SessionSummary, IpcError
     ));
     *state.last_session.lock().expect("last session lock") = Some(session);
     Ok(summary)
+}
+
+/// Kicks off the after-meeting summary (CloakView Pro): one non-streaming
+/// request over the interview record, saved as a note; the hub is told via
+/// `summary-saved`. Every failure is a log line — the interview itself is
+/// already saved by now, so the summary is best-effort.
+fn spawn_summary(app: AppHandle, state: &State<'_, AppState>, session: &crate::session::FinishedSession) {
+    let Ok(api_key) = secrets::get_api_key() else {
+        crate::diag::log("after-meeting summary skipped: no api key");
+        return;
+    };
+    let model = state.settings.read().expect("settings lock").answers_model.clone();
+    let record = crate::session::summary_input(session);
+    let title = format!("{} — summary", crate::session::title(session.started_ms));
+    let started_ms = session.started_ms;
+    // `tauri::async_runtime::spawn`, not `tokio::spawn`: this runs on a sync
+    // command thread, which has no tokio context of its own.
+    tauri::async_runtime::spawn(async move {
+        match crate::answers::client::summarize(&api_key, &model, &record).await {
+            Ok(text) => {
+                let note = {
+                    let state = app.state::<AppState>();
+                    let guard = state.db.lock().expect("db lock");
+                    guard.as_ref().and_then(|db| {
+                        notes::create(
+                            db,
+                            notes::NewNote {
+                                title,
+                                content: text,
+                                tags: vec!["summary".into(), "interview".into()],
+                                folder_id: None,
+                            },
+                        )
+                        .ok()
+                    })
+                };
+                if note.is_some() {
+                    crate::diag::log(&format!("after-meeting summary saved (interview {started_ms})"));
+                    let _ = app.emit(crate::events::SUMMARY_SAVED_EVENT, ());
+                }
+            }
+            Err(e) => crate::diag::log(&format!("after-meeting summary failed: {e}")),
+        }
+    });
 }
 
 // --- session history (CloakView Pro) ---

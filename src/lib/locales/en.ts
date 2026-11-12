@@ -109,6 +109,7 @@ export const en = {
   "history.back": "Back",
   "history.theySaid": "They said",
   "history.youSaid": "You said",
+  "summary.savedToNotes": "Summary saved to Notes",
 };
 
 /**

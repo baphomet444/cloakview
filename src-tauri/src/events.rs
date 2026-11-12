@@ -27,6 +27,9 @@ pub const PUSH_TO_ASK_EVENT: &str = "push-to-ask";
 /// Not in design.md §5: the read-screen global shortcut asks the hub to read the
 /// screen, so it goes through the same path as the hub's Screen button. No payload.
 pub const READ_SCREEN_EVENT: &str = "read-screen";
+/// Not in design.md §5: the after-meeting summary was saved to the notes
+/// (CloakView Pro). No payload.
+pub const SUMMARY_SAVED_EVENT: &str = "summary-saved";
 
 #[cfg(test)]
 mod tests {
@@ -48,6 +51,7 @@ mod tests {
             ERROR_EVENT,
             PUSH_TO_ASK_EVENT,
             READ_SCREEN_EVENT,
+            SUMMARY_SAVED_EVENT,
         ];
         let spec = [
             "transcript-delta",
@@ -59,6 +63,7 @@ mod tests {
             "error",
             "push-to-ask",
             "read-screen",
+            "summary-saved",
         ];
         assert_eq!(ours, spec);
 

@@ -157,9 +157,27 @@ pub struct NoteLine {
     pub content: String,
 }
 
+/// The interview as compact plain text for the after-meeting summary request:
+/// every line that was heard or suggested, in order, no timestamps.
+pub fn summary_input(session: &FinishedSession) -> String {
+    let mut out = String::new();
+    for entry in &session.entries {
+        match entry {
+            Entry::Heard { text, mine, .. } => {
+                out.push_str(if *mine { "You said: " } else { "They said: " });
+                out.push_str(text);
+                out.push('\n');
+            }
+            Entry::Suggestion { prompt, text, .. } => {
+                out.push_str(&format!("Suggested answer (to \"{prompt}\"): {text}\n"));
+            }
+        }
+    }
+    out
+}
+
 /// The whole interview as plain text: the conversation in order, then the notes.
-pub fn render_txt(session: &FinishedSession, notes: &[NoteLine]) -> String {
-    let start = local(session.started_ms);
+pub fn render_txt(session: &FinishedSession, notes: &[NoteLine]) -> String {    let start = local(session.started_ms);
     let minutes = ((session.ended_ms - session.started_ms).max(0) / 60_000).max(1);
     let mut out = String::new();
     out.push_str("CloakView - interview record\n");
@@ -301,5 +319,16 @@ mod tests {
         let name = file_name(1_700_000_000_000);
         assert!(name.starts_with("CloakView interview 20") && name.ends_with(".txt"));
         assert!(!name.contains([':', '/', '\\']));
+    }
+
+    #[test]
+    fn the_summary_input_is_the_lines_in_order_without_timestamps() {
+        let text = summary_input(&sample());
+        assert_eq!(
+            text,
+            "They said: Tell me about your last project.\n\
+             You said: Sure, one moment.\n\
+             Suggested answer (to \"Tell me about your last project.\"): I led a rewrite.\nIt shipped on time.\n"
+        );
     }
 }

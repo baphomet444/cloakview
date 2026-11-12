@@ -319,6 +319,8 @@ export interface EventPayloads {
   "push-to-ask": null;
   /** The read-screen global shortcut, sent to the hub only. No data. */
   "read-screen": null;
+  /** The after-meeting summary was saved to the notes (CloakView Pro). No data. */
+  "summary-saved": null;
 }
 
 /** Runtime list of the same names, compared by the test with `src-tauri/src/events.rs`. */
@@ -332,6 +334,7 @@ export const EVENTS = [
   "error",
   "push-to-ask",
   "read-screen",
+  "summary-saved",
 ] as const satisfies readonly (keyof EventPayloads)[];
 
 export type EventName = (typeof EVENTS)[number];
@@ -372,4 +375,8 @@ export function subscribePushToAsk(handler: () => void): Promise<UnlistenFn> {
 /** Fires when the read-screen global shortcut is pressed: the hub reads the screen. No data. */
 export function subscribeReadScreen(handler: () => void): Promise<UnlistenFn> {
   return subscribe("read-screen", () => handler());
+}
+/** Fires when the after-meeting summary was saved to the notes. No data. */
+export function subscribeSummarySaved(handler: () => void): Promise<UnlistenFn> {
+  return subscribe("summary-saved", () => handler());
 }

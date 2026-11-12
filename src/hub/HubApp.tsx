@@ -14,6 +14,7 @@ import {
   subscribeListenState,
   subscribePushToAsk,
   subscribeReadScreen,
+  subscribeSummarySaved,
   subscribeTurnDetected,
   waitForAskReady,
 } from "../lib/ipc";
@@ -104,6 +105,7 @@ export function HubApp() {
   const [listenState, setListenState] = useState<ListenState | null>(null);
   const [busy, setBusy] = useState(false);
   const [errorKey, setErrorKey] = useState<CatalogKey | null>(null);
+  const [noticeKey, setNoticeKey] = useState<CatalogKey | null>(null);
   const [opacity, setOpacity] = useState(1);
   // The interview that just ended, while the bar offers to save it.
   const [ended, setEnded] = useState<SessionSummary | null>(null);
@@ -172,6 +174,7 @@ export function HubApp() {
       // The read-screen global shortcut goes through the hub's own Screen button path,
       // so the "wait for Ask to be ready" fix covers it too.
       subscribeReadScreen(() => void readTheScreen()),
+      subscribeSummarySaved(() => setNoticeKey("summary.savedToNotes")),
     ])
       .then((stops) => {
         const stop = () => stops.forEach((each) => each());
@@ -195,6 +198,13 @@ export function HubApp() {
     const timer = window.setTimeout(() => setErrorKey(null), ERROR_DISMISS_MS);
     return () => window.clearTimeout(timer);
   }, [errorKey]);
+
+  // A notice (today: the summary was saved) clears itself too.
+  useEffect(() => {
+    if (noticeKey === null) return;
+    const timer = window.setTimeout(() => setNoticeKey(null), ERROR_DISMISS_MS);
+    return () => window.clearTimeout(timer);
+  }, [noticeKey]);
 
   // Persist the opacity once the slider settles — but not the value just loaded from settings.
   useEffect(() => {
@@ -278,6 +288,12 @@ export function HubApp() {
         <div className="hub-error" role="alert">
           <button type="button" onClick={() => setErrorKey(null)} title={t(errorKey)}>
             {t(errorKey)}
+          </button>
+        </div>
+      ) : noticeKey !== null ? (
+        <div className="hub-notice">
+          <button type="button" onClick={() => setNoticeKey(null)} title={t(noticeKey)}>
+            {t(noticeKey)}
           </button>
         </div>
       ) : ended !== null ? (
