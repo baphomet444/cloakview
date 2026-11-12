@@ -50,6 +50,7 @@ const ANSWER_STYLES: readonly { value: string; labelKey: CatalogKey }[] = [
   { value: "interview", labelKey: "settings.styleInterview" },
   { value: "sales", labelKey: "settings.styleSales" },
   { value: "technical", labelKey: "settings.styleTechnical" },
+  { value: "coding", labelKey: "settings.styleCoding" },
   { value: "short", labelKey: "settings.styleShort" },
 ];
 

@@ -99,6 +99,7 @@ export const en = {
   "settings.styleInterview": "Interview (STAR)",
   "settings.styleSales": "Sales call",
   "settings.styleTechnical": "Technical deep-dive",
+  "settings.styleCoding": "Coding test",
   "settings.styleShort": "Short",
   "history.searchPlaceholder": "Search interviews…",
   "history.search": "Search",

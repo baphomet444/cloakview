@@ -104,6 +104,9 @@ const STYLE_PARAGRAPHS: &[(&str, &str)] = &[
      concrete numbers. If the other side is wrong, correct them politely and precisely."),
     ("short", "Keep every answer under three short sentences: the answer first, one supporting point, \
      nothing else."),
+    ("coding", "The user is in a coding interview or technical test. Give working code in a fenced code \
+     block, then its time and space complexity, then the edge cases to mention aloud. Keep the prose \
+     tight; the code is the answer."),
 ];
 
 fn style_paragraph(style: &str) -> &'static str {
@@ -429,6 +432,7 @@ mod instructions_tests {
             ("sales", "sales call"),
             ("technical", "deep-dive"),
             ("short", "three short sentences"),
+            ("coding", "edge cases"),
         ] {
             for for_screen in [false, true] {
                 let pro = instructions(for_screen, true, None, style);

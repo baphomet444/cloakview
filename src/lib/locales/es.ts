@@ -101,6 +101,7 @@ export const es: Catalog = {
   "settings.styleInterview": "Entrevista (STAR)",
   "settings.styleSales": "Llamada de ventas",
   "settings.styleTechnical": "Técnico a fondo",
+  "settings.styleCoding": "Prueba de código",
   "settings.styleShort": "Breve",
   "history.searchPlaceholder": "Buscar entrevistas…",
   "history.search": "Buscar",
