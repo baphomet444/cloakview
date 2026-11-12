@@ -104,6 +104,8 @@ export const en = {
   "settings.translate": "Live translation (Pro)",
   "settings.translateOff": "Off",
   "settings.translateHint": "Translates each transcript line as it arrives; each line is one small request to OpenAI. Ignored without CloakView Pro.",
+  "settings.contactSupport": "Contact support",
+  "settings.supportHint": "Pro licenses get replies within 1 business day; free users are answered best-effort.",
   "history.searchPlaceholder": "Search interviews…",
   "history.search": "Search",
   "history.empty": "No interviews yet. They appear here after you stop listening.",

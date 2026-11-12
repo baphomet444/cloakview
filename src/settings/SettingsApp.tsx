@@ -3,8 +3,10 @@ import { getLocale, setLocale, t, type CatalogKey, type Locale } from "../lib/i1
 import {
   activateLicense,
   deactivateLicense,
+  getAppInfo,
   getLicenseStatus,
   hasApiKey,
+  openExternal,
   saveApiKey,
   saveSettings,
 } from "../lib/ipc";
@@ -179,6 +181,20 @@ export function SettingsApp() {
     }
   }
 
+  /// Opens a pre-filled support email. The subject carries the Pro tag, so Pro
+  /// mail is easy to spot and answer first (priority support).
+  async function contactSupport(): Promise<void> {
+    try {
+      const info = await getAppInfo();
+      const pro = license !== null && license.status !== "inactive";
+      const subject = encodeURIComponent(`${pro ? "[Pro] " : ""}CloakView support`);
+      const body = encodeURIComponent(`${pro ? "CloakView Pro" : "CloakView (free)"} ${info.version}\n\n`);
+      await openExternal(`mailto:support@getcloakview.com?subject=${subject}&body=${body}`);
+    } catch (error) {
+      setErrorKey(errorCopyKey(error));
+    }
+  }
+
   function changeLanguage(next: Locale): void {
     setLocale(next);
     setLocaleState(getLocale());
@@ -278,6 +294,12 @@ export function SettingsApp() {
           </>
         )}
         <p className="win-hint">{t("settings.proHint")}</p>
+        <div className="win-row">
+          <button type="button" className="win-btn" onClick={() => void contactSupport()}>
+            {t("settings.contactSupport")}
+          </button>
+        </div>
+        <p className="win-hint">{t("settings.supportHint")}</p>
       </section>
 
       {settings === null || draft === null || opacity === null ? (

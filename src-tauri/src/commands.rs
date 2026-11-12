@@ -541,8 +541,9 @@ pub fn get_app_info(app: AppHandle) -> AppInfo {
     app_info(app.package_info())
 }
 
-/// Opens an `http`/`https` URL in the default browser. Any other scheme (or a
-/// malformed URL) is rejected as `InvalidUrl` before anything is launched.
+/// Opens an `http`/`https` URL in the default browser, or a `mailto:` link in
+/// Mail. Any other scheme (or a malformed URL) is rejected as `InvalidUrl`
+/// before anything is launched.
 #[tauri::command]
 pub async fn open_external(url: String) -> Result<(), IpcError> {
     platform::open_external(&url).await.map_err(IpcError::from)

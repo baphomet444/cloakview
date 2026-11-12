@@ -106,6 +106,8 @@ export const es: Catalog = {
   "settings.translate": "Traducción en vivo (Pro)",
   "settings.translateOff": "Off",
   "settings.translateHint": "Traduce cada línea del transcript al llegar; cada línea es una pequeña petición a OpenAI. Sin efecto sin CloakView Pro.",
+  "settings.contactSupport": "Contactar con soporte",
+  "settings.supportHint": "Las licencias Pro reciben respuesta en 1 día hábil; los usuarios gratuitos, según disponibilidad.",
   "history.searchPlaceholder": "Buscar entrevistas…",
   "history.search": "Buscar",
   "history.empty": "Aún no hay entrevistas. Aparecerán aquí al detener la escucha.",

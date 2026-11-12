@@ -246,7 +246,7 @@ export function getMicStatus(): Promise<MicStatus> {
 export function getAppInfo(): Promise<AppInfo> {
   return call("get_app_info");
 }
-/** Rust accepts only `http`/`https` and rejects anything else with `InvalidUrl`. */
+/** Rust accepts only `http`/`https` and `mailto:` (for the support contact) and rejects anything else with `InvalidUrl`. */
 export function openExternal(url: string): Promise<void> {
   return call("open_external", { url });
 }

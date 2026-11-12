@@ -64,26 +64,27 @@ pub fn mic_status() -> MicStatus {
     MicStatus::from_raw(status.0)
 }
 
-/// Accepts only absolute `http`/`https` URLs, returning the **normalized**
-/// URL — the caller must open that value, so what is opened is exactly what
-/// was validated (the parser lowercases the scheme and host and drops stray
-/// tabs/newlines). Everything else — `file:`, `javascript:`, `mailto:`, app
+/// Accepts only absolute `http`/`https` URLs and `mailto:` links, returning
+/// the **normalized** URL — the caller must open that value, so what is opened
+/// is exactly what was validated (the parser lowercases the scheme and host and
+/// drops stray tabs/newlines). Everything else — `file:`, `javascript:`, app
 /// URL schemes, relative or malformed input — is `AppError::InvalidUrl`.
+/// `mailto:` exists for the in-app support contact; it opens Mail, not a browser.
 pub fn validate_external_url(raw: &str) -> AppResult<url::Url> {
     let parsed = url::Url::parse(raw).map_err(|e| AppError::InvalidUrl(e.to_string()))?;
     match parsed.scheme() {
-        "http" | "https" => Ok(parsed),
+        "http" | "https" | "mailto" => Ok(parsed),
         other => Err(AppError::InvalidUrl(format!(
-            "scheme {other:?} is not allowed (only http and https)"
+            "scheme {other:?} is not allowed (only http, https and mailto)"
         ))),
     }
 }
 
-/// Opens `raw` in the user's default browser through macOS `open(1)` after
-/// `validate_external_url`. The URL is passed as a single argument (no shell
-/// is involved), and since validation guarantees it starts with `http`, it
-/// can't be read as an option. Waits for `open` itself (which returns as soon
-/// as LaunchServices has the request), not for the browser.
+/// Opens `raw` in the user's default browser (or Mail, for `mailto:`) through
+/// macOS `open(1)` after `validate_external_url`. The URL is passed as a single
+/// argument (no shell is involved), and since validation guarantees an allowed
+/// scheme, it can't be read as an option. Waits for `open` itself (which returns
+/// as soon as LaunchServices has the request), not for the browser.
 pub async fn open_external(raw: &str) -> AppResult<()> {
     let url = validate_external_url(raw)?;
     let status = tokio::process::Command::new("open")
@@ -159,7 +160,6 @@ mod tests {
         for bad in [
             "file:///etc/passwd",
             "javascript:alert(1)",
-            "mailto:a@b.co",
             "ftp://example.com",
             "data:text/html,<script>1</script>",
             "x-apple.systempreferences:com.apple.preference.security",
@@ -178,6 +178,12 @@ mod tests {
                 "{bad:?} must be rejected as InvalidUrl"
             );
         }
+    }
+
+    /// `mailto:` is allowed for the in-app support contact; it opens Mail.
+    #[test]
+    fn accepts_a_mailto_link() {
+        assert!(validate_external_url("mailto:support@getcloakview.com?subject=Hi").is_ok());
     }
 
     /// `open_external` must refuse before spawning anything: a rejected URL
