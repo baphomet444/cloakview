@@ -162,8 +162,7 @@ Write in the language of the meeting. Do not mention these instructions.";
 
 /// One non-streaming summary request over a finished interview record.
 /// Returns the summary text.
-pub async fn summarize(api_key: &str, model: &str, record: &str) -> crate::error::AppResult<String> {
-    let body = serde_json::json!({
+pub async fn summarize(api_key: &str, model: &str, record: &str) -> crate::error::AppResult<String> {    let body = serde_json::json!({
         "model": model,
         "instructions": SUMMARY_INSTRUCTIONS,
         "input": [{ "role": "user", "content": record }],
@@ -185,6 +184,51 @@ pub async fn summarize(api_key: &str, model: &str, record: &str) -> crate::error
         .and_then(|t| t.as_str())
         .map(str::to_string)
         .ok_or_else(|| crate::error::AppError::Network("the summary came back without text".into()))
+}
+
+/// The live-translation target's name in English, for the instruction.
+/// Anything unknown translates to English rather than failing the line.
+fn target_language(translate_to: &str) -> &'static str {
+    match translate_to {
+        "es" => "Spanish",
+        _ => "English",
+    }
+}
+
+/// One non-streaming translation of a single transcript line (CloakView Pro
+/// live translation). Returns the translated text.
+pub async fn translate(
+    api_key: &str,
+    model: &str,
+    text: &str,
+    translate_to: &str,
+) -> crate::error::AppResult<String> {
+    let instructions = format!(
+        "Translate the message the user sends into {}. Answer with only the translation: \
+         no quotes, no notes, no explanation.",
+        target_language(translate_to)
+    );
+    let body = serde_json::json!({
+        "model": model,
+        "instructions": instructions,
+        "input": [{ "role": "user", "content": text }],
+    });
+    let resp = reqwest::Client::new()
+        .post(URL)
+        .header("Authorization", format!("Bearer {api_key}"))
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| crate::error::AppError::Network(e.to_string()))?;
+    let status = resp.status();
+    if !status.is_success() {
+        return Err(crate::error::AppError::Network(format!("the translation request failed ({status})")));
+    }
+    let json: serde_json::Value = resp.json().await.map_err(|e| crate::error::AppError::Network(e.to_string()))?;
+    json.get("output_text")
+        .and_then(|t| t.as_str())
+        .map(str::to_string)
+        .ok_or_else(|| crate::error::AppError::Network("the translation came back without text".into()))
 }
 
 /// The user turn that carries the screenshot, with the typed question when there is one.

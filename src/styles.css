@@ -561,6 +561,19 @@ body,
   font-size: 10.5px;
 }
 
+/* Live transcript: a line and, when translation is on, its translation. */
+.tr-entry {
+  margin-bottom: 2px;
+}
+
+.tr-translation {
+  margin: 0 0 4px;
+  color: var(--win-muted);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 /* History */
 .history-open {
   padding: 0;

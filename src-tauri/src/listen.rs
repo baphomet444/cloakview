@@ -74,6 +74,24 @@ struct TurnDetection<'a> {
     user_name: Option<&'a str>,
 }
 
+/// Live translation (CloakView Pro), snapshotted once per session like
+/// `TurnDetection`. `dispatch` sends one transcribed line for translation;
+/// the result comes back as a `"translation"` event carrying the same `ts`.
+/// `None` when the feature is off (or the license is missing), and then
+/// `pump` never thinks about it.
+struct Translation<'a> {
+    dispatch: &'a (dyn Fn(String, i64) + Send + Sync),
+}
+
+/// Everything `pump` needs that isn't a channel: the per-session snapshot
+/// (turn-detection inputs, live translation). Bundled so the signatures
+/// stay under clippy's argument limit.
+#[derive(Default)]
+struct SessionOptions<'a> {
+    detection: TurnDetection<'a>,
+    translation: Option<Translation<'a>>,
+}
+
 /// State surfaced to the frontend under the `"listen-state"` event.
 /// `Connected`/`Reconnecting` mirror the realtime WS connection's own
 /// lifecycle (`RealtimeEvent::SessionStarted`/`Closed`) — see the module
@@ -177,7 +195,7 @@ async fn pump(
     audio_out: mpsc::Sender<AudioChunk>,
     mut realtime_events: mpsc::Receiver<RealtimeEvent>,
     transcript: &tokio::sync::Mutex<Vec<Turn>>,
-    detection: TurnDetection<'_>,
+    options: SessionOptions<'_>,
     emit: &(dyn Fn(&str, serde_json::Value) + Send + Sync),
 ) {
     let mut realtime_open = true;
@@ -197,14 +215,19 @@ async fn pump(
                             TRANSCRIPT_DELTA_EVENT,
                             serde_json::to_value(&turn).expect("Turn serializes"),
                         );
+                        if let Some(t) = &options.translation {
+                            if !turn.text.trim().is_empty() {
+                                (t.dispatch)(turn.text.clone(), turn.ts);
+                            }
+                        }
                         // The cue to suggest an answer: the user was addressed
                         // (keyword or name), or what was said asks for a reply.
                         // The user's own words (the microphone) never ask for a reply.
                         if !turn.is_user_turn
                             && (crate::detect::is_user_turn(
                                 &turn.text,
-                                detection.keywords,
-                                detection.user_name,
+                                options.detection.keywords,
+                                options.detection.user_name,
                                 turn.is_user_turn,
                             ) || crate::detect::asks_for_reply(&turn.text))
                         {
@@ -249,12 +272,12 @@ async fn pump_until_cancelled(
     audio_out: mpsc::Sender<AudioChunk>,
     realtime_events: mpsc::Receiver<RealtimeEvent>,
     transcript: &tokio::sync::Mutex<Vec<Turn>>,
-    detection: TurnDetection<'_>,
+    options: SessionOptions<'_>,
     emit: &(dyn Fn(&str, serde_json::Value) + Send + Sync),
 ) {
     tokio::select! {
         _ = cancel.cancelled() => {}
-        _ = pump(status_rx, audio_out, realtime_events, transcript, detection, emit) => {}
+        _ = pump(status_rx, audio_out, realtime_events, transcript, options, emit) => {}
     }
 }
 
@@ -315,6 +338,7 @@ pub fn start(model: String, include_mic: bool, app: tauri::AppHandle) -> AppResu
     let app_for_handle = app.clone();
     let listen_state_app = app.clone();
     let generic_app = app.clone();
+    let translation_app = app.clone();
 
     let emit_listen_state = move |state: ListenState| {
         crate::diag::log(&format!("listen-state {state:?}"));
@@ -339,15 +363,47 @@ pub fn start(model: String, include_mic: bool, app: tauri::AppHandle) -> AppResu
         let app_state = app.state::<crate::state::AppState>();
         // Snapshot, once per session: later `save_settings` calls do not
         // reach a running session (documented in the module doc).
-        let (user_keywords, user_name) = {
+        let (user_keywords, user_name, translate_to) = {
             let s = app_state.settings.read().expect("settings lock");
-            (s.user_keywords.clone(), s.user_name.clone())
+            (s.user_keywords.clone(), s.user_name.clone(), s.translate_to.clone())
         };
         let detection = TurnDetection { keywords: &user_keywords, user_name: user_name.as_deref() };
+        // Live translation (CloakView Pro): each transcribed line goes to one
+        // background request; the result is emitted as `"translation"`.
+        let translation_dispatch: Option<Box<dyn Fn(String, i64) + Send + Sync>> =
+            if app_state.is_pro() && !translate_to.is_empty() {
+                let key = api_key.clone();
+                let model = model.clone();
+                let target = translate_to.clone();
+                let app = translation_app.clone();
+                Some(Box::new(move |text: String, ts: i64| {
+                    let (key, model, target, app) = (key.clone(), model.clone(), target.clone(), app.clone());
+                    tauri::async_runtime::spawn(async move {
+                        match crate::answers::client::translate(&key, &model, &text, &target).await {
+                            Ok(translated) => {
+                                crate::diag::log(&format!("translation ({} chars)", translated.chars().count()));
+                                let _ = app.emit(
+                                    crate::events::TRANSLATION_EVENT,
+                                    serde_json::json!({ "ts": ts, "text": translated }),
+                                );
+                            }
+                            Err(e) => crate::diag::log(&format!("translation failed: {e}")),
+                        }
+                    });
+                }))
+            } else {
+                None
+            };
+        let translation = translation_dispatch.as_deref().map(|dispatch| Translation { dispatch });
         let realtime_task = realtime::client::run_session(api_key, model, audio_rx, rt_tx, realtime::client::Source::Remote);
         tokio::select! {
             _ = pump_until_cancelled(
-                cancel_for_task, status_rx, audio_tx, rt_rx, &app_state.transcript, detection,
+                cancel_for_task,
+                status_rx,
+                audio_tx,
+                rt_rx,
+                &app_state.transcript,
+                SessionOptions { detection, translation },
                 &emit_generic,
             ) => {}
             res = realtime_task => {
@@ -401,7 +457,7 @@ mod tests {
         // (the queued `Transcript` is handled on its first scheduling).
         let _ = tokio::time::timeout(
             std::time::Duration::from_millis(200),
-            pump(status_rx, audio_tx, rt_rx, &transcript, detection, &emit),
+            pump(status_rx, audio_tx, rt_rx, &transcript, SessionOptions { detection, translation: None }, &emit),
         )
         .await;
 
@@ -498,7 +554,7 @@ mod tests {
         let transcript = tokio::sync::Mutex::new(Vec::<Turn>::new());
         let (emit, emitted) = recording_emit();
 
-        pump(status_rx, audio_tx, rt_rx, &transcript, TurnDetection::default(), &emit).await;
+        pump(status_rx, audio_tx, rt_rx, &transcript, SessionOptions::default(), &emit).await;
 
         let events = emitted.lock().unwrap();
         assert_eq!(events.len(), 1, "expected exactly one emission, got {events:?}");
@@ -506,9 +562,51 @@ mod tests {
         assert_eq!(events[0].1["kind"], "error");
     }
 
+    /// Live translation (CloakView Pro): every non-blank line is dispatched for
+    /// translation with its `ts`; blank lines are not.
     #[tokio::test]
-    async fn pump_emits_transcript_delta_with_turn_payload() {
+    async fn translation_dispatches_each_non_blank_line_with_its_ts() {
         let (_status_tx, status_rx) = mpsc::channel::<AudioStatus>(1);
+        let (audio_tx, _audio_rx) = mpsc::channel::<AudioChunk>(1);
+        let (rt_tx, rt_rx) = mpsc::channel::<RealtimeEvent>(2);
+        let transcript = tokio::sync::Mutex::new(Vec::<Turn>::new());
+
+        rt_tx
+            .send(RealtimeEvent::Transcript { speaker: "a".into(), text: "hola".into(), is_user_turn: false })
+            .await
+            .unwrap();
+        rt_tx
+            .send(RealtimeEvent::Transcript { speaker: "b".into(), text: "   ".into(), is_user_turn: false })
+            .await
+            .unwrap();
+
+        let dispatched = std::sync::Arc::new(std::sync::Mutex::new(Vec::<(String, i64)>::new()));
+        let recorder = dispatched.clone();
+        let dispatch = move |text: String, ts: i64| {
+            recorder.lock().unwrap().push((text, ts));
+        };
+
+        let _ = tokio::time::timeout(
+            std::time::Duration::from_millis(200),
+            pump(
+                status_rx,
+                audio_tx,
+                rt_rx,
+                &transcript,
+                SessionOptions { detection: TurnDetection::default(), translation: Some(Translation { dispatch: &dispatch }) },
+                &|_, _| {},
+            ),
+        )
+        .await;
+
+        let calls = dispatched.lock().unwrap();
+        assert_eq!(calls.len(), 1, "only the non-blank line is dispatched: {calls:?}");
+        assert_eq!(calls[0].0, "hola");
+        assert!(calls[0].1 > 0, "the ts is the line's own");
+    }
+
+    #[tokio::test]
+    async fn pump_emits_transcript_delta_with_turn_payload() {        let (_status_tx, status_rx) = mpsc::channel::<AudioStatus>(1);
         let (audio_tx, _audio_rx) = mpsc::channel::<AudioChunk>(1);
         let (rt_tx, rt_rx) = mpsc::channel::<RealtimeEvent>(1);
         let transcript = tokio::sync::Mutex::new(Vec::<Turn>::new());
@@ -529,7 +627,7 @@ mod tests {
         // very first scheduling, before anything can block for real.
         let _ = tokio::time::timeout(
             std::time::Duration::from_millis(200),
-            pump(status_rx, audio_tx, rt_rx, &transcript, TurnDetection::default(), &emit),
+            pump(status_rx, audio_tx, rt_rx, &transcript, SessionOptions::default(), &emit),
         )
         .await;
 
@@ -560,7 +658,7 @@ mod tests {
 
         let _ = tokio::time::timeout(
             std::time::Duration::from_millis(200),
-            pump(status_rx, audio_tx, rt_rx, &transcript, TurnDetection::default(), &|_, _| {}),
+            pump(status_rx, audio_tx, rt_rx, &transcript, SessionOptions::default(), &|_, _| {}),
         )
         .await;
 
@@ -589,7 +687,7 @@ mod tests {
                 audio_tx,
                 rt_rx,
                 &transcript,
-                TurnDetection::default(),
+                SessionOptions::default(),
                 &|_, _| {},
             ),
         )
@@ -621,7 +719,7 @@ mod tests {
 
             let _ = tokio::time::timeout(
                 std::time::Duration::from_millis(200),
-                pump(status_rx, audio_tx, rt_rx, &transcript, detection, &emit),
+                pump(status_rx, audio_tx, rt_rx, &transcript, SessionOptions { detection, translation: None }, &emit),
             )
             .await;
 
@@ -653,7 +751,7 @@ mod tests {
 
             let _ = tokio::time::timeout(
                 std::time::Duration::from_millis(200),
-                pump(status_rx, audio_tx, rt_rx, &transcript, detection, &emit),
+                pump(status_rx, audio_tx, rt_rx, &transcript, SessionOptions { detection, translation: None }, &emit),
             )
             .await;
 

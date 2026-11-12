@@ -23,6 +23,7 @@ const settings: Settings = {
   includeMic: false,
   personalContext: "",
   answerStyle: "balanced",
+  translateTo: "",
 };
 
 describe("themeFromSetting", () => {

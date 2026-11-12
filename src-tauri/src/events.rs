@@ -30,6 +30,9 @@ pub const READ_SCREEN_EVENT: &str = "read-screen";
 /// Not in design.md §5: the after-meeting summary was saved to the notes
 /// (CloakView Pro). No payload.
 pub const SUMMARY_SAVED_EVENT: &str = "summary-saved";
+/// Not in design.md §5: a transcript line's live translation (CloakView Pro).
+/// Payload: `{ ts, text }`, matched to the line by `ts`.
+pub const TRANSLATION_EVENT: &str = "translation";
 
 #[cfg(test)]
 mod tests {
@@ -52,6 +55,7 @@ mod tests {
             PUSH_TO_ASK_EVENT,
             READ_SCREEN_EVENT,
             SUMMARY_SAVED_EVENT,
+            TRANSLATION_EVENT,
         ];
         let spec = [
             "transcript-delta",
@@ -64,6 +68,7 @@ mod tests {
             "push-to-ask",
             "read-screen",
             "summary-saved",
+            "translation",
         ];
         assert_eq!(ours, spec);
 

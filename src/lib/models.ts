@@ -137,6 +137,8 @@ export type Settings = {
   personalContext: string;
   /** `balanced`, `interview`, `sales`, `technical` or `short` (CloakView Pro). */
   answerStyle: string;
+  /** Live translation target for the transcript: "" (off), "en" or "es" (CloakView Pro). */
+  translateTo: string;
 };
 
 /**
@@ -158,6 +160,8 @@ export type SettingsPatch = {
   /** Replaces the whole notes block; blank clears it. */
   personalContext?: string;
   answerStyle?: string;
+  /** "" (off), "en" or "es". */
+  translateTo?: string;
 };
 
 /** Microphone permission. `src-tauri/src/platform.rs` (`MicStatus`): a plain camelCase string. */

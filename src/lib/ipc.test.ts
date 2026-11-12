@@ -234,6 +234,7 @@ describe("events", () => {
     ["answer-delta", ipc.subscribeAnswerDelta, "Hel"],
     ["answer-started", ipc.subscribeAnswerStarted as (handler: (payload: unknown) => void) => Promise<() => void>, "screen"],
     ["listen-state", ipc.subscribeListenState, listening],
+    ["translation", ipc.subscribeTranslation, { ts: 1, text: "hola" }],
     ["error", ipc.subscribeError, "rate_limit"],
   ];
 
@@ -267,8 +268,7 @@ describe("events", () => {
   });
 
   it("has a subscribe wrapper for every event (none forgotten)", () => {
-    const covered = [...subscriptions.map(([event]) => event), "turn-detected", "answer-done", "push-to-ask", "read-screen", "summary-saved"];
-    expect(sorted(covered)).toEqual(sorted(ipc.EVENTS));
+    const covered = [...subscriptions.map(([event]) => event), "turn-detected", "answer-done", "push-to-ask", "read-screen", "summary-saved"];    expect(sorted(covered)).toEqual(sorted(ipc.EVENTS));
   });
 });
 

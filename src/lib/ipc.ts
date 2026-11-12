@@ -321,6 +321,8 @@ export interface EventPayloads {
   "read-screen": null;
   /** The after-meeting summary was saved to the notes (CloakView Pro). No data. */
   "summary-saved": null;
+  /** A transcript line's live translation (CloakView Pro), matched to the line by `ts`. */
+  translation: { ts: number; text: string };
 }
 
 /** Runtime list of the same names, compared by the test with `src-tauri/src/events.rs`. */
@@ -335,6 +337,7 @@ export const EVENTS = [
   "push-to-ask",
   "read-screen",
   "summary-saved",
+  "translation",
 ] as const satisfies readonly (keyof EventPayloads)[];
 
 export type EventName = (typeof EVENTS)[number];
@@ -379,4 +382,8 @@ export function subscribeReadScreen(handler: () => void): Promise<UnlistenFn> {
 /** Fires when the after-meeting summary was saved to the notes. No data. */
 export function subscribeSummarySaved(handler: () => void): Promise<UnlistenFn> {
   return subscribe("summary-saved", () => handler());
+}
+/** Fires when a transcript line's translation arrives; `ts` matches the line it belongs to. */
+export function subscribeTranslation(handler: (translation: { ts: number; text: string }) => void): Promise<UnlistenFn> {
+  return subscribe("translation", handler);
 }

@@ -33,6 +33,9 @@ pub struct Settings {
     /// (STAR), `sales`, `technical` or `short`. CloakView Pro: ignored without
     /// a license.
     pub answer_style: String,
+    /// Live translation target for the transcript: "" (off), "en" or "es".
+    /// CloakView Pro: ignored without a license.
+    pub translate_to: String,
 }
 
 impl Default for Settings {
@@ -52,6 +55,7 @@ impl Default for Settings {
             include_mic: false,
             personal_context: String::new(),
             answer_style: "balanced".into(),
+            translate_to: String::new(),
         }
     }
 }
@@ -132,6 +136,7 @@ mod tests {
             include_mic: true,
             personal_context: String::new(),
             answer_style: "balanced".into(),
+            translate_to: String::new(),
         };
         let json = serde_json::to_value(&s).unwrap();
 
@@ -153,7 +158,8 @@ mod tests {
                 },
                 "includeMic": true,
                 "personalContext": "",
-                "answerStyle": "balanced"
+                "answerStyle": "balanced",
+                "translateTo": ""
             })
         );
         for key in json.as_object().unwrap().keys() {

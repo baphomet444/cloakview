@@ -54,6 +54,12 @@ const ANSWER_STYLES: readonly { value: string; labelKey: CatalogKey }[] = [
   { value: "short", labelKey: "settings.styleShort" },
 ];
 
+const TRANSLATE_OPTIONS: readonly { value: string; labelKey: CatalogKey }[] = [
+  { value: "", labelKey: "settings.translateOff" },
+  { value: "en", labelKey: "settings.languageEn" },
+  { value: "es", labelKey: "settings.languageEs" },
+];
+
 const THEMES: readonly { value: Theme; labelKey: CatalogKey }[] = [
   { value: "dark", labelKey: "settings.themeDark" },
   { value: "light", labelKey: "settings.themeLight" },
@@ -320,6 +326,17 @@ export function SettingsApp() {
               onChange={(next) => void save({ answerStyle: next })}
             />
             <p className="win-hint set-span">{t("settings.answerStyleHint")}</p>
+
+            <span className="win-label" id="set-translate-label">
+              {t("settings.translate")}
+            </span>
+            <Segmented
+              id="set-translate"
+              options={TRANSLATE_OPTIONS}
+              value={settings.translateTo}
+              onChange={(next) => void save({ translateTo: next })}
+            />
+            <p className="win-hint set-span">{t("settings.translateHint")}</p>
 
             <label className="win-label" htmlFor="set-opacity">
               {t("settings.opacity")}
