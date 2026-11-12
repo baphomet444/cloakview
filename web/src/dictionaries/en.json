@@ -196,7 +196,7 @@
     },
     "roadmap": {
       "title": "What comes later",
-      "body": "A one-time-payment Pro with advanced features — vision, translation, offline mode — is coming in v1.1. No subscription there either: pay once, keep it. We'll publish the details before it ships."
+      "body": "CloakView Pro is a one-time purchase — pay once, keep it, no subscription. It adds the features that make the copilot feel like yours: it transcribes your side of the call too, reads a question or task straight off your screen, draws diagrams, tailors answers to your own résumé and context, translates the conversation live, keeps a searchable history of every interview, and includes priority support with replies within one business day. We'll publish the price and the full list before it ships."
     },
     "cta": {
       "title": "Try it with your own key",
@@ -436,7 +436,7 @@
       },
       "openaiProcessing": {
         "title": "OpenAI API Usage",
-        "content": "When you use CloakView with your OpenAI API key:\n\n• Your meeting audio is sent to OpenAI's API servers to be transcribed.\n• Context is sent to OpenAI to generate suggestions.\n• You are responsible for reviewing OpenAI's privacy policy at openai.com/privacy.\n• CloakView never stores, logs, or monitors these requests.\n• OpenAI's terms require that you own the rights to the audio being sent. You remain responsible for compliance.\n\nNo data is retained by CloakView beyond the session."
+        "content": "When you use CloakView with your OpenAI API key:\n\n• Your meeting audio is sent to OpenAI's API servers to be transcribed.\n• Context is sent to OpenAI to generate suggestions.\n• With CloakView Pro, if you turn on microphone transcription, your own voice is also sent to OpenAI to be transcribed. It is off by default.\n• With CloakView Pro, when you use Read Screen, a screenshot of your main display is sent to OpenAI to answer what is shown on it. It is captured only when you press the button, kept in memory, and deleted immediately. CloakView's own windows are excluded from the capture.\n• You are responsible for reviewing OpenAI's privacy policy at openai.com/privacy.\n• CloakView never stores, logs, or monitors these requests.\n• OpenAI's terms require that you own the rights to the audio being sent. You remain responsible for compliance.\n\nNo data is retained by CloakView beyond the session."
       },
       "yourKey": {
         "title": "Your API Key",

@@ -196,7 +196,7 @@
     },
     "roadmap": {
       "title": "Qué viene después",
-      "body": "Un Pro de pago único con features avanzadas — visión, traducción, modo offline — llegará en v1.1. Ahí tampoco habrá suscripción: pagas una vez y lo conservas. Publicaremos los detalles antes de lanzarlo."
+      "body": "CloakView Pro es un pago único: pagas una vez y es tuyo, sin suscripción. Añade las funciones que hacen que el copiloto se sienta tuyo: transcribe también lo que dices tú, lee una pregunta o tarea directamente de tu pantalla, dibuja diagramas, adapta las respuestas a tu propio currículum y contexto, traduce la conversación en vivo, guarda un historial de todas tus entrevistas con búsqueda e incluye soporte prioritario con respuesta en un día hábil. Publicaremos el precio y la lista completa antes de su lanzamiento."
     },
     "cta": {
       "title": "Pruébalo con tu propia clave",
@@ -436,7 +436,7 @@
       },
       "openaiProcessing": {
         "title": "Uso de la API de OpenAI",
-        "content": "Cuando usas CloakView con tu clave de API de OpenAI:\n\n• Tu audio de reunión se envía a los servidores de la API de OpenAI para ser transcrito.\n• El contexto se envía a OpenAI para generar sugerencias.\n• Eres responsable de revisar la política de privacidad de OpenAI en openai.com/privacy.\n• CloakView nunca almacena, registra ni monitorea estas solicitudes.\n• Los términos de OpenAI requieren que poseas derechos sobre el audio enviado. Eres responsable del cumplimiento.\n\nNingún dato es retenido por CloakView más allá de la sesión."
+        "content": "Cuando usas CloakView con tu clave de API de OpenAI:\n\n• Tu audio de reunión se envía a los servidores de la API de OpenAI para ser transcrito.\n• El contexto se envía a OpenAI para generar sugerencias.\n• Con CloakView Pro, si activas la transcripción del micrófono, tu propia voz también se envía a OpenAI para ser transcrita. Está desactivada por defecto.\n• Con CloakView Pro, cuando usas Leer pantalla, se envía a OpenAI una captura de tu pantalla principal para responder lo que hay en ella. Se toma solo al pulsar el botón, se mantiene en memoria y se elimina de inmediato. Las ventanas de CloakView se excluyen de la captura.\n• Eres responsable de revisar la política de privacidad de OpenAI en openai.com/privacy.\n• CloakView nunca almacena, registra ni monitorea estas solicitudes.\n• Los términos de OpenAI requieren que poseas derechos sobre el audio enviado. Eres responsable del cumplimiento.\n\nNingún dato es retenido por CloakView más allá de la sesión."
       },
       "yourKey": {
         "title": "Tu Clave de API",
