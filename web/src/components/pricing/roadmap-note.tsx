@@ -11,9 +11,18 @@ export function RoadmapNote({
         <h2 className="font-display text-3xl font-bold tracking-tight text-foreground">
           {dict.title}
         </h2>
-        <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted">
-          {dict.body}
-        </p>
+        <div className="mt-8 grid gap-8 md:grid-cols-[auto_1fr] md:items-start">
+          <div className="rounded-2xl border border-accent/40 bg-surface p-6 text-center md:min-w-52">
+            <p className="font-display text-5xl font-extrabold tracking-tight text-foreground">
+              {dict.price}
+            </p>
+            <p className="mt-2 text-sm text-muted">{dict.priceNote}</p>
+            <span className="mt-5 inline-flex cursor-not-allowed rounded-lg border border-border px-5 py-2.5 text-sm text-muted">
+              {dict.soon}
+            </span>
+          </div>
+          <p className="max-w-3xl text-lg leading-relaxed text-muted">{dict.body}</p>
+        </div>
       </div>
     </section>
   );

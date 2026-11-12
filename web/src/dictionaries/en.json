@@ -196,7 +196,10 @@
     },
     "roadmap": {
       "title": "What comes later",
-      "body": "CloakView Pro is a one-time purchase — pay once, keep it, no subscription. It adds the features that make the copilot feel like yours: it transcribes your side of the call too, reads a question or task straight off your screen, draws diagrams, tailors answers to your own résumé and context, translates the conversation live, keeps a searchable history of every interview, and includes priority support with replies within one business day. We'll publish the price and the full list before it ships."
+      "body": "CloakView Pro is a one-time purchase — pay once, keep it, no subscription. It adds the features that make the copilot feel like yours: it transcribes your side of the call too, reads a question or task straight off your screen, draws diagrams, tailors answers to your own résumé and context, translates the conversation live, keeps a searchable history of every interview, and includes priority support with replies within one business day. We'll publish the price and the full list before it ships.",
+      "price": "$99",
+      "priceNote": "one-time · no subscription",
+      "soon": "Coming soon"
     },
     "cta": {
       "title": "Try it with your own key",

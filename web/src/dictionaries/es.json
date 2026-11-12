@@ -196,7 +196,10 @@
     },
     "roadmap": {
       "title": "Qué viene después",
-      "body": "CloakView Pro es un pago único: pagas una vez y es tuyo, sin suscripción. Añade las funciones que hacen que el copiloto se sienta tuyo: transcribe también lo que dices tú, lee una pregunta o tarea directamente de tu pantalla, dibuja diagramas, adapta las respuestas a tu propio currículum y contexto, traduce la conversación en vivo, guarda un historial de todas tus entrevistas con búsqueda e incluye soporte prioritario con respuesta en un día hábil. Publicaremos el precio y la lista completa antes de su lanzamiento."
+      "body": "CloakView Pro es un pago único: pagas una vez y es tuyo, sin suscripción. Añade las funciones que hacen que el copiloto se sienta tuyo: transcribe también lo que dices tú, lee una pregunta o tarea directamente de tu pantalla, dibuja diagramas, adapta las respuestas a tu propio currículum y contexto, traduce la conversación en vivo, guarda un historial de todas tus entrevistas con búsqueda e incluye soporte prioritario con respuesta en un día hábil. Publicaremos el precio y la lista completa antes de su lanzamiento.",
+      "price": "$99",
+      "priceNote": "pago único · sin suscripción",
+      "soon": "Próximamente"
     },
     "cta": {
       "title": "Pruébalo con tu propia clave",
