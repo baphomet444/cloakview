@@ -26,4 +26,12 @@ xcrun notarytool submit "$dmg" \
   --wait
 xcrun stapler staple "$dmg"
 spctl -a -vv -t open --context context:primary-signature "$dmg"
+
+# Version-free copy so .../releases/latest/download/CloakView-Pro_aarch64.dmg
+# (the link given to Pro buyers) always resolves to the newest release.
+pro_dmg="src-tauri/target/release/bundle/dmg/CloakView-Pro_aarch64.dmg"
+cp "$dmg" "$pro_dmg"
+
 shasum -a 256 "$dmg"
+echo "Upload both to the GitHub release:"
+echo "  gh release upload v${version} \"$dmg\" \"$pro_dmg\" --repo baphomet444/cloakview --clobber"
