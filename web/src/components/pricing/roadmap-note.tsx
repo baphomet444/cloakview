@@ -1,10 +1,13 @@
 import type { Dictionary } from "@/lib/get-dictionary";
+import { siteConfig } from "@/site.config";
 
 export function RoadmapNote({
   dict,
 }: {
   dict: Dictionary["pricing"]["roadmap"];
 }) {
+  const checkoutUrl = siteConfig.PRO_CHECKOUT_URL;
+
   return (
     <section className="border-t border-border">
       <div className="mx-auto max-w-5xl px-6 py-20">
@@ -17,9 +20,22 @@ export function RoadmapNote({
               {dict.price}
             </p>
             <p className="mt-2 text-sm text-muted">{dict.priceNote}</p>
-            <span className="mt-5 inline-flex cursor-not-allowed rounded-lg border border-border px-5 py-2.5 text-sm text-muted">
-              {dict.soon}
-            </span>
+            {checkoutUrl ? (
+              <a
+                href={checkoutUrl}
+                rel="noopener noreferrer"
+                className="btn btn-primary mt-5"
+              >
+                {dict.buy}
+              </a>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="mt-5 inline-flex cursor-not-allowed rounded-lg border border-border px-5 py-2.5 text-sm text-muted"
+              >
+                {dict.soon}
+              </span>
+            )}
           </div>
           <p className="max-w-3xl text-lg leading-relaxed text-muted">{dict.body}</p>
         </div>

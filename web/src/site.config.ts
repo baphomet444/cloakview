@@ -26,6 +26,11 @@ export const siteConfig = {
   SHA256_ARM64: "b64d0b4b6b1de6ff0c2541d71e14e86b0acae3f2c21d4be2c77964e7d51f1e2e" as string | null,
   SHA256_INTEL: null as string | null,
   SHA256_WINDOWS: null as string | null,
+  // CloakView Pro: URL de checkout de Lemon Squeezy en modo LIVE. Mientras sea
+  // null, la tarjeta de precio muestra "Coming soon". Nunca poner aquí la URL de
+  // modo TEST: las URLs live y test tienen el mismo aspecto, así que copiarla del
+  // producto después de "Copy to Live Mode", con la tienda ya aprobada.
+  PRO_CHECKOUT_URL: null as string | null,
 
   // --- Términos legales ---
   LEGAL_UPDATED: "2026-11-11", // ISO date: Fase 7
