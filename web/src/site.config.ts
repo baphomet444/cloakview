@@ -23,7 +23,7 @@ export const siteConfig = {
   SUPPORT_EMAIL: "support@getcloakview.com",
   LEGAL_ENTITY: "PLACEHOLDER LLC", // TODO: razón social real antes de producción
   // Sustituir solo por hashes SHA-256 publicados para los artefactos reales.
-  SHA256_ARM64: null as string | null,
+  SHA256_ARM64: "bc4a82d28c3f0f5ef9b1ce56bea763ac10a9ad0d3b8f6eb145efea46009c894e" as string | null,
   SHA256_INTEL: null as string | null,
   SHA256_WINDOWS: null as string | null,
 
