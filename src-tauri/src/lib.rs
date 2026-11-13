@@ -75,6 +75,26 @@ ipc_commands![
     delete_session,
 ];
 
+/// Asks Lemon Squeezy, once per launch and in the background, whether the stored
+/// license still stands, and locks Pro if it was refunded, disabled or deactivated.
+/// When Lemon Squeezy cannot be reached the license is kept: being offline must not
+/// lock a paying user out.
+fn recheck_license(app: tauri::AppHandle) {
+    let stored = app.state::<state::AppState>().license.read().expect("license lock").clone();
+    let license::License::Active { key, instance_id } = stored else { return };
+    tauri::async_runtime::spawn(async move {
+        match license::validate(&key, &instance_id).await {
+            Ok(true) => {}
+            Ok(false) => {
+                let state = app.state::<state::AppState>();
+                let _ = commands::store_license(&app, &state, &license::License::Inactive);
+                diag::log("license no longer valid; Pro locked");
+            }
+            Err(_) => diag::log("license recheck skipped: Lemon Squeezy unreachable"),
+        }
+    });
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -104,6 +124,7 @@ pub fn run() {
             // be registered (taken by another app, say) is logged and skipped; it never
             // stops the app from starting.
             hotkeys::register_all(app.handle(), &shortcuts);
+            recheck_license(app.handle().clone());
             #[cfg(all(debug_assertions, target_os = "macos"))]
             windows_ext::spawn_overlay_probe(hub.clone());
             Ok(())

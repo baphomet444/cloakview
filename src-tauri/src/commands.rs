@@ -477,48 +477,48 @@ pub fn get_license_status(state: State<AppState>) -> crate::license::License {
     state.license.read().expect("license lock").clone()
 }
 
-/// Stores the key and unlocks Pro. The key is kept as `PendingValidation`: the
-/// one-time online check against Lemon Squeezy is not wired yet, and until it
-/// is, a stored key counts as Pro.
+/// Activates the key for this Mac with Lemon Squeezy and unlocks Pro. Rejects with
+/// `License` (message: a `license::Rejection` code) when Lemon Squeezy refuses the
+/// key, or the key is for another product, or Lemon Squeezy cannot be reached.
 #[tauri::command]
-pub fn activate_license(
+pub async fn activate_license(
     app: AppHandle,
-    state: State<AppState>,
+    state: State<'_, AppState>,
     key: String,
 ) -> Result<crate::license::License, IpcError> {
-    let key = key.trim();
-    if key.is_empty() {
-        return Err(IpcError::from(AppError::License("the license key is empty".into())));
-    }
-    let license = crate::license::License::PendingValidation(key.into());
-    {
-        let mut stored = state.license.write().expect("license lock");
-        *stored = license.clone();
-    }
-    let dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| AppError::Serialize(e.to_string()))?;
-    crate::license::save_to(&crate::license::license_path(&dir), &license).map_err(IpcError::from)?;
-    crate::diag::log("license activated (pending online validation)");
+    let license = crate::license::activate(&key, &crate::license::instance_name())
+        .await
+        .map_err(|r| IpcError::from(AppError::from(r)))?;
+    store_license(&app, &state, &license)?;
+    crate::diag::log("license activated");
     Ok(license)
 }
 
-/// Locks Pro again and deletes the stored key.
+/// Releases this Mac's activation on Lemon Squeezy (so the key can move to another
+/// Mac), then locks Pro and deletes the stored key. When Lemon Squeezy cannot be
+/// reached the license is kept, so the slot is never silently lost.
 #[tauri::command]
-pub fn deactivate_license(app: AppHandle, state: State<AppState>) -> Result<crate::license::License, IpcError> {
-    {
-        let mut stored = state.license.write().expect("license lock");
-        *stored = crate::license::License::Inactive;
+pub async fn deactivate_license(app: AppHandle, state: State<'_, AppState>) -> Result<crate::license::License, IpcError> {
+    let current = state.license.read().expect("license lock").clone();
+    if let crate::license::License::Active { key, instance_id } = &current {
+        crate::license::deactivate(key, instance_id)
+            .await
+            .map_err(|r| IpcError::from(AppError::from(r)))?;
     }
+    let inactive = crate::license::License::Inactive;
+    store_license(&app, &state, &inactive)?;
+    crate::diag::log("license deactivated");
+    Ok(inactive)
+}
+
+/// Puts `license` in the app state and in `license.json`.
+pub(crate) fn store_license(app: &AppHandle, state: &AppState, license: &crate::license::License) -> Result<(), IpcError> {
+    *state.license.write().expect("license lock") = license.clone();
     let dir = app
         .path()
         .app_data_dir()
         .map_err(|e| AppError::Serialize(e.to_string()))?;
-    crate::license::save_to(&crate::license::license_path(&dir), &crate::license::License::Inactive)
-        .map_err(IpcError::from)?;
-    crate::diag::log("license deactivated");
-    Ok(crate::license::License::Inactive)
+    crate::license::save_to(&crate::license::license_path(&dir), license).map_err(IpcError::from)
 }
 
 // --- app / platform (design.md §5) ---

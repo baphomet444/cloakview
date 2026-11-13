@@ -45,12 +45,20 @@ describe("errorCopyKey", () => {
     [{ kind: "ProRequired" }, "errors.proRequired"],
     [{ kind: "InvalidUrl", message: "x" }, "errors.invalidUrl"],
     [{ kind: "OpenFailed", message: "x" }, "errors.openFailed"],
+    [{ kind: "License", message: "invalid" }, "errors.licenseInvalid"],
+    [{ kind: "License", message: "limit" }, "errors.licenseLimit"],
+    [{ kind: "License", message: "wrongProduct" }, "errors.licenseWrongProduct"],
+    [{ kind: "License", message: "disabled" }, "errors.licenseDisabled"],
+    [{ kind: "License", message: "expired" }, "errors.licenseExpired"],
+    [{ kind: "License", message: "unreachable" }, "errors.licenseUnreachable"],
+    [{ kind: "License", message: "empty" }, "errors.licenseInvalid"],
+    [{ kind: "License", message: "something new" }, "errors.licenseInvalid"],
   ])("%j -> %s", (error, key) => {
     expect(errorCopyKey(error)).toBe(key);
   });
 
   it("falls back to the generic copy for kinds the UI does not explain, and for anything that is not an IpcError", () => {
-    for (const kind of ["Keychain", "Db", "Audio", "Network", "Serialize", "License"] as const) {
+    for (const kind of ["Keychain", "Db", "Audio", "Network", "Serialize"] as const) {
       expect(errorCopyKey({ kind, message: "x" })).toBe("errors.generic");
     }
     for (const value of [new Error("boom"), "boom", null, undefined, { kind: "listening" }, {}]) {

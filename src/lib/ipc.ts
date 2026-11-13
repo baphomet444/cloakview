@@ -217,7 +217,7 @@ export function saveSessionTxt(): Promise<string | null> {
 export function getLicenseStatus(): Promise<License> {
   return call("get_license_status");
 }
-/** Stores the key and unlocks Pro. Rejects with `License` when the key is blank. */
+/** Activates the key for this Mac with Lemon Squeezy. Rejects with `License` (message: a rejection code) when it is refused or Lemon Squeezy is unreachable. */
 export function activateLicense(key: string): Promise<License> {
   return call("activate_license", { key });
 }

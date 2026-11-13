@@ -38,8 +38,28 @@ export function errorCopyKey(error: unknown): CatalogKey {
       return "errors.invalidUrl";
     case "OpenFailed":
       return "errors.openFailed";
+    case "License":
+      return licenseCopyKey(error.message);
     default:
       return "errors.generic";
+  }
+}
+
+/** The message of a `License` error is a `license::Rejection` code from Rust. */
+function licenseCopyKey(code: string): CatalogKey {
+  switch (code) {
+    case "limit":
+      return "errors.licenseLimit";
+    case "wrongProduct":
+      return "errors.licenseWrongProduct";
+    case "disabled":
+      return "errors.licenseDisabled";
+    case "expired":
+      return "errors.licenseExpired";
+    case "unreachable":
+      return "errors.licenseUnreachable";
+    default:
+      return "errors.licenseInvalid";
   }
 }
 
