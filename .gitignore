@@ -7,6 +7,10 @@ src-tauri/target/
 .worktrees/
 .vercel
 
+# Notarization credentials (never commit)
+.env.notary
+*.p8
+
 # graphify
 graphify-out/
 .graphify_root
