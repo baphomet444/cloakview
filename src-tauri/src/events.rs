@@ -33,6 +33,12 @@ pub const SUMMARY_SAVED_EVENT: &str = "summary-saved";
 /// Not in design.md §5: a transcript line's live translation (CloakView Pro).
 /// Payload: `{ ts, text }`, matched to the line by `ts`.
 pub const TRANSLATION_EVENT: &str = "translation";
+/// Not in design.md §5: settings were saved (`commands::save_settings`), broadcast to
+/// every window. Each feature window is created once and then only shown/hidden for
+/// the rest of the app's life, so without this, a window already open when the theme
+/// or opacity changes elsewhere would never see it short of fully restarting the app.
+/// Payload: the full, saved `Settings`.
+pub const SETTINGS_CHANGED_EVENT: &str = "settings-changed";
 
 #[cfg(test)]
 mod tests {
@@ -56,6 +62,7 @@ mod tests {
             READ_SCREEN_EVENT,
             SUMMARY_SAVED_EVENT,
             TRANSLATION_EVENT,
+            SETTINGS_CHANGED_EVENT,
         ];
         let spec = [
             "transcript-delta",
@@ -69,6 +76,7 @@ mod tests {
             "read-screen",
             "summary-saved",
             "translation",
+            "settings-changed",
         ];
         assert_eq!(ours, spec);
 

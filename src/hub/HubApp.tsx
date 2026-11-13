@@ -14,6 +14,7 @@ import {
   subscribeListenState,
   subscribePushToAsk,
   subscribeReadScreen,
+  subscribeSettingsChanged,
   subscribeSummarySaved,
   subscribeTurnDetected,
   waitForAskReady,
@@ -129,6 +130,28 @@ export function HubApp() {
       });
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  // Live opacity from elsewhere (e.g. the Settings window's slider). The hub is
+  // created once at startup and never reloaded, so without this it would stay at
+  // whatever opacity it booted with until the app restarts. Does not touch
+  // `opacityEdited`: this did not come from the hub's own slider, so it must not
+  // trigger that effect's save back to settings.json.
+  useEffect(() => {
+    let cancelled = false;
+    let unlisten: (() => void) | undefined;
+    subscribeSettingsChanged((settings) => {
+      if (!cancelled) setOpacity(settings.opacity);
+    })
+      .then((stop) => {
+        if (cancelled) stop();
+        else unlisten = stop;
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+      unlisten?.();
     };
   }, []);
 

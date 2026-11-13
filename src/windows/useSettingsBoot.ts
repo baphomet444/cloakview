@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getLocale, localeFromSetting, setLocale, type CatalogKey, type Locale } from "../lib/i18n";
-import { getSettings } from "../lib/ipc";
+import { getSettings, subscribeSettingsChanged } from "../lib/ipc";
 import type { Settings } from "../lib/models";
 import { errorCopyKey } from "../hub/hubLogic";
 import { clampOpacity, themeFromSetting, type Theme } from "../settings/settingsLogic";
@@ -13,8 +13,13 @@ export function applyAppearance(theme: Theme, opacity: number): void {
 
 /**
  * Boot for a feature window: the saved settings, with the language, theme and opacity
- * applied. Each window is its own webview, so each reads them when it loads; a change
- * made in Settings reaches another window the next time that window loads.
+ * applied. Each window is its own webview, loaded once and then only shown or hidden
+ * for the rest of the app's life (the hub never destroys and recreates it), so this
+ * also applies the theme and opacity live on every `settings-changed` broadcast --
+ * otherwise a window already open when another window saves settings would stay on
+ * whatever appearance it booted with until the app restarts. Language still only
+ * takes effect the next time the window loads: swapping the locale catalog live is a
+ * bigger change than this fix calls for, and no one has reported it stale.
  */
 export function useSettingsBoot(): {
   settings: Settings | null;
@@ -41,6 +46,25 @@ export function useSettingsBoot(): {
       });
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let unlisten: (() => void) | undefined;
+    subscribeSettingsChanged((changed) => {
+      if (cancelled) return;
+      applyAppearance(themeFromSetting(changed.theme), changed.opacity);
+      setSettings(changed);
+    })
+      .then((stop) => {
+        if (cancelled) stop();
+        else unlisten = stop;
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+      unlisten?.();
     };
   }, []);
 

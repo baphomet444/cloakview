@@ -323,6 +323,12 @@ export interface EventPayloads {
   "summary-saved": null;
   /** A transcript line's live translation (CloakView Pro), matched to the line by `ts`. */
   translation: { ts: number; text: string };
+  /**
+   * Settings were saved somewhere (any window). Every feature window is created once
+   * and only shown/hidden afterward, so this is what lets one already open pick up a
+   * theme or opacity change made elsewhere without the user restarting the app.
+   */
+  "settings-changed": Settings;
 }
 
 /** Runtime list of the same names, compared by the test with `src-tauri/src/events.rs`. */
@@ -338,6 +344,7 @@ export const EVENTS = [
   "read-screen",
   "summary-saved",
   "translation",
+  "settings-changed",
 ] as const satisfies readonly (keyof EventPayloads)[];
 
 export type EventName = (typeof EVENTS)[number];
@@ -386,4 +393,8 @@ export function subscribeSummarySaved(handler: () => void): Promise<UnlistenFn> 
 /** Fires when a transcript line's translation arrives; `ts` matches the line it belongs to. */
 export function subscribeTranslation(handler: (translation: { ts: number; text: string }) => void): Promise<UnlistenFn> {
   return subscribe("translation", handler);
+}
+/** Fires whenever any window saves settings, with the full saved `Settings`. */
+export function subscribeSettingsChanged(handler: (settings: Settings) => void): Promise<UnlistenFn> {
+  return subscribe("settings-changed", handler);
 }

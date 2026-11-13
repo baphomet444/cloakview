@@ -4,7 +4,10 @@
 
 use crate::db::{conversations, notes, sessions, Db};
 use crate::error::{AppError, IpcError};
-use crate::events::{ANSWER_DELTA_EVENT, ANSWER_DONE_EVENT, ANSWER_STARTED_EVENT, ERROR_EVENT};
+use crate::events::{
+    ANSWER_DELTA_EVENT, ANSWER_DONE_EVENT, ANSWER_STARTED_EVENT, ERROR_EVENT,
+    SETTINGS_CHANGED_EVENT,
+};
 use crate::listen;
 use crate::platform;
 use crate::secrets;
@@ -69,6 +72,10 @@ pub fn save_settings(
     if s.shortcuts != before {
         crate::hotkeys::register_all(&app, &s.shortcuts);
     }
+    // Every window the hub has ever opened stays alive (shown/hidden, never destroyed),
+    // so each needs telling: without this, a window already open when the theme or
+    // opacity changes elsewhere would stay stale until the app restarts.
+    let _ = app.emit(SETTINGS_CHANGED_EVENT, s.clone());
     Ok(s)
 }
 

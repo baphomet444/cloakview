@@ -206,6 +206,20 @@ describe("wrappers", () => {
 
 const turn: Turn = { speaker: "remote", text: "hola", isUserTurn: false, ts: 1 };
 const listening: ListenState = { kind: "listening" };
+const settings: Settings = {
+  language: "en",
+  theme: "dark",
+  opacity: 0.5,
+  answersModel: "gpt-4o-mini",
+  realtimeModel: "gpt-4o-mini-realtime",
+  userKeywords: [],
+  userName: null,
+  shortcuts: { quickHide: "", pushToAsk: "", toggleListen: "", readScreen: "" },
+  includeMic: false,
+  personalContext: "",
+  answerStyle: "balanced",
+  translateTo: "",
+};
 
 describe("events", () => {
   const handlers = new Map<string, (event: { payload: unknown }) => void>();
@@ -236,6 +250,7 @@ describe("events", () => {
     ["listen-state", ipc.subscribeListenState, listening],
     ["translation", ipc.subscribeTranslation, { ts: 1, text: "hola" }],
     ["error", ipc.subscribeError, "rate_limit"],
+    ["settings-changed", ipc.subscribeSettingsChanged as (handler: (payload: unknown) => void) => Promise<() => void>, settings],
   ];
 
   it.each(subscriptions)("%s: listens on that event and hands the handler the bare payload", async (event, subscribe, payload) => {
