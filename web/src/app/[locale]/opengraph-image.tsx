@@ -9,8 +9,7 @@ import { OG_IMAGE_SIZE } from "@/lib/seo";
 export const size = OG_IMAGE_SIZE;
 export const contentType = "image/png";
 // Static by convention, so English; the other pages pass the localized `meta.ogAlt`.
-// Written out with "see": alt text is read aloud, and an eye icon is not.
-export const alt = "CloakView — the meeting copilot that only you can see";
+export const alt = "CloakView — A Meeting Copilot only you can see";
 
 // Unbounded (SIL OFL, licence in assets/fonts), read from disk like the logo so a render
 // never depends on a font CDN. Two weights: bold for the name and the feature line.
@@ -25,21 +24,6 @@ const fonts = [
 // would then fail to render.
 const logo = `data:image/png;base64,${(await readFile(join(process.cwd(), "public/brand/logo.png"))).toString("base64")}`;
 const LOGO_PX = 128;
-
-/**
- * The slogan's eye, drawn as a vector in the brand orange like the one on the logo. Not
- * an emoji glyph: the renderer has no emoji font (it would draw an empty box), and its
- * emoji option downloads the graphic from a CDN on every render.
- */
-function Eye() {
-  return (
-    <svg width="46" height="28" viewBox="0 0 46 28" fill="none">
-      <path d="M2 14 C 10 3, 36 3, 44 14 C 36 25, 10 25, 2 14 Z" stroke="#ff6b1a" strokeWidth="3" strokeLinejoin="round" />
-      <circle cx="23" cy="14" r="7" stroke="#ff6b1a" strokeWidth="3" />
-      <circle cx="23" cy="14" r="2.6" fill="#ff6b1a" />
-    </svg>
-  );
-}
 
 export default async function Image({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
@@ -68,11 +52,7 @@ export default async function Image({ params }: { params: Promise<{ locale: stri
           <img src={logo} width={LOGO_PX} height={LOGO_PX} alt="" />
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ fontSize: 72, fontWeight: 700, letterSpacing: -1, lineHeight: 1.05 }}>{meta.siteName}</div>
-            {/* The slogan ends in an eye instead of the word "see" ("ver"), as on the logo. */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 26, color: "#b4b4b4", marginTop: 14 }}>
-              <span>{meta.ogTagline}</span>
-              <Eye />
-            </div>
+            <div style={{ display: "flex", fontSize: 26, color: "#b4b4b4", marginTop: 14 }}>{meta.ogTagline}</div>
           </div>
         </div>
 

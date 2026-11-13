@@ -249,10 +249,10 @@
   },
   "meta": {
     "siteName": "CloakView",
-    "ogTagline": "El copiloto de reuniones que solo tú puedes",
+    "ogTagline": "Un copiloto de reuniones que solo tú puedes ver",
     "ogFeatures": "Transcripción en directo • Sugerencias privadas • Tu clave de API",
     "ogFootnote": "Funciona junto a Zoom, Google Meet y Microsoft Teams. Sin cuenta, sin telemetría.",
-    "ogAlt": "CloakView — el copiloto de reuniones que solo tú puedes ver"
+    "ogAlt": "CloakView — Un copiloto de reuniones que solo tú puedes ver"
   },
   "guide": {
     "title": "Guía",
