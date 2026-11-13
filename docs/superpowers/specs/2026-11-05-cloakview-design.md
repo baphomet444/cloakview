@@ -107,8 +107,11 @@ de OpenAI.
    (transparent, alwaysOnTop, decorations off, skipTaskbar) + en macOS
    `NSWindow.sharingType = .none` (vía `objc2-app-kit`) para exclusión de
    captura.
-8. **`hotkeys`** — Registro global: Quick Hide, Push-to-Ask, Start/Stop
-   Listen, toggle visibilidad (configurables en Settings).
+8. **`hotkeys`** — Registro global (configurables en Settings): Quick Hide
+   ⌥⇧H (muestra u oculta el overlay), Push-to-Ask ⌘⇧Espacio, Start/Stop Listen
+   ⌥⇧L y Leer pantalla ⌘⇧S. ⌘⇧H y ⌘⇧L se evitan: un atajo global se los
+   quitaría a Finder (Inicio) y a Safari (barra lateral). Un atajo que no se puede
+   registrar se muestra en la línea de error del hub, no solo en el log.
 
 ### Comandos IPC (superficie frontend → Rust)
 
@@ -117,10 +120,19 @@ de OpenAI.
 `request_answer(question?)`, `stop_answer`,
 CRUD notas (`create_note`, `list_notes`, `update_note`, `delete_note`,
 folders/tags), CRUD conversaciones, `get_settings`/`save_settings`,
-`get_app_info` (versión), `open_external(url)`.
+`get_app_info` (versión), `open_external(url)`,
+`promote_overlay(label)` (convierte la ventana `label` en un panel overlay como
+el hub —excluido de la captura, sobre Spaces a pantalla completa, sin activar la
+app— y la muestra; el hub lo usa para cada ventana que crea oculta),
+`shortcut_failures` (los atajos que el último registro no pudo tomar; el hub lo
+lee al cargar, porque los fallos del arranque ocurren antes de que escuche).
 
 Eventos Rust → frontend: `transcript-delta`, `turn-detected`,
-`answer-delta`, `answer-done`, `listen-state`, `error`.
+`answer-delta`, `answer-done`, `listen-state`, `error`,
+`push-to-ask` (al hub, sin datos: el atajo Push-to-Ask; Rust ya ha vuelto a
+mostrar el hub si estaba oculto, y el hub abre Ask por el mismo camino que su
+botón Ask), `shortcut-failed` (al hub: los atajos que no se pudieron registrar,
+para mostrarlos en su línea de error).
 
 ### Frontend (React)
 
@@ -128,7 +140,7 @@ Eventos Rust → frontend: `transcript-delta`, `turn-detected`,
   botones Listen / Ask / Notes / Opacidad / Settings, arrastrable.
 - **ListenWindow** — transcripción en vivo con scroll, resaltado del turno
   detectado.
-- **AskWindow** — input + sugerencias con streaming (Cmd+Shift+I push-to-ask).
+- **AskWindow** — input + sugerencias con streaming (⌘⇧Espacio push-to-ask).
 - **NotesWindow** — CRUD de notas + auto-notas generadas al final de sesión.
 - **Settings** — clave API (máscara, test de conexión), modelo, idiomas,
   atajos, opacidad, tema claro/oscuro, auto-borrado (default 30 días).

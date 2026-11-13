@@ -9,11 +9,13 @@ import {
   readScreen,
   saveSessionTxt,
   saveSettings,
+  shortcutFailures,
   startListen,
   stopListen,
   subscribeListenState,
   subscribePushToAsk,
   subscribeReadScreen,
+  subscribeShortcutFailed,
   subscribeSettingsChanged,
   subscribeSummarySaved,
   subscribeTurnDetected,
@@ -185,8 +187,9 @@ export function HubApp() {
     };
   }, []);
 
-  // The push-to-ask global shortcut: open Ask exactly like the Ask button does
-  // (created hidden below the hub if needed, then `promoteOverlay`; never `show()`).
+  // The global shortcuts. Push-to-ask opens Ask exactly like the Ask button does
+  // (created hidden below the hub if needed, then `promoteOverlay`; never `show()`);
+  // Rust has already brought a hidden hub back before sending it.
   useEffect(() => {
     let cancelled = false;
     let unlisten: (() => void) | undefined;
@@ -198,11 +201,21 @@ export function HubApp() {
       // so the "wait for Ask to be ready" fix covers it too.
       subscribeReadScreen(() => void readTheScreen()),
       subscribeSummarySaved(() => setNoticeKey("summary.savedToNotes")),
+      // A shortcut another app holds would otherwise fail silently (only the log saw it).
+      subscribeShortcutFailed(() => setErrorKey("errors.shortcutFailed")),
     ])
       .then((stops) => {
         const stop = () => stops.forEach((each) => each());
-        if (cancelled) stop();
-        else unlisten = stop;
+        if (cancelled) {
+          stop();
+          return;
+        }
+        unlisten = stop;
+        // Registration at startup ran before this page listened: read what failed then.
+        // Subscribed first, so a failure between the two is caught by one or the other.
+        return shortcutFailures().then((failed) => {
+          if (!cancelled && failed.length > 0) setErrorKey("errors.shortcutFailed");
+        });
       })
       .catch((error: unknown) => {
         if (!cancelled) setErrorKey(errorCopyKey(error));

@@ -138,6 +138,7 @@ const cases: Case[] = [
   ["get_app_info", () => ipc.getAppInfo(), undefined],
   ["open_external", () => ipc.openExternal("https://example.com"), { url: "https://example.com" }],
   ["promote_overlay", () => ipc.promoteOverlay("ask"), { label: "ask" }],
+  ["shortcut_failures", () => ipc.shortcutFailures(), undefined],
   ["finish_session", () => ipc.finishSession(), undefined],
   ["save_session_txt", () => ipc.saveSessionTxt(), undefined],
   ["read_screen", () => ipc.readScreen(), undefined],
@@ -250,6 +251,7 @@ describe("events", () => {
     ["listen-state", ipc.subscribeListenState, listening],
     ["translation", ipc.subscribeTranslation, { ts: 1, text: "hola" }],
     ["error", ipc.subscribeError, "rate_limit"],
+    ["shortcut-failed", ipc.subscribeShortcutFailed as (handler: (payload: unknown) => void) => Promise<() => void>, ["alt+shift+h"]],
     ["settings-changed", ipc.subscribeSettingsChanged as (handler: (payload: unknown) => void) => Promise<() => void>, settings],
   ];
 

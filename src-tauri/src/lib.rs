@@ -64,6 +64,7 @@ ipc_commands![
     get_app_info,
     open_external,
     promote_overlay,
+    shortcut_failures,
     finish_session,
     save_session_txt,
     read_screen,
@@ -117,13 +118,14 @@ pub fn run() {
                 session_log: Default::default(),
                 last_session: Default::default(),
                 license: std::sync::RwLock::new(license),
+                shortcut_failures: Default::default(),
             });
             let hub = app.get_webview_window("hub").ok_or("hub window missing")?;
             windows_ext::make_overlay(&hub, false).map_err(|e| e.to_string())?;
-            // After the state is managed (the handlers read it). A shortcut that cannot
-            // be registered (taken by another app, say) is logged and skipped; it never
-            // stops the app from starting.
-            hotkeys::register_all(app.handle(), &shortcuts);
+            // After the state is managed (the handlers read it, and `apply` stores the
+            // failures there). A shortcut that cannot be registered (taken by another app,
+            // say) is skipped and later shown by the hub; it never stops the app starting.
+            hotkeys::apply(app.handle(), &shortcuts);
             recheck_license(app.handle().clone());
             #[cfg(all(debug_assertions, target_os = "macos"))]
             windows_ext::spawn_overlay_probe(hub.clone());
@@ -190,8 +192,9 @@ mod ipc_surface_tests {
         "save_settings",
         "get_app_info",
         "open_external",
-        // windows (not in design.md §5: added for the overlay panels)
+        // windows / shortcuts
         "promote_overlay",
+        "shortcut_failures",
         // interview record (not in design.md §5: added with the session export)
         "finish_session",
         "save_session_txt",

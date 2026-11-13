@@ -395,7 +395,7 @@
           },
           {
             "q": "Why does reopening CloakView from the Dock take me out of full screen?",
-            "a": "If another app is in full screen, clicking CloakView's Dock icon makes macOS switch to the desktop, because the click activates CloakView before it can show the overlay. To bring the overlay back without leaving full screen, use the show/hide shortcut (⌘⇧H by default): it never activates the app.",
+            "a": "If another app is in full screen, clicking CloakView's Dock icon makes macOS switch to the desktop, because the click activates CloakView before it can show the overlay. To bring the overlay back without leaving full screen, use the show/hide shortcut (⌥⇧H by default): it never activates the app.",
             "guide": "shortcuts"
           }
         ]

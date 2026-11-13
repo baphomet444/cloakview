@@ -80,7 +80,7 @@ export type NewMessage = {
 
 /**
  * Global shortcut accelerators. `src-tauri/src/hotkeys.rs` (`Shortcuts`), e.g.
- * `cmdOrControl+shift+h`. A blank string turns that action off.
+ * `alt+shift+h`. A blank string turns that action off.
  */
 export type Shortcuts = {
   quickHide: string;

@@ -21,9 +21,15 @@ pub const ANSWER_DONE_EVENT: &str = "answer-done";
 pub const ANSWER_STARTED_EVENT: &str = "answer-started";
 pub const LISTEN_STATE_EVENT: &str = "listen-state";
 pub const ERROR_EVENT: &str = "error";
-/// Not in design.md §5: the push-to-ask global shortcut asks the hub to open the Ask
-/// window, so it goes through the same path as the hub's Ask button. No payload.
+/// The push-to-ask global shortcut asks the hub to open the Ask window (after Rust has
+/// brought a hidden hub back), so it goes through the same path as the hub's Ask
+/// button. No payload.
 pub const PUSH_TO_ASK_EVENT: &str = "push-to-ask";
+/// Global shortcuts could not be registered (another app holds the combo, or it is
+/// invalid): the hub shows it in its error line. Sent to the hub. Payload: the
+/// accelerators that failed. Failures from startup, before the hub listens, are read
+/// with the `shortcut_failures` command instead.
+pub const SHORTCUT_FAILED_EVENT: &str = "shortcut-failed";
 /// Not in design.md §5: the read-screen global shortcut asks the hub to read the
 /// screen, so it goes through the same path as the hub's Screen button. No payload.
 pub const READ_SCREEN_EVENT: &str = "read-screen";

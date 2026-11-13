@@ -1,11 +1,11 @@
 ## Acciones disponibles {#actions}
 
-CloakView prevé atajos globales para **ocultar rápidamente** (alternar el hub privado), **abrir Ask** (mostrar la ventana de preguntas) e **iniciar o detener la escucha**. Funcionan aunque otra app tenga el foco. No entran ni modifican tu llamada.
+CloakView tiene atajos globales para **ocultar rápidamente** (mostrar u ocultar el overlay privado), **abrir Ask** (mostrar la ventana de preguntas, y el hub si estaba oculto), **iniciar o detener la escucha** y **leer la pantalla**. Funcionan aunque otra app tenga el foco. No entran ni modifican tu llamada.
 
 ## Configura las teclas {#configure}
 
-Abre **CloakView → Ajustes → Atajos** y revisa las combinaciones mostradas antes de usarlas en una reunión. El valor previsto para ocultar rápidamente es Comando–Mayús–H; las combinaciones reales pueden cambiar antes del lanzamiento. Evita conflictos con macOS o tu app de reuniones. Guarda y prueba cada acción en una ventana sin importancia.
+Por defecto son Opción–Mayús–H (ocultar rápidamente), Comando–Mayús–Espacio (abrir Ask), Opción–Mayús–L (iniciar o detener la escucha) y Comando–Mayús–S (leer la pantalla). Ocultar y escuchar evitan Comando–Mayús–H y Comando–Mayús–L, que usan Finder y Safari. Cámbialos en **CloakView → Ajustes → Atajos**. Evita conflictos con macOS o tu app de reuniones. Guarda y prueba cada acción en una ventana sin importancia.
 
 ## Si un atajo no funciona {#conflicts}
 
-Prueba primero el botón de la app. Comprueba si macOS u otra aplicación usa esa combinación y cámbiala en Ajustes de CloakView o de la otra app. Si el atajo inicia la escucha, verifica los permisos de captura y micrófono y la clave de API. Que el hub esté oculto no implica que la captura se haya detenido: usa **Detener escucha** para terminarla.
+Prueba primero el botón de la app. Si otra aplicación ya usa esa combinación, el hub muestra un error al arrancar CloakView o al guardar tus atajos; cámbiala en Ajustes de CloakView o de la otra app. Los atajos que solo usan Opción y Mayús (como los de ocultar y escuchar por defecto) no funcionan mientras macOS tiene activada la entrada segura —por ejemplo en Terminal con Entrada de teclado segura, o con un campo de contraseña activo—; los atajos con Comando sí. Si el atajo inicia la escucha, verifica los permisos de captura y micrófono y la clave de API. Que el hub esté oculto no implica que la captura se haya detenido: usa **Detener escucha** para terminarla.

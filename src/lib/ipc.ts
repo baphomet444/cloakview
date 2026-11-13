@@ -67,6 +67,7 @@ export interface CommandSignatures {
   get_app_info: { args: undefined; result: AppInfo };
   open_external: { args: { url: string }; result: void };
   promote_overlay: { args: { label: string }; result: void };
+  shortcut_failures: { args: undefined; result: string[] };
   finish_session: { args: undefined; result: SessionSummary };
   save_session_txt: { args: undefined; result: string | null };
   read_screen: { args: undefined; result: void };
@@ -105,6 +106,7 @@ export const COMMANDS = [
   "get_app_info",
   "open_external",
   "promote_overlay",
+  "shortcut_failures",
   "finish_session",
   "save_session_txt",
   "read_screen",
@@ -258,6 +260,10 @@ export function openExternal(url: string): Promise<void> {
 export function promoteOverlay(label: string): Promise<void> {
   return call("promote_overlay", { label });
 }
+/** The accelerators the last shortcut registration could not take; empty when all worked. */
+export function shortcutFailures(): Promise<string[]> {
+  return call("shortcut_failures");
+}
 
 // ---------------------------------------------------------------------------
 // Window to window (frontend only: Rust neither emits nor reads this)
@@ -317,6 +323,8 @@ export interface EventPayloads {
   error: string;
   /** The push-to-ask global shortcut, sent to the hub only. No data. */
   "push-to-ask": null;
+  /** Global shortcuts that could not be registered, sent to the hub only: their accelerators. */
+  "shortcut-failed": string[];
   /** The read-screen global shortcut, sent to the hub only. No data. */
   "read-screen": null;
   /** The after-meeting summary was saved to the notes (CloakView Pro). No data. */
@@ -341,6 +349,7 @@ export const EVENTS = [
   "listen-state",
   "error",
   "push-to-ask",
+  "shortcut-failed",
   "read-screen",
   "summary-saved",
   "translation",
@@ -381,6 +390,10 @@ export function subscribeError(handler: (message: string) => void): Promise<Unli
 /** Fires when the push-to-ask global shortcut is pressed: the hub opens the Ask window. No data. */
 export function subscribePushToAsk(handler: () => void): Promise<UnlistenFn> {
   return subscribe("push-to-ask", () => handler());
+}
+/** Fires when global shortcuts could not be registered, with their accelerators. */
+export function subscribeShortcutFailed(handler: (accelerators: string[]) => void): Promise<UnlistenFn> {
+  return subscribe("shortcut-failed", handler);
 }
 /** Fires when the read-screen global shortcut is pressed: the hub reads the screen. No data. */
 export function subscribeReadScreen(handler: () => void): Promise<UnlistenFn> {

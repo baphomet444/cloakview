@@ -85,6 +85,9 @@ pub struct AppState {
     pub last_session: Mutex<Option<crate::session::FinishedSession>>,
     /// The CloakView Pro license, loaded from `license.json` at startup.
     pub license: RwLock<crate::license::License>,
+    /// The accelerators the last `hotkeys::apply` could not register, so the hub can
+    /// show failures that happened before its page was listening (at startup).
+    pub shortcut_failures: Mutex<Vec<String>>,
 }
 
 impl AppState {
@@ -151,9 +154,9 @@ mod tests {
                 "userKeywords": ["opinas"],
                 "userName": "Ana",
                 "shortcuts": {
-                    "quickHide": "cmdOrControl+shift+h",
+                    "quickHide": "alt+shift+h",
                     "pushToAsk": "cmdOrControl+shift+space",
-                    "toggleListen": "cmdOrControl+shift+l",
+                    "toggleListen": "alt+shift+l",
                     "readScreen": "cmdOrControl+shift+s"
                 },
                 "includeMic": true,

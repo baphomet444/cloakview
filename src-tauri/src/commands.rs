@@ -67,10 +67,10 @@ pub fn save_settings(
         (s.clone(), before)
     };
     let (s, before) = saved;
-    // Outside the settings lock. A binding that fails is logged and skipped, never an
-    // error here: the settings are already saved.
+    // Outside the settings lock. A binding that fails is skipped and shown in the hub's
+    // error line, never an error here: the settings are already saved.
     if s.shortcuts != before {
-        crate::hotkeys::register_all(&app, &s.shortcuts);
+        crate::hotkeys::apply(&app, &s.shortcuts);
     }
     // Every window the hub has ever opened stays alive (shown/hidden, never destroyed),
     // so each needs telling: without this, a window already open when the theme or
@@ -556,9 +556,18 @@ pub async fn open_external(url: String) -> Result<(), IpcError> {
     platform::open_external(&url).await.map_err(IpcError::from)
 }
 
+/// The global shortcuts the last registration could not take (another app holds the
+/// combo, or it is invalid). The hub calls it once it loads: failures at startup happen
+/// before its page listens for `shortcut-failed`, so the event alone would lose them.
+#[tauri::command]
+pub fn shortcut_failures(state: State<AppState>) -> Vec<String> {
+    state.shortcut_failures.lock().expect("shortcut failures lock").clone()
+}
+
 /// Turns the window `label` into an overlay panel like the hub (excluded from capture,
-/// over full-screen Spaces, non-activating) and shows it. The hub calls this for
-/// Ask/Notes/Settings, which it creates hidden. Safe to call again on the same window.
+/// over full-screen Spaces, non-activating) and shows it. The hub calls this for every
+/// feature window (Ask, Listen, Notes, History, Settings), which it creates hidden.
+/// Safe to call again on the same window.
 /// Unlike the hub, these windows stay resizable so their content fits.
 ///
 /// AppKit must be touched on the main thread. The command is `async`, so it runs on a

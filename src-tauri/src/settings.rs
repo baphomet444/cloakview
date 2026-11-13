@@ -6,11 +6,16 @@ pub fn settings_path(app_data_dir: &std::path::Path) -> PathBuf {
     app_data_dir.join("settings.json")
 }
 
+/// Missing or unreadable file → defaults. Shortcuts saved with the old ⌘⇧H/⌘⇧L
+/// defaults move to the new ones (`Shortcuts::migrate_old_defaults`); the file itself
+/// is rewritten the next time settings are saved.
 pub fn load_from(path: &std::path::Path) -> Settings {
-    std::fs::read_to_string(path)
+    let mut s: Settings = std::fs::read_to_string(path)
         .ok()
         .and_then(|raw| serde_json::from_str(&raw).ok())
-        .unwrap_or_default()
+        .unwrap_or_default();
+    s.shortcuts.migrate_old_defaults();
+    s
 }
 
 pub fn save_to(path: &std::path::Path, s: &Settings) -> AppResult<()> {
@@ -132,6 +137,28 @@ mod tests {
         std::fs::write(&path, "{not json").unwrap();
         let s3 = load_from(&path);
         assert_eq!(s3.language, "en");
+    }
+
+    /// A file saved before the defaults moved holds ⌘⇧H/⌘⇧L explicitly: loading it
+    /// must move them, or existing installs would keep taking Finder's and Safari's combos.
+    #[test]
+    fn loading_old_settings_moves_quick_hide_and_listen_off_the_system_combos() {
+        let dir = std::env::temp_dir().join("cloakview-settings-migrate-test");
+        let path = settings_path(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            &path,
+            r#"{ "language": "es", "shortcuts": {
+                "quickHide": "cmdOrControl+shift+h", "pushToAsk": "cmdOrControl+shift+space",
+                "toggleListen": "cmdOrControl+shift+l", "readScreen": "cmdOrControl+shift+s" } }"#,
+        )
+        .unwrap();
+        let s = load_from(&path);
+        assert_eq!(s.language, "es"); // the rest of the file is read as before
+        assert_eq!(s.shortcuts.quick_hide, "alt+shift+h");
+        assert_eq!(s.shortcuts.toggle_listen, "alt+shift+l");
+        assert_eq!(s.shortcuts.push_to_ask, "cmdOrControl+shift+space");
+        assert_eq!(s.shortcuts.read_screen, "cmdOrControl+shift+s");
     }
 
     #[test]
