@@ -23,7 +23,7 @@ export const siteConfig = {
   SUPPORT_EMAIL: "support@getcloakview.com",
   LEGAL_ENTITY: "PLACEHOLDER LLC", // TODO: razón social real antes de producción
   // Sustituir solo por hashes SHA-256 publicados para los artefactos reales.
-  SHA256_ARM64: "b64d0b4b6b1de6ff0c2541d71e14e86b0acae3f2c21d4be2c77964e7d51f1e2e" as string | null,
+  SHA256_ARM64: "f1205c1259ecf2279dc1751d75cb3991764fd1875f28048757235a2070737458" as string | null,
   SHA256_INTEL: null as string | null,
   SHA256_WINDOWS: null as string | null,
   // CloakView Pro: URL de checkout de Lemon Squeezy en modo LIVE. Mientras sea
