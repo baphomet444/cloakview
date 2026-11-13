@@ -212,7 +212,7 @@
   },
   "download": {
     "title": "Descargar CloakView para macOS",
-    "description": "Elige la versión de CloakView para tu Mac. Descarga desde GitHub Releases y comprueba el SHA-256 cuando esté disponible.",
+    "description": "Elige la versión de CloakView para tu Mac. Descarga desde GitHub Releases y comprueba su SHA-256.",
     "badge": "macOS 14.2+",
     "heading": "Elige tu versión",
     "intro": "Tu clave sigue siendo tuya. Elige una descarga; todas las opciones permanecen visibles sin importar tu dispositivo. Las descargas abrirán GitHub Releases cuando se publiquen.",
@@ -420,7 +420,7 @@
   "changelog": {
     "title": "Novedades",
     "description": "Historial de versiones y actualizaciones de CloakView. Se muestran notas locales cuando GitHub Releases no está disponible.",
-    "intro": "Notas de versiones del repositorio oficial cuando estén disponibles.",
+    "intro": "Notas de versiones del repositorio oficial.",
     "fallback": "Mostrando información local: GitHub Releases no está disponible o aún no tiene notas bilingües verificadas.",
     "release": "Versión"
   },
