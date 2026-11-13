@@ -552,6 +552,7 @@ pub async fn open_external(url: String) -> Result<(), IpcError> {
 /// Turns the window `label` into an overlay panel like the hub (excluded from capture,
 /// over full-screen Spaces, non-activating) and shows it. The hub calls this for
 /// Ask/Notes/Settings, which it creates hidden. Safe to call again on the same window.
+/// Unlike the hub, these windows stay resizable so their content fits.
 ///
 /// AppKit must be touched on the main thread. The command is `async`, so it runs on a
 /// worker, and hops to the main thread with `windows_ext::on_main_thread`.
@@ -560,8 +561,10 @@ pub async fn promote_overlay(app: AppHandle, label: String) -> Result<(), IpcErr
     let window = app
         .get_webview_window(&label)
         .ok_or_else(|| AppError::Audio(format!("no window labelled {label:?}")))?;
-    crate::windows_ext::on_main_thread(&app, move |_| crate::windows_ext::make_overlay(&window))
-        .await
+    crate::windows_ext::on_main_thread(&app, move |_| {
+        crate::windows_ext::make_overlay(&window, true)
+    })
+    .await
         .map_err(IpcError::from)
 }
 

@@ -18,6 +18,12 @@ use crate::error::AppResult;
 ///   without activating cloakview and pulling the user out of that Space.
 /// - `CanJoinAllSpaces | FullScreenAuxiliary` lets it follow the user into every Space,
 ///   full-screen ones included.
+/// - `resizable` adds the `Resizable` bit to that same style mask. `setStyleMask`
+///   replaces the mask wholesale, so Tauri's own `resizable` option (set at window
+///   creation) has no effect here — this is the only place that bit is decided for an
+///   overlay window. The hub is a fixed-size control strip (`false`); the feature
+///   windows (Ask/Listen/Notes/History/Settings) resize so their content fits
+///   (`true`, passed from `commands::promote_overlay`).
 ///
 /// Idempotent: safe to call again on a window that is already an overlay, and it shows
 /// the window (`orderFrontRegardless`, never made key), so a window created hidden
@@ -33,7 +39,7 @@ use crate::error::AppResult;
 /// registered (`to_panel` reads that plugin's state). If it fails, setup fails and the
 /// app does not start — better no overlay than one that leaks into a screen share.
 #[cfg(target_os = "macos")]
-pub fn make_overlay(window: &tauri::WebviewWindow) -> AppResult<()> {
+pub fn make_overlay(window: &tauri::WebviewWindow, resizable: bool) -> AppResult<()> {
     use crate::error::AppError;
     use objc2_app_kit::{
         NSStatusWindowLevel, NSWindow, NSWindowCollectionBehavior, NSWindowSharingType,
@@ -75,7 +81,11 @@ pub fn make_overlay(window: &tauri::WebviewWindow) -> AppResult<()> {
         if !capturable {
             win.setSharingType(NSWindowSharingType::None);
         }
-        win.setStyleMask(NSWindowStyleMask::NonactivatingPanel);
+        let mut style = NSWindowStyleMask::NonactivatingPanel;
+        if resizable {
+            style |= NSWindowStyleMask::Resizable;
+        }
+        win.setStyleMask(style);
         win.setCollectionBehavior(
             NSWindowCollectionBehavior::CanJoinAllSpaces
                 | NSWindowCollectionBehavior::FullScreenAuxiliary,
@@ -126,7 +136,7 @@ where
 /// Every other platform has no equivalent here: succeeds without doing anything,
 /// so callers need no `cfg` of their own.
 #[cfg(not(target_os = "macos"))]
-pub fn make_overlay(_window: &tauri::WebviewWindow) -> AppResult<()> {
+pub fn make_overlay(_window: &tauri::WebviewWindow, _resizable: bool) -> AppResult<()> {
     Ok(())
 }
 

@@ -88,6 +88,11 @@ export function featureWindowOptions(
     skipTaskbar: true,
     contentProtected: true,
     visibleOnAllWorkspaces: true,
+    // The real switch is native (`windows_ext::make_overlay(_, true)`, which runs once
+    // `promote` turns this into an overlay panel and fully replaces its style mask).
+    // Set here too so the window is resizable even in the brief hidden window before
+    // promotion, and so this option's intent isn't silently contradicted by the default.
+    resizable: true,
     // Created hidden: it is shown by `promote` once it is an overlay panel, so it never
     // flashes as an ordinary window first.
     visible: false,
