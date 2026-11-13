@@ -12,9 +12,9 @@ use std::path::{Path, PathBuf};
 
 /// The Lemon Squeezy store that sells CloakView Pro. A key from any other store, or
 /// for any other product, is refused even if Lemon Squeezy calls it valid.
-pub const LEMON_STORE_ID: u64 = 0;
+pub const LEMON_STORE_ID: u64 = 522202;
 /// The CloakView Pro product in that store.
-pub const LEMON_PRODUCT_ID: u64 = 0;
+pub const LEMON_PRODUCT_ID: u64 = 1524133;
 
 const API: &str = "https://api.lemonsqueezy.com/v1/licenses";
 
