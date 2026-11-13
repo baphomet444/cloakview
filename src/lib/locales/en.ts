@@ -65,7 +65,7 @@ export const en = {
   "settings.shortcutPushToAsk": "Open Ask",
   "settings.shortcutToggleListen": "Start or stop listening",
   "settings.shortcutReadScreen": "Read the screen and answer what is on it",
-  "settings.shortcutsHint": "Accelerators such as alt+shift+h. Leave one blank to turn it off.",
+  "settings.shortcutsHint": "Accelerators such as ctrl+alt+h. Leave one blank to turn it off.",
   "settings.save": "Save",
   "settings.saved": "Saved",
   "settings.loading": "Loading settings…",

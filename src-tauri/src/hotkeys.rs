@@ -18,7 +18,7 @@ use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 /// The accelerators, in `tauri-plugin-global-shortcut` syntax (case-insensitive,
-/// e.g. `alt+shift+h`). `serde(default)` so a `settings.json` written
+/// e.g. `ctrl+alt+h`). `serde(default)` so a `settings.json` written
 /// before this field existed, or one missing a key, gets the defaults.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -34,14 +34,17 @@ pub struct Shortcuts {
     pub read_screen: String,
 }
 
-/// Quick-hide and toggle-listen use Option+Shift: a global shortcut takes the combo
-/// from every app, and ⌘⇧H (Finder's Home) and ⌘⇧L (Safari's sidebar) are system ones.
+/// Quick-hide and toggle-listen use Control+Option. Not ⌘⇧H/⌘⇧L: a global shortcut
+/// takes the combo from every app, and those are Finder's Home and Safari's sidebar.
+/// Not ⌥⇧H/⌥⇧L either: a combo that types a character (⌥⇧H types "Ó") is not delivered
+/// while macOS secure input is on (Terminal's Secure Keyboard Entry, a focused password
+/// field), and ⌃⌥ types none, so it still fires there (tested on macOS 27.3).
 impl Default for Shortcuts {
     fn default() -> Self {
         Self {
-            quick_hide: "alt+shift+h".into(),
+            quick_hide: "ctrl+alt+h".into(),
             push_to_ask: "cmdOrControl+shift+space".into(),
-            toggle_listen: "alt+shift+l".into(),
+            toggle_listen: "ctrl+alt+l".into(),
             read_screen: "cmdOrControl+shift+s".into(),
         }
     }
@@ -55,22 +58,26 @@ pub enum Action {
     ReadScreen,
 }
 
-/// Quick-hide's and toggle-listen's defaults before they moved off ⌘⇧H/⌘⇧L.
-const OLD_QUICK_HIDE: &str = "cmdOrControl+shift+h";
-const OLD_TOGGLE_LISTEN: &str = "cmdOrControl+shift+l";
+/// Every earlier default of quick-hide and toggle-listen: ⌘⇧ (up to 0.2.0), then ⌥⇧.
+const OLD_QUICK_HIDE: &[&str] = &["cmdOrControl+shift+h", "alt+shift+h"];
+const OLD_TOGGLE_LISTEN: &[&str] = &["cmdOrControl+shift+l", "alt+shift+l"];
+
+fn is_one_of(value: &str, old: &[&str]) -> bool {
+    old.iter().any(|o| value.trim().eq_ignore_ascii_case(o))
+}
 
 impl Shortcuts {
-    /// Moves quick-hide and toggle-listen off their old defaults (⌘⇧H, ⌘⇧L). Saving
-    /// settings writes every shortcut to `settings.json`, so an install that ever saved
-    /// holds the old defaults explicitly, and the new `Default` alone would never reach
-    /// it. A value the user changed is kept; one still equal to the old default (which
-    /// is what an untouched install has) gets the new default.
+    /// Moves quick-hide and toggle-listen off any earlier default (⌘⇧H/⌘⇧L, ⌥⇧H/⌥⇧L).
+    /// Saving settings writes every shortcut to `settings.json`, so an install that ever
+    /// saved holds an old default explicitly, and the new `Default` alone would never
+    /// reach it. A value the user changed is kept; one still equal to an old default
+    /// (which is what an untouched install has) gets the new default.
     pub fn migrate_old_defaults(&mut self) {
         let new = Self::default();
-        if self.quick_hide.trim().eq_ignore_ascii_case(OLD_QUICK_HIDE) {
+        if is_one_of(&self.quick_hide, OLD_QUICK_HIDE) {
             self.quick_hide = new.quick_hide;
         }
-        if self.toggle_listen.trim().eq_ignore_ascii_case(OLD_TOGGLE_LISTEN) {
+        if is_one_of(&self.toggle_listen, OLD_TOGGLE_LISTEN) {
             self.toggle_listen = new.toggle_listen;
         }
     }
@@ -224,9 +231,9 @@ mod tests {
     fn an_empty_object_yields_the_default_shortcuts() {
         let s: Shortcuts = serde_json::from_str("{}").unwrap();
         assert_eq!(s, Shortcuts::default());
-        assert_eq!(s.quick_hide, "alt+shift+h");
+        assert_eq!(s.quick_hide, "ctrl+alt+h");
         assert_eq!(s.push_to_ask, "cmdOrControl+shift+space");
-        assert_eq!(s.toggle_listen, "alt+shift+l");
+        assert_eq!(s.toggle_listen, "ctrl+alt+l");
         assert_eq!(s.read_screen, "cmdOrControl+shift+s");
     }
 
@@ -244,9 +251,9 @@ mod tests {
         assert_eq!(
             json,
             serde_json::json!({
-                "quickHide": "alt+shift+h",
+                "quickHide": "ctrl+alt+h",
                 "pushToAsk": "cmdOrControl+shift+space",
-                "toggleListen": "alt+shift+l",
+                "toggleListen": "ctrl+alt+l",
                 "readScreen": "cmdOrControl+shift+s"
             })
         );
@@ -284,20 +291,38 @@ mod tests {
         }
     }
 
+    /// A combo with only Option/Shift and a letter types a character (⌥⇧H types "Ó"),
+    /// and macOS does not deliver it while secure input is on (Terminal's Secure Keyboard
+    /// Entry, a focused password field). With Control or Command it types none and still
+    /// fires there: measured on macOS 27.3 (⌥⇧H blocked; ⌃⌥H and ⌘⇧H fired).
     #[test]
-    fn the_old_defaults_move_to_the_new_ones_and_chosen_combos_stay() {
-        let mut saved: Shortcuts = serde_json::from_value(serde_json::json!({
-            "quickHide": "cmdOrControl+shift+h",
-            "pushToAsk": "cmdOrControl+shift+space",
-            "toggleListen": "cmdOrControl+shift+l",
-            "readScreen": "cmdOrControl+shift+s"
-        }))
-        .unwrap();
-        saved.migrate_old_defaults();
-        assert_eq!(saved, Shortcuts::default());
+    fn every_default_has_control_or_command_so_secure_input_does_not_block_it() {
+        use tauri_plugin_global_shortcut::Modifiers;
+        for (action, acc) in Shortcuts::default().bindings() {
+            let shortcut = Shortcut::from_str(acc).unwrap();
+            assert!(
+                shortcut.mods.intersects(Modifiers::CONTROL | Modifiers::SUPER),
+                "{action:?} = {acc:?} has neither Control nor Command"
+            );
+        }
+    }
+
+    #[test]
+    fn every_old_default_moves_to_the_new_ones_and_chosen_combos_stay() {
+        for (hide, listen) in [("cmdOrControl+shift+h", "cmdOrControl+shift+l"), ("alt+shift+h", "alt+shift+l")] {
+            let mut saved: Shortcuts = serde_json::from_value(serde_json::json!({
+                "quickHide": hide,
+                "pushToAsk": "cmdOrControl+shift+space",
+                "toggleListen": listen,
+                "readScreen": "cmdOrControl+shift+s"
+            }))
+            .unwrap();
+            saved.migrate_old_defaults();
+            assert_eq!(saved, Shortcuts::default(), "from {hide} / {listen}");
+        }
 
         let mut chosen = Shortcuts {
-            quick_hide: "ctrl+alt+h".into(),
+            quick_hide: "ctrl+cmd+h".into(),
             toggle_listen: String::new(), // turned off on purpose
             ..Shortcuts::default()
         };

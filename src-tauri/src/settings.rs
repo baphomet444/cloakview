@@ -139,26 +139,31 @@ mod tests {
         assert_eq!(s3.language, "en");
     }
 
-    /// A file saved before the defaults moved holds ⌘⇧H/⌘⇧L explicitly: loading it
-    /// must move them, or existing installs would keep taking Finder's and Safari's combos.
+    /// A file saved under an earlier default holds it explicitly (⌘⇧H/⌘⇧L up to 0.2.0,
+    /// then ⌥⇧H/⌥⇧L): loading it must move both to ⌃⌥, or existing installs would keep
+    /// Finder's and Safari's combos, or ones that secure input silences.
     #[test]
-    fn loading_old_settings_moves_quick_hide_and_listen_off_the_system_combos() {
+    fn loading_old_settings_moves_quick_hide_and_listen_to_the_current_defaults() {
         let dir = std::env::temp_dir().join("cloakview-settings-migrate-test");
         let path = settings_path(&dir);
         std::fs::create_dir_all(&dir).unwrap();
-        std::fs::write(
-            &path,
-            r#"{ "language": "es", "shortcuts": {
-                "quickHide": "cmdOrControl+shift+h", "pushToAsk": "cmdOrControl+shift+space",
-                "toggleListen": "cmdOrControl+shift+l", "readScreen": "cmdOrControl+shift+s" } }"#,
-        )
-        .unwrap();
-        let s = load_from(&path);
-        assert_eq!(s.language, "es"); // the rest of the file is read as before
-        assert_eq!(s.shortcuts.quick_hide, "alt+shift+h");
-        assert_eq!(s.shortcuts.toggle_listen, "alt+shift+l");
-        assert_eq!(s.shortcuts.push_to_ask, "cmdOrControl+shift+space");
-        assert_eq!(s.shortcuts.read_screen, "cmdOrControl+shift+s");
+        for (hide, listen) in [("cmdOrControl+shift+h", "cmdOrControl+shift+l"), ("alt+shift+h", "alt+shift+l")] {
+            std::fs::write(
+                &path,
+                format!(
+                    r#"{{ "language": "es", "shortcuts": {{
+                    "quickHide": "{hide}", "pushToAsk": "cmdOrControl+shift+space",
+                    "toggleListen": "{listen}", "readScreen": "cmdOrControl+shift+s" }} }}"#
+                ),
+            )
+            .unwrap();
+            let s = load_from(&path);
+            assert_eq!(s.language, "es"); // the rest of the file is read as before
+            assert_eq!(s.shortcuts.quick_hide, "ctrl+alt+h", "from {hide}");
+            assert_eq!(s.shortcuts.toggle_listen, "ctrl+alt+l", "from {listen}");
+            assert_eq!(s.shortcuts.push_to_ask, "cmdOrControl+shift+space");
+            assert_eq!(s.shortcuts.read_screen, "cmdOrControl+shift+s");
+        }
     }
 
     #[test]

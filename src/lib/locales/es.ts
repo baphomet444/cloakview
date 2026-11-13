@@ -67,7 +67,7 @@ export const es: Catalog = {
   "settings.shortcutPushToAsk": "Abrir Preguntar",
   "settings.shortcutToggleListen": "Iniciar o detener la escucha",
   "settings.shortcutReadScreen": "Leer la pantalla y responder lo que hay en ella",
-  "settings.shortcutsHint": "Combinaciones como alt+shift+h. Déjala en blanco para desactivarla.",
+  "settings.shortcutsHint": "Combinaciones como ctrl+alt+h. Déjala en blanco para desactivarla.",
   "settings.save": "Guardar",
   "settings.saved": "Guardado",
   "settings.loading": "Cargando ajustes…",

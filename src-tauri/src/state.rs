@@ -154,9 +154,9 @@ mod tests {
                 "userKeywords": ["opinas"],
                 "userName": "Ana",
                 "shortcuts": {
-                    "quickHide": "alt+shift+h",
+                    "quickHide": "ctrl+alt+h",
                     "pushToAsk": "cmdOrControl+shift+space",
-                    "toggleListen": "alt+shift+l",
+                    "toggleListen": "ctrl+alt+l",
                     "readScreen": "cmdOrControl+shift+s"
                 },
                 "includeMic": true,

@@ -13,6 +13,6 @@ before the hub is shown, and macOS switches Spaces to follow the activation. Cal
 debug probe (`[overlay-probe] … active=`) shows the app still active after every call.
 
 **To reopen without leaving full screen, use the quick-hide shortcut** (`quickHide`,
-⌥⇧H by default). It never activates the app, so you stay in the full-screen Space.
+⌃⌥H by default). It never activates the app, so you stay in the full-screen Space.
 
 The Dock handler stays, so the hub can always be brought back after `Close`.

@@ -251,7 +251,7 @@ describe("events", () => {
     ["listen-state", ipc.subscribeListenState, listening],
     ["translation", ipc.subscribeTranslation, { ts: 1, text: "hola" }],
     ["error", ipc.subscribeError, "rate_limit"],
-    ["shortcut-failed", ipc.subscribeShortcutFailed as (handler: (payload: unknown) => void) => Promise<() => void>, ["alt+shift+h"]],
+    ["shortcut-failed", ipc.subscribeShortcutFailed as (handler: (payload: unknown) => void) => Promise<() => void>, ["ctrl+alt+h"]],
     ["settings-changed", ipc.subscribeSettingsChanged as (handler: (payload: unknown) => void) => Promise<() => void>, settings],
   ];
 

@@ -395,7 +395,7 @@
           },
           {
             "q": "¿Por qué al reabrir CloakView desde el Dock salgo de la pantalla completa?",
-            "a": "Si otra app está en pantalla completa, al hacer clic en el icono de CloakView en el Dock macOS vuelve al escritorio, porque el clic activa CloakView antes de que pueda mostrar el overlay. Para recuperar el overlay sin salir de la pantalla completa, usa el atajo de mostrar/ocultar (⌥⇧H por defecto): nunca activa la app.",
+            "a": "Si otra app está en pantalla completa, al hacer clic en el icono de CloakView en el Dock macOS vuelve al escritorio, porque el clic activa CloakView antes de que pueda mostrar el overlay. Para recuperar el overlay sin salir de la pantalla completa, usa el atajo de mostrar/ocultar (⌃⌥H por defecto): nunca activa la app.",
             "guide": "shortcuts"
           }
         ]

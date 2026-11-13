@@ -108,9 +108,12 @@ de OpenAI.
    `NSWindow.sharingType = .none` (vía `objc2-app-kit`) para exclusión de
    captura.
 8. **`hotkeys`** — Registro global (configurables en Settings): Quick Hide
-   ⌥⇧H (muestra u oculta el overlay), Push-to-Ask ⌘⇧Espacio, Start/Stop Listen
-   ⌥⇧L y Leer pantalla ⌘⇧S. ⌘⇧H y ⌘⇧L se evitan: un atajo global se los
-   quitaría a Finder (Inicio) y a Safari (barra lateral). Un atajo que no se puede
+   ⌃⌥H (muestra u oculta el overlay), Push-to-Ask ⌘⇧Espacio, Start/Stop Listen
+   ⌃⌥L y Leer pantalla ⌘⇧S. Se evitan ⌘⇧H y ⌘⇧L (un atajo global se los
+   quitaría a Finder —Inicio— y a Safari —barra lateral—) y ⌥⇧H/⌥⇧L (una
+   combinación que escribe un carácter no llega con la entrada segura de macOS
+   activa; ⌃⌥ no escribe ninguno). Los valores guardados de defaults anteriores
+   (⌘⇧ y ⌥⇧) migran a ⌃⌥ al cargar los ajustes. Un atajo que no se puede
    registrar se muestra en la línea de error del hub, no solo en el log.
 
 ### Comandos IPC (superficie frontend → Rust)
