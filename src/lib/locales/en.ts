@@ -87,6 +87,7 @@ export const en = {
   "errors.licenseWrongProduct": "That key isn't for CloakView Pro.",
   "errors.licenseDisabled": "This license key has been disabled. Contact support if you think that's a mistake.",
   "errors.licenseExpired": "This license key has expired.",
+  "errors.licenseTestMode": "That's a test key and can't unlock Pro. Use the key from your purchase email.",
   "errors.licenseUnreachable": "Couldn't reach the license server. Check your connection and try again.",
   "settings.pro": "CloakView Pro",
   "settings.proActive": "Active on this Mac.",

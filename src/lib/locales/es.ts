@@ -89,6 +89,7 @@ export const es: Catalog = {
   "errors.licenseWrongProduct": "Esa clave no es de CloakView Pro.",
   "errors.licenseDisabled": "Esta clave de licencia se ha desactivado. Escribe a soporte si crees que es un error.",
   "errors.licenseExpired": "Esta clave de licencia ha caducado.",
+  "errors.licenseTestMode": "Esa es una clave de prueba y no puede activar Pro. Usa la clave del correo de tu compra.",
   "errors.licenseUnreachable": "No se pudo contactar con el servidor de licencias. Revisa tu conexión e inténtalo de nuevo.",
   "settings.pro": "CloakView Pro",
   "settings.proActive": "Activo en este Mac.",
