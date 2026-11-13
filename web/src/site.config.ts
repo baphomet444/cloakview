@@ -33,7 +33,7 @@ export const siteConfig = {
   PRO_CHECKOUT_URL: null as string | null,
 
   // --- Términos legales ---
-  LEGAL_UPDATED: "2026-11-11", // ISO date: Fase 7
+  LEGAL_UPDATED: "2026-11-13", // ISO date: Fase 7
   LEGAL_JURISDICTION: "Florida, USA",
 
   locales: ["en", "es"] as const,

@@ -103,10 +103,10 @@
     },
     "costs": {
       "title": "Honest costs",
-      "body": "CloakView is free in v1. You pay your own OpenAI API consumption — typically a few dollars a month for regular use — directly to OpenAI at their listed rates. We take nothing: no subscription, no markup, no cut.",
+      "body": "The CloakView app is free. You pay only your own OpenAI API usage — typically a few dollars a month for regular use — directly to OpenAI at their listed rates, with no markup from us. CloakView Pro, a one-time $99 purchase, adds more features and also runs on your own key.",
       "points": [
         "No CloakView account or subscription",
-        "OpenAI bills you at their public rates — we never touch your money",
+        "OpenAI bills you at their public rates — no markup from us",
         "Revoke the key anytime and the app simply stops"
       ]
     },
@@ -149,21 +149,21 @@
     },
     "download": {
       "title": "Get CloakView",
-      "body": "Free in v1. Requires macOS 14.2 or later on a Mac with Apple Silicon. Signed and notarized by Apple. Distributed via GitHub Releases — no account needed.",
+      "body": "Free to download and use. Requires macOS 14.2 or later on a Mac with Apple Silicon. Signed and notarized by Apple. Distributed via GitHub Releases — no account needed.",
       "button": "Download for macOS",
       "soon": "Coming soon.",
       "note": "We will never ask for your email to download."
     }
   },
   "pricing": {
-    "title": "Pricing — free in v1, pay only your API usage",
-    "description": "CloakView is free in v1 with no subscription and no account. You only pay your own OpenAI API consumption — see honest monthly estimates by usage level.",
+    "title": "Pricing — free app, optional $99 one-time Pro",
+    "description": "The CloakView app is free, with no subscription and no account: you pay only your own OpenAI API usage. CloakView Pro is an optional $99 one-time purchase. See honest monthly API estimates by usage level.",
     "hero": {
-      "badge": "Free in v1",
-      "title": "CloakView costs $0. Your OpenAI bill is between you and OpenAI.",
-      "body": "There is no CloakView subscription, no tier and no account. The app talks directly to OpenAI with your own API key, and OpenAI bills you for your consumption at their public rates. We never touch your money.",
+      "badge": "Free · Pro $99 one-time",
+      "title": "The app costs $0. Your OpenAI bill is between you and OpenAI.",
+      "body": "The free app has no subscription and no account. It talks directly to OpenAI with your own API key, and OpenAI bills you for your consumption at their public rates — we add no markup. If you want more, CloakView Pro is a one-time $99 purchase: no subscription, and it keeps using your own key.",
       "points": [
-        "No subscription, no tiers, no free-to-paid bait",
+        "No subscription — the app is free and Pro is a single payment",
         "You pay OpenAI directly, at OpenAI's public rates",
         "Revoke your key anytime and the app simply stops — no cancellation flow, because there is nothing to cancel"
       ]
@@ -195,7 +195,7 @@
       "footnote": "What's covered: live transcription of your meeting audio plus the suggestion requests. What's not covered: nothing — there is no CloakView charge on top."
     },
     "roadmap": {
-      "title": "What comes later",
+      "title": "CloakView Pro",
       "body": "CloakView Pro is a one-time purchase — pay once, keep it, no subscription. It adds the features that make the copilot feel like yours: it transcribes your side of the call too, reads a question or task straight off your screen, draws diagrams, tailors answers to your own résumé and context, translates the conversation live, keeps a searchable history of every interview, and includes priority support with replies within one business day.",
       "price": "$99",
       "priceNote": "one-time · no subscription",
@@ -204,7 +204,7 @@
     },
     "cta": {
       "title": "Try it with your own key",
-      "body": "Free in v1 for macOS 14.2+ on Apple Silicon. Signed and notarized by Apple. No account, no email required.",
+      "body": "Free for macOS 14.2+ on Apple Silicon. Signed and notarized by Apple. No account, no email required.",
       "button": "Download for macOS",
       "soon": "Coming soon.",
       "note": "We will never ask for your email to download."
@@ -215,7 +215,7 @@
     "description": "Choose the CloakView build for your Mac. Download from GitHub Releases and check its SHA-256 checksum.",
     "badge": "macOS 14.2+",
     "heading": "Choose your build",
-    "intro": "Your key stays yours. Choose a download below; all options remain visible regardless of your device. Downloads will open on GitHub Releases once published.",
+    "intro": "Your key stays yours. Choose a download below; all options remain visible regardless of your device. Downloads open on GitHub Releases.",
     "optionsLabel": "Available platforms",
     "recommended": "Recommended for this Mac",
     "notarized": "Signed and notarized by Apple",
@@ -257,7 +257,7 @@
   },
   "guide": {
     "title": "Guide",
-    "description": "Set up CloakView, manage permissions and your key, use shortcuts, and resolve common issues. The app and downloads are not yet published.",
+    "description": "Set up CloakView, manage permissions and your key, use shortcuts, and resolve common issues.",
     "homeLabel": "Home",
     "breadcrumbLabel": "Breadcrumb",
     "onThisPageLabel": "On this page",
@@ -293,7 +293,7 @@
   "faq": {
     "title": "Frequently asked questions",
     "description": "Answers about privacy, installation, costs, compatibility and technical setup for CloakView.",
-    "intro": "Clear answers before you install. The app and GitHub repository have not been published yet.",
+    "intro": "Clear answers before you install.",
     "guideLink": "Read the guide",
     "topics": [
       {
@@ -301,11 +301,11 @@
         "items": [
           {
             "q": "Does CloakView record or upload meetings to its own servers?",
-            "a": "No CloakView backend or telemetry is planned. Meeting audio is processed on your Mac and API requests go directly to OpenAI with your key. Check OpenAI’s data handling policy before using the service."
+            "a": "There is no CloakView backend and no telemetry. Meeting audio is processed on your Mac and API requests go directly to OpenAI with your key. Check OpenAI’s data handling policy before using the service."
           },
           {
             "q": "Where is my API key stored?",
-            "a": "The planned app stores your key in macOS Keychain and sends it directly to OpenAI, not to CloakView servers. Revoke it in your OpenAI account whenever you like.",
+            "a": "The app stores your key in macOS Keychain and sends it directly to OpenAI, not to CloakView servers. Revoke it in your OpenAI account whenever you like.",
             "guide": "api-key"
           },
           {
@@ -323,12 +323,12 @@
         "items": [
           {
             "q": "When can I download the app?",
-            "a": "Not yet. The repository and signed release artifacts are pending; this site will link to the official release when it exists.",
+            "a": "Now. CloakView is published on GitHub Releases, signed and notarized by Apple. Use the download page to get the official build and its SHA-256 checksum.",
             "guide": "installation"
           },
           {
             "q": "Which macOS version do I need?",
-            "a": "macOS 14.2 or later is planned. Check the release notes for the final system requirements before installing.",
+            "a": "macOS 14.2 or later, on a Mac with Apple Silicon.",
             "guide": "installation"
           },
           {
@@ -343,7 +343,7 @@
         "items": [
           {
             "q": "Is CloakView free?",
-            "a": "The planned v1 is free, with no CloakView subscription. You pay your own OpenAI API usage directly to OpenAI."
+            "a": "Yes, the app is free: no subscription, no account. You pay your own OpenAI API usage directly to OpenAI. CloakView Pro is an optional one-time $99 purchase that adds features such as transcribing your own side of the call, reading your screen and live translation."
           },
           {
             "q": "Does a ChatGPT subscription cover API usage?",
@@ -366,11 +366,11 @@
           },
           {
             "q": "Is there a Windows version?",
-            "a": "No Windows build is planned for v1. The download page will show the availability of each platform."
+            "a": "No. CloakView is macOS-only for now. The download page shows the availability of each platform."
           },
           {
             "q": "Are Apple Silicon and Intel supported?",
-            "a": "Apple Silicon is supported; the download is not published yet. There is no Intel build planned for the first release. Only install an official release matched to your Mac.",
+            "a": "Apple Silicon only; there is no Intel build. Only install the official release from the download page.",
             "guide": "installation"
           }
         ]
@@ -390,8 +390,13 @@
           },
           {
             "q": "What happens when OpenAI is unavailable?",
-            "a": "Suggestions require OpenAI connectivity. Check your key, billing, network connection and OpenAI service status; the planned app should not pretend requests succeeded.",
+            "a": "Suggestions require OpenAI connectivity. Check your key, billing, network connection and OpenAI service status.",
             "guide": "troubleshooting"
+          },
+          {
+            "q": "Why does reopening CloakView from the Dock take me out of full screen?",
+            "a": "If another app is in full screen, clicking CloakView's Dock icon makes macOS switch to the desktop, because the click activates CloakView before it can show the overlay. To bring the overlay back without leaving full screen, use the show/hide shortcut (⌘⇧H by default): it never activates the app.",
+            "guide": "shortcuts"
           }
         ]
       }
@@ -436,7 +441,7 @@
       },
       "dataCollection": {
         "title": "What Data We Collect",
-        "content": "CloakView does not collect, store, or transmit any user data to CloakView servers. Specifically:\n\n• We do not collect meeting audio, transcripts, or personal information.\n• We do not create accounts or user profiles.\n• We do not use cookies, tracking pixels, or analytics.\n• We do not log your API usage or meeting details.\n\nThe only data transmitted outside your Mac is to OpenAI's API, using your own API key, for the purpose of transcription and suggestion generation.\n\nWebsite assistant: if you type a question into the assistant on this website, that question and the conversation shown in the assistant are sent to Vercel's AI Gateway and to Anthropic (Claude) to generate the answer. We do not store these conversations or log their content, and any OpenAI key pasted into the assistant is removed before it is sent. The suggested questions in the assistant are answered without sending anything. This applies only to the website, not to the CloakView app."
+        "content": "CloakView does not collect, store, or transmit any user data to CloakView servers. Specifically:\n\n• We do not collect meeting audio, transcripts, or personal information.\n• We do not create accounts or user profiles.\n• We do not use cookies, tracking pixels, or analytics.\n• We do not log your API usage or meeting details.\n\nThe app sends data outside your Mac to two places only: OpenAI's API, using your own API key, for transcription and suggestions; and, only if you activate CloakView Pro, Lemon Squeezy's license API (see Third Parties).\n\nWebsite assistant: if you type a question into the assistant on this website, that question and the conversation shown in the assistant are sent to Vercel's AI Gateway and to Anthropic (Claude) to generate the answer. We do not store these conversations or log their content, and any OpenAI key pasted into the assistant is removed before it is sent. The suggested questions in the assistant are answered without sending anything. This applies only to the website, not to the CloakView app."
       },
       "openaiProcessing": {
         "title": "OpenAI API Usage",
@@ -456,7 +461,7 @@
       },
       "thirdParties": {
         "title": "Third Parties",
-        "content": "CloakView does not share your data with third parties. The only external service is OpenAI's API, which you invoke directly with your own key. We do not have access to, control over, or visibility into OpenAI's processing of your data beyond their published privacy policy.\n\nOn this website only, the assistant's typed questions are processed by Vercel (AI Gateway) and Anthropic to generate answers, under their own privacy policies. Do not include personal or sensitive information in them."
+        "content": "CloakView does not sell or share your data. The app talks to two external services only: OpenAI's API, which you invoke directly with your own key, and — only if you activate CloakView Pro — Lemon Squeezy's license API. We do not have access to, control over, or visibility into OpenAI's processing of your data beyond their published privacy policy.\n\nCloakView Pro: when you enter a license key, the app sends Lemon Squeezy the key and a label for your Mac (\"CloakView on\" followed by your Mac's name) to activate it. It checks the key again each time the app starts, and sends the key and activation ID when you deactivate a Mac. Lemon Squeezy is the merchant of record for Pro purchases: it handles payment under its own privacy policy and shares the order details with us (your name, email address and order) so we can provide your license and support. We never see your card details. The free app never contacts Lemon Squeezy.\n\nOn this website only, the assistant's typed questions are processed by Vercel (AI Gateway) and Anthropic to generate answers, under their own privacy policies. Do not include personal or sensitive information in them."
       },
       "dataRights": {
         "title": "Your Rights",
@@ -586,13 +591,13 @@
       },
       {
         "q": "Where is my key stored? Is it safe?",
-        "a": "The planned app stores your key in macOS Keychain and sends it directly to OpenAI, not to CloakView servers. You can revoke it in your OpenAI account whenever you like; revoking it stops it from working even if a copy remains on your Mac.",
+        "a": "The app stores your key in macOS Keychain and sends it directly to OpenAI, not to CloakView servers. You can revoke it in your OpenAI account whenever you like; revoking it stops it from working even if a copy remains on your Mac.",
         "linkLabel": "Where the key is stored",
         "href": "/guide/api-key#storage"
       },
       {
         "q": "How much does it cost?",
-        "a": "CloakView is free in v1: no subscription and no account. You only pay your own OpenAI API usage, directly to OpenAI at their rates. A ChatGPT subscription does not cover API usage.",
+        "a": "The app is free: no subscription and no account. You only pay your own OpenAI API usage, directly to OpenAI at their rates — a ChatGPT subscription does not cover API usage. CloakView Pro is an optional one-time $99 purchase.",
         "linkLabel": "See monthly estimates",
         "href": "/pricing"
       },
@@ -604,7 +609,7 @@
       },
       {
         "q": "When can I download it?",
-        "a": "Not yet. The signed release is still pending; this site will link to the official download as soon as it exists.",
+        "a": "Now: get the signed, notarized build from the download page (macOS 14.2 or later, Apple Silicon).",
         "linkLabel": "Follow the changelog",
         "href": "/changelog"
       }

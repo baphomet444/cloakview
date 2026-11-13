@@ -27,15 +27,33 @@ export function generateSoftwareApplicationSchema(locale: Locale) {
       : "macOS 14.2 or later, Mac with Apple Silicon",
     image: `${siteConfig.url}/brand/logo.png`,
     author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "USD",
-      description: isSpanish
-        ? "Gratis en v1. Sin suscripción, sin cuenta, sin intermediarios."
-        : "Free in v1. No subscription, no account, no middleman.",
-      ...(released ? { availability: "https://schema.org/InStock", url: siteConfig.GITHUB_RELEASES } : {}),
-    },
+    // The free app, plus CloakView Pro only once it can actually be bought: the Pro
+    // offer appears with `PRO_CHECKOUT_URL`, the same switch as the buy button.
+    offers: [
+      {
+        "@type": "Offer",
+        name: "CloakView",
+        price: "0",
+        priceCurrency: "USD",
+        description: isSpanish
+          ? "App gratuita. Sin suscripción y sin cuenta; usa tu propia clave de OpenAI."
+          : "Free app. No subscription, no account; uses your own OpenAI key.",
+        ...(released ? { availability: "https://schema.org/InStock", url: siteConfig.GITHUB_RELEASES } : {}),
+      },
+      ...(siteConfig.PRO_CHECKOUT_URL
+        ? [
+            {
+              "@type": "Offer",
+              name: "CloakView Pro",
+              price: "99",
+              priceCurrency: "USD",
+              description: isSpanish ? "Pago único, sin suscripción." : "One-time payment, no subscription.",
+              availability: "https://schema.org/InStock",
+              url: siteConfig.PRO_CHECKOUT_URL,
+            },
+          ]
+        : []),
+    ],
     ...(released ? { downloadUrl: siteConfig.GITHUB_RELEASES } : {}),
     featureList: isSpanish
       ? [
