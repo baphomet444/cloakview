@@ -20,6 +20,8 @@ export const siteConfig = {
   // --- Placeholders pendientes de valores reales ---
   GITHUB_RELEASES: "https://github.com/baphomet444/cloakview/releases/latest",
   GITHUB_REPO: "https://github.com/baphomet444/cloakview",
+  // Perfil limpio, sin los parámetros del QR con el que se compartió.
+  INSTAGRAM_URL: "https://www.instagram.com/cloak_view",
   SUPPORT_EMAIL: "support@getcloakview.com",
   LEGAL_ENTITY: "PLACEHOLDER LLC", // TODO: razón social real antes de producción
   // Sustituir solo por hashes SHA-256 publicados para los artefactos reales.

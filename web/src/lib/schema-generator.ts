@@ -26,7 +26,8 @@ export function generateSoftwareApplicationSchema(locale: Locale) {
       ? "macOS 14.2 o posterior, Mac con Apple Silicon"
       : "macOS 14.2 or later, Mac with Apple Silicon",
     image: `${siteConfig.url}/brand/logo.png`,
-    author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
+    author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url, sameAs: [siteConfig.INSTAGRAM_URL] },
+    sameAs: [siteConfig.INSTAGRAM_URL],
     // The free app, plus CloakView Pro only once it can actually be bought: the Pro
     // offer appears with `PRO_CHECKOUT_URL`, the same switch as the buy button.
     offers: [

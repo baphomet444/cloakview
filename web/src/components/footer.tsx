@@ -36,6 +36,14 @@ export function Footer({ dict, locale }: { dict: Dictionary; locale: Locale }) {
               {link.label}
             </Link>
           ))}
+          <a
+            href={siteConfig.INSTAGRAM_URL}
+            target="_blank"
+            rel="me noopener noreferrer"
+            className="inline-flex items-center tap-target hover:text-foreground transition-colors"
+          >
+            {dict.footer.instagram}
+          </a>
         </div>
         <p>
           © {BUILD_YEAR} {siteConfig.name}. {dict.footer.rights}
