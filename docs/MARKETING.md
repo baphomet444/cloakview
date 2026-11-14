@@ -7,6 +7,12 @@
 - Sin build descargable, sin release, sin audiencia previa, sin presupuesto asignado.
 - El activo decisivo es un vídeo de 20 s que demuestre la invisibilidad. Todo lo demás cuelga de ahí.
 
+## Canales
+- Instagram: [@cloak_view](https://www.instagram.com/cloak_view) — perfil creado el 2026-11-14. El enlace con los parámetros del QR de invitación es
+  `https://www.instagram.com/cloak_view?srtk=MWdxbjVoeGo2NmNxag%3D%3D&utm_source=qr`;
+  el sitio y los posts usan el limpio, el de QR solo para compartir desde el móvil.
+- Pendientes: X, TikTok, Reels/Shorts y LinkedIn (nombres todavía sin reservar).
+
 ## Fase 0 — Prerrequisitos (D-14 a D-7)
 Nada se anuncia hasta que esto esté:
 1. DMG firmado y notarizado, `SHA256_ARM64` rellenado, botón de descarga activo.
