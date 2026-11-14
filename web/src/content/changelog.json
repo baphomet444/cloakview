@@ -1,11 +1,38 @@
 [
   {
-    "version": "unreleased",
-    "date": null,
-    "title": { "en": "Release pending", "es": "Lanzamiento pendiente" },
+    "version": "0.2.1",
+    "date": "2026-11-14",
+    "title": {
+      "en": "Shortcuts that survive secure input",
+      "es": "Atajos que funcionan con la entrada segura"
+    },
     "body": {
-      "en": "CloakView has not published a GitHub release yet. Check back here for verified release notes once the repository and downloads are available.",
-      "es": "CloakView aún no ha publicado una versión en GitHub. Vuelve aquí para consultar las notas verificadas cuando estén disponibles el repositorio y las descargas."
+      "en": "Quick hide and start/stop listen now default to Control–Option–H and Control–Option–L. The previous Command–Shift defaults belong to Finder and Safari, and they stopped working while macOS secure input was on; Control–Option keeps working in a password field or with Secure Keyboard Entry. If you already changed a shortcut, your choice is kept. If another app already holds Control–Option–H or L, CloakView shows the error when it starts or when you save, and you can pick another combination in Settings → Shortcuts. VoiceOver users should change quick hide and listen to a different combination, because Control–Option is the VoiceOver key.",
+      "es": "Ocultar rápido e iniciar/detener la escucha ahora usan Control–Opción–H y Control–Opción–L por defecto. Los atajos anteriores con Comando–Mayúsculas son de Finder y Safari y dejaban de funcionar con la entrada segura de macOS activa; Control–Opción sigue funcionando en un campo de contraseña o con Entrada de teclado segura. Si ya habías cambiado un atajo, se conserva tu elección. Si otra app ya usa Control–Opción–H o L, CloakView muestra el error al abrirse o al guardar, y puedes elegir otra combinación en Ajustes → Atajos. Si usas VoiceOver, cambia ocultar rápido y la escucha a otra combinación, porque Control–Opción es la tecla de VoiceOver."
+    }
+  },
+  {
+    "version": "0.2.0",
+    "date": "2026-11-13",
+    "title": {
+      "en": "CloakView Pro is here",
+      "es": "CloakView Pro ya está aquí"
+    },
+    "body": {
+      "en": "CloakView Pro keys are now activated with Lemon Squeezy. A key is checked once when you enter it and rechecked at launch; each key works on up to 5 Macs, and you can free a Mac from Settings. Test-mode keys are refused, so only a real purchase unlocks Pro. Refusal messages now say what went wrong: wrong product, activation limit reached, disabled, expired, or the licence server could not be reached. If you entered a key in 0.1.1, enter it again after updating. The app itself stays free and keeps using your own OpenAI API key.",
+      "es": "Las claves de CloakView Pro ahora se activan con Lemon Squeezy. La clave se comprueba una vez al introducirla y de nuevo al abrir la app; cada clave sirve en hasta 5 Macs y puedes liberar un Mac desde Ajustes. Se rechazan las claves en modo prueba: solo una compra real desbloquea Pro. Los mensajes de rechazo ahora explican el motivo: otro producto, límite de activaciones alcanzado, desactivada, caducada o sin conexión con el servidor de licencias. Si introdujiste una clave en la 0.1.1, vuelve a introducirla tras actualizar. La app sigue siendo gratis y usa tu propia clave de API de OpenAI."
+    }
+  },
+  {
+    "version": "0.1.0",
+    "date": "2026-11-11",
+    "title": {
+      "en": "First public release",
+      "es": "Primera versión pública"
+    },
+    "body": {
+      "en": "CloakView is a meeting copilot only you can see: the overlay is excluded from screen capture, so it does not appear in a shared screen or a recording. Listen in real time, ask by voice or text without leaving the call, and keep your own OpenAI API key. The app is signed and notarized for Apple Silicon and requires macOS 14.2 or later. Your notes and transcripts stay on your Mac.",
+      "es": "CloakView es un copiloto de reuniones que solo tú puedes ver: la ventana queda excluida de la captura de pantalla, así que no aparece al compartir pantalla ni en una grabación. Escucha en tiempo real, pregunta por voz o por texto sin salir de la llamada y usa tu propia clave de API de OpenAI. La app está firmada y notarizada para Apple Silicon y requiere macOS 14.2 o posterior. Tus notas y transcripciones se quedan en tu Mac."
     }
   }
 ]
