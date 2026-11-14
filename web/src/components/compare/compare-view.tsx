@@ -75,8 +75,8 @@ export function CompareView({ locale, slug }: { locale: Locale; slug: CompareSlu
       </div>
 
       <Section id="compare-table" title={locale === "en" ? "Side by side" : "Lado a lado"}>
-        <div className="mt-5 overflow-x-auto rounded-xl border border-border">
-          <table className="w-full min-w-[46rem] border-collapse text-left text-sm">
+        <div className="mt-5 rounded-xl border border-border">
+          <table className="w-full table-fixed border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-border bg-surface">
                 <th scope="col" className="px-4 py-3 align-bottom font-medium text-muted">
