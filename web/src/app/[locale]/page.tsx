@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getDictionary } from "@/lib/get-dictionary";
-import { siteConfig, type Locale } from "@/site.config";
+import type { Locale } from "@/site.config";
+import { absoluteUrl, ogImages, ogLocale } from "@/lib/seo";
 import { Hero } from "@/components/hero";
 import { HowItWorks } from "@/components/how-it-works";
 import { FeaturesGrid } from "@/components/features-grid";
@@ -17,7 +18,15 @@ export async function generateMetadata({
   const dict = await getDictionary(locale);
   return {
     title: dict.home.title,
-    description: siteConfig.description[locale],
+    description: dict.home.description,
+    openGraph: {
+      type: "website",
+      title: dict.home.title,
+      description: dict.home.description,
+      url: absoluteUrl(locale),
+      locale: ogLocale(locale),
+      images: ogImages(locale, dict.meta.ogAlt),
+    },
   };
 }
 

@@ -24,6 +24,17 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Files in /public ship unhashed, so Next serves them with max-age=0. They only
+  // change when a deploy replaces them; a year of immutable caching is safe for
+  // the brand assets and removes a revalidation round-trip from every page.
+  async headers() {
+    return [
+      {
+        source: "/brand/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

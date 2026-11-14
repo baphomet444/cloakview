@@ -18,7 +18,7 @@
     "rights": "Todos los derechos reservados."
   },
   "home": {
-    "title": "CloakView — Copiloto privado de reuniones",
+    "title": "CloakView — copiloto de IA invisible para reuniones",
     "hero": {
       "kicker": "Para macOS 14.2+",
       "titleLead": "Un copiloto de reuniones",
@@ -154,11 +154,12 @@
       "button": "Descargar para macOS",
       "soon": "Próximamente.",
       "note": "Nunca te pediremos tu email para descargar."
-    }
+    },
+    "description": "CloakView es un copiloto de reuniones para Mac: transcripción y sugerencias en vivo en una ventana que tu pantalla compartida no muestra. Gratis y con tu clave."
   },
   "pricing": {
-    "title": "Precios — app gratis y Pro opcional de pago único (99 USD)",
-    "description": "La app de CloakView es gratis, sin suscripción y sin cuenta: solo pagas tu propio consumo de la API de OpenAI. CloakView Pro es una compra opcional de pago único de 99 USD. Consulta estimaciones mensuales honestas de la API según tu nivel de uso.",
+    "title": "Precios: app gratis, Pro 99 USD, pago único",
+    "description": "La app es gratis, sin suscripción ni cuenta: solo pagas tu consumo de OpenAI. CloakView Pro es una compra opcional de 99 USD, una sola vez.",
     "hero": {
       "badge": "Gratis · Pro 99 USD pago único",
       "title": "La app cuesta $0. Tu factura de OpenAI es cosa de ti y OpenAI.",
@@ -212,8 +213,8 @@
     }
   },
   "download": {
-    "title": "Descargar CloakView para macOS",
-    "description": "Elige la versión de CloakView para tu Mac. Descarga desde GitHub Releases y comprueba su SHA-256.",
+    "title": "Descargar CloakView gratis para macOS — notarizada",
+    "description": "Descarga el DMG de CloakView para Apple Silicon, comprueba su SHA-256 e instálalo en tres pasos. Firmada y notarizada por Apple; requiere macOS 14.2 o posterior.",
     "badge": "macOS 14.2+",
     "heading": "Elige tu versión",
     "intro": "Tu clave sigue siendo tuya. Elige una descarga; todas las opciones permanecen visibles sin importar tu dispositivo. Las descargas se abren en GitHub Releases.",
@@ -257,8 +258,8 @@
     "ogAlt": "CloakView — Un copiloto de reuniones que solo tú puedes ver"
   },
   "guide": {
-    "title": "Guía",
-    "description": "Configura CloakView, gestiona permisos y tu clave, usa atajos y resuelve problemas habituales.",
+    "title": "Guía: instalar, permisos, clave y atajos",
+    "description": "Configura CloakView en macOS: instala el DMG, concede grabación de pantalla y micrófono, añade tu clave de OpenAI, aprende los atajos y resuelve problemas.",
     "homeLabel": "Inicio",
     "breadcrumbLabel": "Ruta de navegación",
     "onThisPageLabel": "En esta página",
@@ -270,30 +271,30 @@
     "copyErrorLabel": "No se pudo copiar el código",
     "articles": {
       "installation": {
-        "title": "Instalación",
-        "description": "Descarga, mueve a Aplicaciones y abre CloakView por primera vez."
+        "title": "Instalar CloakView en macOS en tres pasos",
+        "description": "Descarga el DMG, arrastra CloakView a Aplicaciones y ábrelo por primera vez. Qué te pide Gatekeeper y por qué el primer arranque necesita tu clave de API."
       },
       "permissions": {
-        "title": "Permisos de macOS",
-        "description": "Concede acceso a captura de pantalla y micrófono o restáuralos tras denegarlos."
+        "title": "Permisos de macOS: pantalla y micrófono",
+        "description": "CloakView necesita grabación de pantalla para leer la llamada y micrófono para escuchar. Cómo conceder ambos y cómo recuperarlos si los denegaste por error."
       },
       "api-key": {
-        "title": "Clave de API de OpenAI",
-        "description": "Crea, conecta, guarda y revoca tu propia clave de API."
+        "title": "Clave de OpenAI: créala y pégala con seguridad",
+        "description": "Crea una clave de API de OpenAI, ponle un límite de gasto y pégala en CloakView. Dónde se guarda en tu Mac y cómo cambiarla o borrarla."
       },
       "shortcuts": {
-        "title": "Atajos globales",
-        "description": "Configura ocultar rápidamente, abrir Ask y controlar la escucha."
+        "title": "Atajos globales: ocultar, preguntar, escuchar",
+        "description": "Los atajos por defecto de CloakView, por qué ocultar y escuchar usan Control–Opción y cómo cambiar cualquier combinación si otra app ya la usa."
       },
       "troubleshooting": {
-        "title": "Solución de problemas",
-        "description": "Soluciones prácticas para instalación, permisos, conexión y audio."
+        "title": "Problemas: instalación, permisos y audio",
+        "description": "Soluciona los fallos habituales de CloakView: un atajo que no hace nada, un permiso denegado, falta de transcripción, una clave ausente o una conexión que falla."
       }
     }
   },
   "faq": {
-    "title": "Preguntas frecuentes",
-    "description": "Respuestas sobre privacidad, instalación, costes, compatibilidad y configuración técnica de CloakView.",
+    "title": "Preguntas: privacidad, coste y configuración",
+    "description": "Respuestas claras sobre privacidad, instalación, costes, compatibilidad con macOS, atajos y solución de problemas, antes de instalar CloakView en tu Mac.",
     "intro": "Respuestas claras antes de instalar.",
     "guideLink": "Leer la guía",
     "topics": [
@@ -404,8 +405,8 @@
     ]
   },
   "support": {
-    "title": "Soporte",
-    "description": "Obtén ayuda de CloakView por correo, informa de un fallo sin exponer datos o consulta la guía de solución de problemas.",
+    "title": "Soporte: correo y solución de problemas",
+    "description": "Escríbenos para recibir soporte, informa de un fallo sin exponer datos de reuniones o sigue la guía de solución de problemas paso a paso.",
     "intro": "¿Necesitas ayuda? Empieza por la guía de solución de problemas o escríbenos sin compartir datos sensibles.",
     "emailTitle": "Soporte por correo",
     "emailText": "Escríbenos a",
@@ -424,15 +425,15 @@
     "troubleshooting": "Leer la guía de solución de problemas"
   },
   "changelog": {
-    "title": "Novedades",
-    "description": "Historial de versiones y actualizaciones de CloakView. Se muestran notas locales cuando GitHub Releases no está disponible.",
+    "title": "Novedades: notas de todas las versiones",
+    "description": "Todas las versiones de CloakView en un sitio: qué cambió, qué se corrigió y qué macOS necesita. Notas publicadas en inglés y en español.",
     "intro": "Notas de versiones del repositorio oficial.",
     "fallback": "Mostrando información local: GitHub Releases no está disponible o aún no tiene notas bilingües verificadas.",
     "release": "Versión"
   },
   "privacy": {
-    "title": "Política de Privacidad",
-    "description": "Cómo CloakView maneja tus datos: local-first, sin backend, sin cuentas, sin telemetría.",
+    "title": "Privacidad: local-first, sin telemetría",
+    "description": "Cómo trata CloakView tus datos: el audio y las transcripciones se quedan en tu Mac, sin backend, sin cuentas y sin telemetría. Qué se envía a OpenAI y por qué.",
     "updated": "Última actualización",
     "jurisdiction": "Regida por las leyes de Florida, EE.UU.",
     "sections": {
@@ -479,8 +480,8 @@
     }
   },
   "terms": {
-    "title": "Términos de Servicio",
-    "description": "Términos de uso de CloakView, limitaciones y tus responsabilidades.",
+    "title": "Términos: licencia y responsabilidades",
+    "description": "Las condiciones de uso de CloakView: qué permite la licencia, qué prohíbe y de qué sigues respondiendo con tu propia clave de API y el audio que procesas.",
     "updated": "Última actualización",
     "jurisdiction": "Regida por las leyes de Florida, EE.UU.",
     "sections": {
@@ -531,8 +532,8 @@
     }
   },
   "cookies": {
-    "title": "Política de Cookies",
-    "description": "CloakView no usa cookies, seguimiento ni análisis.",
+    "title": "Cookies: ninguna, sin seguimiento",
+    "description": "CloakView no usa cookies, píxeles de seguimiento ni análisis, ni en la web ni en la app. Esta página explica exactamente qué significa en la práctica.",
     "updated": "Última actualización",
     "jurisdiction": "Regida por las leyes de Florida, EE.UU.",
     "sections": {

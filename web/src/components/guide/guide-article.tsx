@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 import type { Dictionary } from "@/lib/get-dictionary";
 import { guidePath, guideSlugs, type GuideSlug } from "@/lib/guide";
 import { GuideToc } from "@/components/guide/guide-toc";
-import type { Locale } from "@/site.config";
+import { siteConfig, type Locale } from "@/site.config";
+import { breadcrumbJsonLd } from "@/lib/schema-generator";
 
 export function GuideArticle({ locale, slug, guide, sections, content }: {
   locale: Locale; slug: GuideSlug; guide: Dictionary["guide"];
@@ -13,6 +14,14 @@ export function GuideArticle({ locale, slug, guide, sections, content }: {
   const previous = guideSlugs[position - 1];
   const next = guideSlugs[position + 1];
   return <div className="mx-auto max-w-6xl px-6 py-14">
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd([
+        { name: guide.homeLabel, url: locale === "en" ? siteConfig.url : `${siteConfig.url}/es` },
+        { name: guide.title, url: `${siteConfig.url}${guidePath(locale)}` },
+        { name: guide.articles[slug].title, url: `${siteConfig.url}${guidePath(locale, slug)}` },
+      ]) }}
+    />
     <nav aria-label={guide.breadcrumbLabel} className="mb-10 text-sm text-muted">
       <ol className="flex flex-wrap items-center gap-2">
         <li><Link href={locale === "en" ? "/" : "/es"} className="hover:text-accent">{guide.homeLabel}</Link></li>

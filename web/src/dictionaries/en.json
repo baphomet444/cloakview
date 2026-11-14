@@ -18,7 +18,7 @@
     "rights": "All rights reserved."
   },
   "home": {
-    "title": "CloakView — Private meeting copilot",
+    "title": "CloakView — invisible AI meeting copilot for Mac",
     "hero": {
       "kicker": "For macOS 14.2+",
       "titleLead": "A meeting copilot only",
@@ -154,11 +154,12 @@
       "button": "Download for macOS",
       "soon": "Coming soon.",
       "note": "We will never ask for your email to download."
-    }
+    },
+    "description": "CloakView is a private meeting copilot for Mac: live transcription and suggestions in an overlay your screen share never shows. Free, with your own OpenAI key."
   },
   "pricing": {
-    "title": "Pricing — free app, optional $99 one-time Pro",
-    "description": "The CloakView app is free, with no subscription and no account: you pay only your own OpenAI API usage. CloakView Pro is an optional $99 one-time purchase. See honest monthly API estimates by usage level.",
+    "title": "Pricing: free app, $99 Pro, no subscription",
+    "description": "The app is free, with no subscription and no account: you pay only your own OpenAI usage. CloakView Pro is an optional $99 one-time purchase.",
     "hero": {
       "badge": "Free · Pro $99 one-time",
       "title": "The app costs $0. Your OpenAI bill is between you and OpenAI.",
@@ -212,8 +213,8 @@
     }
   },
   "download": {
-    "title": "Download CloakView for macOS",
-    "description": "Choose the CloakView build for your Mac. Download from GitHub Releases and check its SHA-256 checksum.",
+    "title": "Download CloakView free for macOS — notarized",
+    "description": "Download the CloakView DMG for Apple Silicon, check its SHA-256 and install in three steps. Signed and notarized by Apple; requires macOS 14.2 or later.",
     "badge": "macOS 14.2+",
     "heading": "Choose your build",
     "intro": "Your key stays yours. Choose a download below; all options remain visible regardless of your device. Downloads open on GitHub Releases.",
@@ -257,8 +258,8 @@
     "ogAlt": "CloakView — A Meeting Copilot only you can see"
   },
   "guide": {
-    "title": "Guide",
-    "description": "Set up CloakView, manage permissions and your key, use shortcuts, and resolve common issues.",
+    "title": "Guide: install, permissions, API key, shortcuts",
+    "description": "Set up CloakView on macOS: install the DMG, grant screen recording and microphone access, add your OpenAI key, learn the shortcuts and fix common issues.",
     "homeLabel": "Home",
     "breadcrumbLabel": "Breadcrumb",
     "onThisPageLabel": "On this page",
@@ -270,30 +271,30 @@
     "copyErrorLabel": "Could not copy code",
     "articles": {
       "installation": {
-        "title": "Installation",
-        "description": "Download, move to Applications, and open CloakView for the first time."
+        "title": "Install CloakView on macOS in three steps",
+        "description": "Download the DMG, drag CloakView to Applications and open it for the first time. What Gatekeeper asks for, and why the first launch needs your API key."
       },
       "permissions": {
-        "title": "macOS permissions",
-        "description": "Allow screen recording and microphone access, or restore them after denial."
+        "title": "macOS permissions: screen recording and mic",
+        "description": "CloakView needs screen recording to read the call and microphone access to listen. How to grant both, and how to restore them if you denied them by mistake."
       },
       "api-key": {
-        "title": "OpenAI API key",
-        "description": "Create, connect, store, and revoke your own API key."
+        "title": "OpenAI API key: create it and paste it safely",
+        "description": "Create an OpenAI API key, set a spending limit and paste it into CloakView. Where the key is stored on your Mac, and how to replace it or delete it."
       },
       "shortcuts": {
-        "title": "Global shortcuts",
-        "description": "Configure quick hide, push-to-ask, and listening controls."
+        "title": "Global shortcuts: quick hide, ask, listen",
+        "description": "The default CloakView shortcuts, why quick hide and listen use Control–Option, and how to change any combination when another app already holds it."
       },
       "troubleshooting": {
-        "title": "Troubleshooting",
-        "description": "Practical fixes for setup, permissions, connection, and audio issues."
+        "title": "Troubleshooting: setup, permissions, audio",
+        "description": "Fix the usual CloakView problems: a shortcut that does nothing, a denied permission, no transcription, a missing API key or a connection that drops mid-call."
       }
     }
   },
   "faq": {
-    "title": "Frequently asked questions",
-    "description": "Answers about privacy, installation, costs, compatibility and technical setup for CloakView.",
+    "title": "CloakView FAQ: privacy, cost and setup",
+    "description": "Straight answers about CloakView privacy, installation, costs, macOS compatibility, shortcuts and troubleshooting, before you install it on your Mac.",
     "intro": "Clear answers before you install.",
     "guideLink": "Read the guide",
     "topics": [
@@ -404,8 +405,8 @@
     ]
   },
   "support": {
-    "title": "Support",
-    "description": "Get CloakView support by email, report a bug safely, or follow the troubleshooting guide.",
+    "title": "Support: email help and troubleshooting",
+    "description": "Get CloakView support by email, report a bug without exposing meeting data, or work through the troubleshooting guide step by step.",
     "intro": "Need help? Start with the troubleshooting guide or write to us without sharing sensitive data.",
     "emailTitle": "Email support",
     "emailText": "Contact us at",
@@ -424,15 +425,15 @@
     "troubleshooting": "Read the troubleshooting guide"
   },
   "changelog": {
-    "title": "Changelog",
-    "description": "CloakView release history and updates. Local notes appear when GitHub Releases is unavailable.",
+    "title": "Changelog: release notes for every version",
+    "description": "Every CloakView release in one place: what changed, what was fixed and which macOS build it needs. Notes are published in English and Spanish.",
     "intro": "Release notes from the official repository.",
     "fallback": "Showing local information: GitHub Releases is not available or has no verified bilingual notes yet.",
     "release": "Release"
   },
   "privacy": {
-    "title": "Privacy Policy",
-    "description": "How CloakView handles your data: local-first, no backend, no accounts, no telemetry.",
+    "title": "Privacy Policy — local-first, no telemetry",
+    "description": "How CloakView handles your data: audio and transcripts stay on your Mac, with no CloakView backend, no account and no telemetry. What goes to OpenAI, and why.",
     "updated": "Last updated",
     "jurisdiction": "Governed by the laws of Florida, USA.",
     "sections": {
@@ -479,8 +480,8 @@
     }
   },
   "terms": {
-    "title": "Terms of Service",
-    "description": "CloakView terms of use, limitations, and your responsibilities.",
+    "title": "Terms of Service — licence and limits",
+    "description": "The terms for using CloakView on your Mac: what the licence allows, what it forbids, and what you remain responsible for with your own API key and meeting audio.",
     "updated": "Last updated",
     "jurisdiction": "Governed by the laws of Florida, USA.",
     "sections": {
@@ -531,8 +532,8 @@
     }
   },
   "cookies": {
-    "title": "Cookies Policy",
-    "description": "CloakView does not use cookies, tracking, or analytics.",
+    "title": "Cookies Policy — none used, no tracking",
+    "description": "CloakView uses no cookies, no tracking pixels and no analytics, on the website or in the app. This page explains exactly what that means in practice.",
     "updated": "Last updated",
     "jurisdiction": "Governed by the laws of Florida, USA.",
     "sections": {

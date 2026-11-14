@@ -78,3 +78,65 @@ export function generateSoftwareApplicationSchema(locale: Locale) {
 export function softwareApplicationJsonLd(locale: Locale): string {
   return JSON.stringify(generateSoftwareApplicationSchema(locale)).replace(/</g, "\\u003c");
 }
+
+/**
+ * `Organization` + `WebSite`, site-wide. This is what brand panels read: one
+ * entity with a logo, the support address and the social profiles it owns.
+ */
+export function generateOrganizationSchema(locale: Locale) {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${siteConfig.url}/#organization`,
+        name: siteConfig.name,
+        url: siteConfig.url,
+        logo: `${siteConfig.url}/brand/logo.png`,
+        email: siteConfig.SUPPORT_EMAIL,
+        sameAs: [siteConfig.INSTAGRAM_URL, siteConfig.GITHUB_REPO],
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${siteConfig.url}/#website`,
+        name: siteConfig.name,
+        url: siteConfig.url,
+        inLanguage: locale,
+        publisher: { "@id": `${siteConfig.url}/#organization` },
+      },
+    ],
+  };
+}
+
+export function organizationJsonLd(locale: Locale): string {
+  return JSON.stringify(generateOrganizationSchema(locale)).replace(/</g, "\\u003c");
+}
+
+/** `FAQPage` built from the questions the page actually renders. */
+export function faqPageJsonLd(topics: { title: string; items: { q: string; a: string }[] }[]): string {
+  return JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: topics.flatMap((topic) =>
+      topic.items.map((item) => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: { "@type": "Answer", text: item.a },
+      })),
+    ),
+  }).replace(/</g, "\\u003c");
+}
+
+/** `BreadcrumbList` matching the breadcrumb the guide article renders. */
+export function breadcrumbJsonLd(items: { name: string; url: string }[]): string {
+  return JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  }).replace(/</g, "\\u003c");
+}

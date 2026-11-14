@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { siteConfig, type Locale } from "@/site.config";
 import { getDictionary } from "@/lib/get-dictionary";
-import { softwareApplicationJsonLd } from "@/lib/schema-generator";
+import { softwareApplicationJsonLd, organizationJsonLd } from "@/lib/schema-generator";
 import { absoluteUrl, ogImages, ogLocale, twitterCard } from "@/lib/seo";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
@@ -104,6 +104,10 @@ export default async function LocaleLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: softwareApplicationJsonLd(locale) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: organizationJsonLd(locale) }}
         />
       </head>
       <body className="min-h-full antialiased flex flex-col">
