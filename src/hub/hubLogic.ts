@@ -62,8 +62,6 @@ function licenseCopyKey(code: string): CatalogKey {
       return "errors.licenseDisabled";
     case "expired":
       return "errors.licenseExpired";
-    case "testMode":
-      return "errors.licenseTestMode";
     case "unreachable":
       return "errors.licenseUnreachable";
     default:
