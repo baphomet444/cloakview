@@ -77,6 +77,9 @@ pub fn classify(status: u16, body: &str) -> FailureKind {
 ///    a letter and a digit catches key-shaped strings even without a known
 ///    prefix, while leaving model names (`whisper-large-v3-turbo`,
 ///    `gpt-4o-mini-transcribe`) and URLs readable — they never reach 32.
+///    Provider request IDs (`req_...` Responses API, `chatcmpl-...` Chat
+///    API) are exempt: users should be able to quote them to vendor
+///    support.
 ///
 /// The output of this function only ever appears in error surfaces, so a
 /// rare false positive mangles an error string, never user data.
@@ -84,6 +87,8 @@ pub fn scrub_secrets(input: &str) -> String {
     const PREFIXES: &[&str] = &["sk-", "gsk_", "gsk-"];
     const MIN_PREFIX_RUN: usize = 8;
     const MIN_OPAQUE_RUN: usize = 32;
+    /// Run prefixes that identify vendor request IDs, not secrets.
+    const EXEMPT_RUN_PREFIXES: &[&str] = &["req_", "chatcmpl-"];
 
     let is_run_byte = |b: u8| b.is_ascii_alphanumeric() || b == b'_' || b == b'-';
     let bytes = input.as_bytes();
@@ -106,17 +111,24 @@ pub fn scrub_secrets(input: &str) -> String {
                 }
             }
         }
-        // Rule 2: a long opaque token starting here.
+        // Rule 2: a run starting here is either an opaque token (redact) or
+        // not (copy verbatim). No rule-1 boundary can occur inside a run —
+        // the byte before a prefix match must not be a run byte — so a run
+        // is always consumed whole, exempt request IDs included.
         let run_len = rest.bytes().take_while(|&b| is_run_byte(b)).count();
-        if run_len >= MIN_OPAQUE_RUN {
+        if run_len > 0 {
             let run = &rest[..run_len];
-            let has_digit = run.bytes().any(|b| b.is_ascii_digit());
-            let has_letter = run.bytes().any(|b| b.is_ascii_alphabetic());
-            if has_digit && has_letter {
+            let opaque = run_len >= MIN_OPAQUE_RUN
+                && run.bytes().any(|b| b.is_ascii_digit())
+                && run.bytes().any(|b| b.is_ascii_alphabetic());
+            let is_request_id = EXEMPT_RUN_PREFIXES.iter().any(|p| run.starts_with(p));
+            if opaque && !is_request_id {
                 out.push_str("[redacted]");
-                i += run_len;
-                continue;
+            } else {
+                out.push_str(run);
             }
+            i += run_len;
+            continue;
         }
         let ch = rest.chars().next().expect("i < len");
         out.push(ch);
@@ -178,6 +190,22 @@ mod tests {
         // A long opaque token with no known prefix is still a key shape.
         let opaque = "AAAAbbbbCCCC1111ddddEEEEffff2222GGGG";
         assert_eq!(scrub_secrets(&format!("token {opaque} done")), "token [redacted] done");
+    }
+
+    /// Vendor request IDs must survive the opaque-token rule: users quote
+    /// them to support. A key-shaped token next to them is still redacted.
+    #[test]
+    fn request_ids_survive_but_key_shaped_tokens_do_not() {
+        let with_req = "failed for request req_6800a1b2c3d4e5f6a7b8c9d0e1f2a3b4";
+        assert_eq!(scrub_secrets(with_req), with_req);
+        let with_chatcmpl = "error in chatcmpl-9xY7zW1vU2tS3rQ4pN5mL6kJ7hG8fD9sA";
+        assert_eq!(scrub_secrets(with_chatcmpl), with_chatcmpl);
+        // Key-shaped token in the same string is still caught.
+        let mixed = "req_6800a1b2c3d4e5f6a7b8c9d0e1f2a3b4 key AAAAbbbbCCCC1111ddddEEEEffff2222GGGG";
+        assert_eq!(
+            scrub_secrets(mixed),
+            "req_6800a1b2c3d4e5f6a7b8c9d0e1f2a3b4 key [redacted]"
+        );
     }
 
     /// The other direction, from the review: model names and URLs in error
