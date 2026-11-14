@@ -38,3 +38,5 @@ objc2 = "0.6"
 tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2", version = "2.0.1" }
 cpal = "0.18.2"
 block2 = "0.6.2"
+# One provider, one key: the STT/LLM abstraction the whole app talks to.
+cv_providers = { path = "crates/cv_providers" }
