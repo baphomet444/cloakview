@@ -1,9 +1,16 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/site.config";
 import { guidePath, guideSlugs } from "@/lib/guide";
+import { comparePath, compareSlugs } from "@/content/compare";
 import changelog from "@/content/changelog.json";
 
-const paths = ["/", "/pricing", "/download", "/faq", "/support", "/changelog", "/privacy", "/terms", "/cookies", guidePath("en"), ...guideSlugs.map((slug) => guidePath("en", slug))];
+const paths = [
+  "/", "/pricing", "/download", "/faq", "/support", "/changelog", "/privacy", "/terms", "/cookies",
+  guidePath("en"),
+  ...guideSlugs.map((slug) => guidePath("en", slug)),
+  comparePath("en"),
+  ...compareSlugs.map((slug) => comparePath("en", slug)),
+];
 
 // The newest dated release: the changelog and the download page change when one ships.
 const latestRelease = changelog
