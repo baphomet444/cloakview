@@ -1,12 +1,29 @@
 use std::sync::{Mutex, RwLock};
 
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ModelOverride {
+    /// Replacement STT model; `None` = the profile's documented default.
+    pub stt: Option<String>,
+    /// Replacement LLM model; `None` = the profile's documented default.
+    pub llm: Option<String>,
+}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Settings {
     pub language: String,
     pub theme: String,
     pub opacity: f64,
-    pub answers_model: String,
+    /// The AI provider everything goes to (id into `cv_providers`' builtin
+    /// profiles): one provider, one key, for listening and answers alike.
+    /// Unknown values behave like "openai".
+    pub active_provider: String,
+    /// Safety valve, not exposed in the UI: replaces a profile's default
+    /// model (a retired model, say) without waiting for a release.
+    pub model_overrides: std::collections::HashMap<String, ModelOverride>,
+    /// The OpenAI Realtime transcription model for the streaming listen
+    /// path (used only while the active provider is "openai").
     pub realtime_model: String,
     /// Keywords `listen::pump` checks against each `Transcript`'s text —
     /// via `detect::is_user_turn` — to decide whether `"turn-detected"`
@@ -44,8 +61,12 @@ impl Default for Settings {
             language: "en".into(),
             theme: "dark".into(),
             opacity: 0.95,
-            answers_model: "gpt-4o-mini".into(),
-            realtime_model: "gpt-4o-mini-realtime".into(),
+            active_provider: "openai".into(),
+            model_overrides: Default::default(),
+            // gpt-4o-mini-transcribe: the transcription model the realtime
+            // session actually uses (older saves naming a conversation model
+            // fall back inside `realtime::client::transcription_model`).
+            realtime_model: "gpt-4o-mini-transcribe".into(),
             // The spec's example phrase (design.md §5, `detect`) and its
             // punctuation-free variant — Whisper frequently drops the ¿?.
             // Lowercase because `detect` compares case-insensitively anyway.
@@ -124,15 +145,16 @@ mod tests {
     /// `Settings` goes to the frontend (`get_settings`, `save_settings`) and is persisted
     /// to `settings.json`, so these exact camelCase keys are a contract with the
     /// frontend's `Settings` type. Without `rename_all` it would silently emit
-    /// `answers_model`, `realtime_model`, `user_keywords` and `user_name` instead.
+    /// `active_provider`, `realtime_model`, `user_keywords` and `user_name` instead.
     #[test]
     fn settings_serializes_with_camel_case_keys() {
         let s = Settings {
             language: "es".into(),
             theme: "light".into(),
             opacity: 0.5,
-            answers_model: "gpt-4o-mini".into(),
-            realtime_model: "gpt-4o-mini-realtime".into(),
+            active_provider: "groq".into(),
+            model_overrides: Default::default(),
+            realtime_model: "gpt-4o-mini-transcribe".into(),
             user_keywords: vec!["opinas".into()],
             user_name: Some("Ana".into()),
             shortcuts: crate::hotkeys::Shortcuts::default(),
@@ -149,8 +171,9 @@ mod tests {
                 "language": "es",
                 "theme": "light",
                 "opacity": 0.5,
-                "answersModel": "gpt-4o-mini",
-                "realtimeModel": "gpt-4o-mini-realtime",
+                "activeProvider": "groq",
+                "modelOverrides": {},
+                "realtimeModel": "gpt-4o-mini-transcribe",
                 "userKeywords": ["opinas"],
                 "userName": "Ana",
                 "shortcuts": {

@@ -49,7 +49,6 @@ pub struct SettingsPatch {
     pub language: Option<String>,
     pub theme: Option<String>,
     pub opacity: Option<f64>,
-    pub answers_model: Option<String>,
     pub realtime_model: Option<String>,
     pub user_keywords: Option<Vec<String>>,
     /// `None` = leave unchanged. A blank string clears the name (a plain
@@ -80,9 +79,6 @@ pub fn apply_patch(s: &mut Settings, patch: SettingsPatch) {
     }
     if let Some(v) = patch.opacity {
         s.opacity = v.clamp(0.1, 1.0);
-    }
-    if let Some(v) = patch.answers_model {
-        s.answers_model = v;
     }
     if let Some(v) = patch.realtime_model {
         s.realtime_model = v;
@@ -124,7 +120,7 @@ mod tests {
         // missing file -> defaults
         let s = load_from(&path);
         assert_eq!(s.language, "en");
-        assert_eq!(s.answers_model, "gpt-4o-mini");
+        assert_eq!(s.active_provider, "openai");
 
         // save + load roundtrip
         let mut s2 = s.clone();
@@ -197,5 +193,74 @@ mod tests {
         assert_eq!(s.answer_style, "balanced");
         apply_patch(&mut s, SettingsPatch { answer_style: Some("interview".into()), ..Default::default() });
         assert_eq!(s.answer_style, "interview");
+    }
+
+    /// A `settings.json` written by the shipped 0.2.1 build (schema at tag
+    /// `v0.2.1`: it has `answersModel`, no provider fields) must load
+    /// cleanly on the new build: no error, every field it set preserved, new
+    /// fields defaulted — and the transcription model actually sent must be
+    /// the same one 0.2.1 sent (0.2.1 saved `gpt-4o-mini-realtime`, which
+    /// its realtime client already fell back to `gpt-4o-mini-transcribe`).
+    #[test]
+    fn settings_json_written_by_v021_loads_without_error_or_loss() {
+        let dir = std::env::temp_dir().join("cloakview-settings-v021-fixture");
+        let path = settings_path(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            &path,
+            r#"{
+  "language": "es",
+  "theme": "light",
+  "opacity": 0.85,
+  "answersModel": "gpt-4o-mini",
+  "realtimeModel": "gpt-4o-mini-realtime",
+  "userKeywords": ["opinas", "christian"],
+  "userName": "Christian",
+  "shortcuts": {
+    "quickHide": "ctrl+alt+h",
+    "pushToAsk": "cmdOrControl+shift+space",
+    "toggleListen": "ctrl+alt+l",
+    "readScreen": "cmdOrControl+shift+s"
+  },
+  "includeMic": true,
+  "personalContext": "Rust engineer, interviewing for fintech roles.",
+  "answerStyle": "interview",
+  "translateTo": "en"
+}"#,
+        )
+        .unwrap();
+
+        let s = load_from(&path);
+
+        // Everything 0.2.1 wrote survives, nothing is silently reset.
+        assert_eq!(s.language, "es");
+        assert_eq!(s.theme, "light");
+        assert!((s.opacity - 0.85).abs() < f64::EPSILON);
+        assert_eq!(s.user_keywords, vec!["opinas", "christian"]);
+        assert_eq!(s.user_name.as_deref(), Some("Christian"));
+        assert_eq!(s.shortcuts, crate::hotkeys::Shortcuts::default());
+        assert!(s.include_mic);
+        assert_eq!(s.personal_context, "Rust engineer, interviewing for fintech roles.");
+        assert_eq!(s.answer_style, "interview");
+        assert_eq!(s.translate_to, "en");
+
+        // New fields pick up their defaults; the removed `answersModel` is ignored.
+        assert_eq!(s.active_provider, "openai");
+        assert!(s.model_overrides.is_empty());
+
+        // 0.2.1's saved value is kept verbatim, and the model the realtime
+        // session actually sends is the same one 0.2.1 sent — the new
+        // default (`gpt-4o-mini-transcribe`) equals 0.2.1's fallback.
+        assert_eq!(s.realtime_model, "gpt-4o-mini-realtime");
+        assert_eq!(
+            crate::realtime::client::transcription_model(&s.realtime_model),
+            "gpt-4o-mini-transcribe",
+            "an upgraded install must keep sending the model 0.2.1 sent"
+        );
+        assert_eq!(
+            crate::realtime::client::transcription_model(&Settings::default().realtime_model),
+            "gpt-4o-mini-transcribe",
+            "the new default must match what 0.2.1 actually sent"
+        );
     }
 }
