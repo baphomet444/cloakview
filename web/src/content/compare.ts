@@ -127,7 +127,7 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
         "Cluely sells screen-share undetectability as a separate top tier. CloakView hides the overlay in the free app, and you pay OpenAI for your own usage.",
       h1: "CloakView vs Cluely",
       standfirst:
-        "Cluely sells undetectability as its most expensive tier. CloakView hides the overlay in the free app.",
+        "Cluely sells undetectability as its most expensive tier. CloakView keeps the overlay out of a shared window in the free app.",
       intro: [
         "Both products do the same thing in the same place: an AI that listens to a live call and puts an answer on your screen while the other side sees nothing. The difference is the business model, and it shows up in three places — what the stealth costs, whose models answer, and whether your transcripts leave your Mac.",
         "Everything below about Cluely comes from its public pricing page in November 2026: a free Starter tier, a Pro subscription billed monthly or annually (from $11.99/month on annual billing), and a separate Pro + Undetectability tier that adds hiding from screen sharing. CloakView's side describes what the shipped app does today.",
@@ -145,7 +145,7 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
         },
         {
           label: "Hiding the overlay from a screen share",
-          we: "Included in every tier, free one included. It is the reason the app exists.",
+          we: "In every tier, free one included, on the configurations we have tested: share a window, not the whole display.",
           they: "A separate top tier: Pro + Undetectability. On Starter and Pro, undetectability is not in the plan.",
         },
         {
@@ -206,7 +206,7 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
       weWin: [
         {
           title: "Stealth is not an upsell",
-          body: "Hiding the overlay from a screen share is what CloakView is built around, and it works on the free app. With Cluely that behaviour is the most expensive tier.",
+          body: "Hiding the overlay from a shared window is what CloakView is built around, and it works in the free app. With Cluely that behaviour is the most expensive tier.",
         },
         {
           title: "No subscription to remember",
@@ -493,7 +493,7 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
         "Cluely vende la invisibilidad como plan superior aparte. CloakView oculta la ventana en la app gratuita y tú le pagas a OpenAI tu propio consumo.",
       h1: "CloakView vs Cluely",
       standfirst:
-        "Cluely vende la invisibilidad como su plan más caro. CloakView oculta la ventana en la app gratuita.",
+        "Cluely vende la invisibilidad como su plan más caro. CloakView mantiene la ventana fuera de la ventana que compartes, en la app gratuita.",
       intro: [
         "Los dos productos hacen lo mismo en el mismo sitio: una IA que escucha una llamada en directo y pone una respuesta en tu pantalla mientras la otra parte no ve nada. La diferencia está en el modelo de negocio, y se nota en tres puntos: qué cuesta la invisibilidad, qué modelos responden y si tus transcripciones salen de tu Mac.",
         "Todo lo que decimos de Cluely viene de su página de precios pública en noviembre de 2026: un plan Starter gratuito, una suscripción Pro mensual o anual (desde 11,99 USD/mes con facturación anual) y un plan Pro + Undetectability aparte que añade el ocultamiento durante la pantalla compartida. El lado de CloakView describe lo que la app hace hoy tal como se distribuye.",
@@ -511,7 +511,7 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
         },
         {
           label: "Ocultar la ventana en una pantalla compartida",
-          we: "Incluido en todos los planes, también en el gratuito. Es la razón de ser de la app.",
+          we: "En todos los planes, también en el gratuito, en las configuraciones que hemos probado: comparte una ventana, no toda la pantalla.",
           they: "Un plan superior aparte: Pro + Undetectability. En Starter y Pro la invisibilidad no está incluida.",
         },
         {
@@ -572,7 +572,7 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
       weWin: [
         {
           title: "La invisibilidad no es un extra",
-          body: "Ocultar la ventana a una pantalla compartida es aquello para lo que está construido CloakView, y funciona en la app gratuita. En Cluely ese comportamiento es el plan más caro.",
+          body: "Ocultar la ventana al compartir es aquello para lo que está construido CloakView, y funciona en la app gratuita. En Cluely ese comportamiento es el plan más caro.",
         },
         {
           title: "Sin suscripción que recordar",

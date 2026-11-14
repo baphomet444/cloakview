@@ -19,13 +19,13 @@
     "compare": "Comparativas"
   },
   "home": {
-    "title": "CloakView — copiloto de IA invisible para reuniones",
+    "title": "CloakView — copiloto privado de IA para reuniones",
     "hero": {
       "kicker": "Para macOS 14.2+",
       "titleLead": "Un copiloto de reuniones",
       "titleHand": "que solo tú",
       "titleTail": "puedes ver",
-      "subtitle": "CloakView escucha tu llamada, la transcribe en vivo y te sugiere qué decir después — en un overlay privado que nadie más en la llamada puede ver. Tu clave, tu control.",
+      "subtitle": "CloakView escucha tu llamada, la transcribe en vivo y sugiere qué decir — en una ventana privada que se queda fuera de la ventana que compartes. Tu clave, tu control.",
       "ctaHow": "Cómo funciona",
       "ctaDownload": "Descargar para macOS",
       "ctaSoon": "Próximamente",
@@ -65,7 +65,7 @@
         },
         {
           "title": "Escucha",
-          "desc": "Durante la llamada, CloakView transcribe la conversación localmente en tu Mac y detecta cuándo te toca hablar."
+          "desc": "Durante la llamada, CloakView captura el audio y lo envía a OpenAI para transcribirlo en vivo; después detecta cuándo te toca hablar."
         },
         {
           "title": "Sugiere",
@@ -79,11 +79,11 @@
       "items": [
         {
           "title": "Overlay privado",
-          "desc": "Las sugerencias se dibujan solo en tu pantalla — invisibles para Zoom, Meet, Teams y todos los demás."
+          "desc": "Las sugerencias se dibujan en una ventana privada, fuera de la ventana que compartes. Comparte una ventana, no toda la pantalla."
         },
         {
           "title": "Local-first",
-          "desc": "Sin cuentas, sin telemetría, sin backend. Los datos de tus reuniones no salen de tu Mac."
+          "desc": "Sin cuentas, sin telemetría, sin backend. Las transcripciones y notas se quedan en tu Mac; el audio va solo a OpenAI, con tu clave."
         },
         {
           "title": "BYOK primero",
@@ -117,7 +117,7 @@
       "items": [
         {
           "q": "¿Me estáis escuchando?",
-          "a": "No. El audio se procesa en tu Mac y se envía a OpenAI solo para transcribir y sugerir, con tu propia clave. No operamos servidores, así que no hay desde dónde escucharte."
+          "a": "No. No hay servidor de CloakView desde el que escuchar: el audio se captura en tu Mac y se envía directamente a OpenAI, con tu clave, para transcribirlo y sugerir respuestas. Nada pasa por nosotros."
         },
         {
           "q": "¿Dónde van las transcripciones?",
@@ -156,7 +156,7 @@
       "soon": "Próximamente.",
       "note": "Nunca te pediremos tu email para descargar."
     },
-    "description": "CloakView es un copiloto de reuniones para Mac: transcripción y sugerencias en vivo en una ventana que tu pantalla compartida no muestra. Gratis y con tu clave."
+    "description": "CloakView es un copiloto de reuniones para Mac: transcripción en vivo y respuestas sugeridas en una ventana fuera de lo que compartes. Gratis y con tu clave."
   },
   "pricing": {
     "title": "Precios: app gratis, Pro 99 USD, pago único",
@@ -304,7 +304,7 @@
         "items": [
           {
             "q": "¿Graba o sube CloakView las reuniones a sus servidores?",
-            "a": "No hay backend ni telemetría de CloakView. El audio se procesa en tu Mac y las peticiones a la API van directamente a OpenAI con tu clave. Consulta la política de datos de OpenAI antes de usar el servicio."
+            "a": "No hay backend ni telemetría de CloakView. El audio se captura en tu Mac y se envía a OpenAI con tu clave; las peticiones van directamente allí. Consulta la política de datos de OpenAI antes de usar el servicio."
           },
           {
             "q": "¿Dónde se guarda mi clave de API?",
@@ -434,7 +434,7 @@
   },
   "privacy": {
     "title": "Privacidad: local-first, sin telemetría",
-    "description": "Cómo trata CloakView tus datos: el audio y las transcripciones se quedan en tu Mac, sin backend, sin cuentas y sin telemetría. Qué se envía a OpenAI y por qué.",
+    "description": "Cómo trata CloakView tus datos: las transcripciones y las notas se quedan en tu Mac, sin backend, sin cuentas y sin telemetría. Qué se envía a OpenAI y por qué.",
     "updated": "Última actualización",
     "jurisdiction": "Regida por las leyes de Florida, EE.UU.",
     "sections": {
@@ -460,7 +460,7 @@
       },
       "storage": {
         "title": "Almacenamiento Local",
-        "content": "Todo el procesamiento ocurre en tu Mac. El audio de la reunión y las transcripciones permanecen locales en tu sistema a menos que las compartas explícitamente. CloakView no respalda, sincroniza ni carga ningún dato a almacenamiento en la nube."
+        "content": "Las transcripciones y notas se guardan en tu Mac, en una base de datos local. CloakView no las respalda, ni las sincroniza, ni las sube, y puedes borrarlas cuando quieras.\n\nEl procesamiento es otra cosa: para transcribir la llamada, la app envía el audio a la API de OpenAI con tu clave y OpenAI devuelve la transcripción. Nada pasa por un servidor de CloakView, porque no existe."
       },
       "thirdParties": {
         "title": "Terceros",
