@@ -76,8 +76,9 @@ export function CompareView({ locale, slug }: { locale: Locale; slug: CompareSlu
 
       <Section id="compare-table" title={locale === "en" ? "Side by side" : "Lado a lado"}>
         <div className="mt-5 rounded-xl border border-border">
-          <table className="w-full table-fixed border-collapse text-left text-sm">
-            <thead>
+          {/* Phones get one stacked block per row; the table only appears from md up. */}
+          <table className="block w-full border-collapse text-left text-sm md:table">
+            <thead className="hidden md:table-header-group">
               <tr className="border-b border-border bg-surface">
                 <th scope="col" className="px-4 py-3 align-bottom font-medium text-muted">
                   {labels.tableFeature}
@@ -90,14 +91,24 @@ export function CompareView({ locale, slug }: { locale: Locale; slug: CompareSlu
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="block md:table-row-group">
               {doc.rows.map((row) => (
-                <tr key={row.label} className="border-b border-border last:border-0">
-                  <th scope="row" className="px-4 py-4 align-top font-medium text-foreground">
+                <tr key={row.label} className="block border-b border-border px-4 py-4 last:border-0 md:table-row md:px-0 md:py-0">
+                  <th scope="row" className="block font-medium text-foreground md:table-cell md:px-4 md:py-4 md:align-top">
                     {row.label}
                   </th>
-                  <td className="px-4 py-4 align-top text-muted">{row.we}</td>
-                  <td className="px-4 py-4 align-top text-muted">{row.they}</td>
+                  <td className="mt-2 block text-muted md:mt-0 md:table-cell md:px-4 md:py-4 md:align-top">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-foreground md:hidden">
+                      CloakView
+                    </span>
+                    {row.we}
+                  </td>
+                  <td className="mt-3 block text-muted md:mt-0 md:table-cell md:px-4 md:py-4 md:align-top">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-foreground md:hidden">
+                      {doc.name}
+                    </span>
+                    {row.they}
+                  </td>
                 </tr>
               ))}
             </tbody>
