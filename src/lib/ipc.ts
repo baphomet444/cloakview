@@ -22,6 +22,7 @@ import {
   IPC_ERROR_MESSAGE_KINDS,
   IPC_ERROR_UNIT_KINDS,
   type AppInfo,
+  type ConnectionTestResult,
   type Conversation,
   type ConversationMessage,
   type IpcError,
@@ -34,6 +35,7 @@ import {
   type NoteFilter,
   type PastSession,
   type PastSessionDetail,
+  type ProviderInfo,
   type SessionSummary,
   type Settings,
   type SettingsPatch,
@@ -49,6 +51,11 @@ export interface CommandSignatures {
   get_api_key_status: { args: undefined; result: boolean };
   save_api_key: { args: { key: string }; result: void };
   clear_api_key: { args: undefined; result: void };
+  list_profiles: { args: undefined; result: ProviderInfo[] };
+  save_key: { args: { providerId: string; key: string }; result: void };
+  clear_key: { args: { providerId: string }; result: void };
+  set_active_provider: { args: { providerId: string }; result: Settings };
+  test_connection: { args: { providerId: string }; result: ConnectionTestResult };
   get_settings: { args: undefined; result: Settings };
   save_settings: { args: { patch: SettingsPatch }; result: Settings };
   create_note: { args: { input: NewNote }; result: Note };
@@ -116,6 +123,11 @@ export const COMMANDS = [
   "list_sessions",
   "get_session",
   "delete_session",
+  "list_profiles",
+  "save_key",
+  "clear_key",
+  "set_active_provider",
+  "test_connection",
 ] as const satisfies readonly (keyof CommandSignatures)[];
 
 export type CommandName = (typeof COMMANDS)[number];
@@ -141,6 +153,23 @@ export function hasApiKey(): Promise<boolean> {
 }
 export function clearApiKey(): Promise<void> {
   return call("clear_api_key");
+}
+
+// providers
+export function listProfiles(): Promise<ProviderInfo[]> {
+  return call("list_profiles");
+}
+export function saveKey(providerId: string, key: string): Promise<void> {
+  return call("save_key", { providerId, key });
+}
+export function clearKey(providerId: string): Promise<void> {
+  return call("clear_key", { providerId });
+}
+export function setActiveProvider(providerId: string): Promise<Settings> {
+  return call("set_active_provider", { providerId });
+}
+export function testConnection(providerId: string): Promise<ConnectionTestResult> {
+  return call("test_connection", { providerId });
 }
 
 // settings

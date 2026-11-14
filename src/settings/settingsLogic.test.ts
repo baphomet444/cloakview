@@ -15,8 +15,9 @@ const settings: Settings = {
   language: "en",
   theme: "dark",
   opacity: 0.9,
-  answersModel: "gpt-4o-mini",
-  realtimeModel: "gpt-4o-realtime-preview",
+  activeProvider: "openai",
+  modelOverrides: {},
+  realtimeModel: "gpt-4o-mini-transcribe",
   userKeywords: [],
   userName: null,
   shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "cmdOrControl+shift+space", toggleListen: "", readScreen: "" },
@@ -53,39 +54,31 @@ describe("maskKey", () => {
   });
 });
 
-describe("the model and shortcuts draft", () => {
+describe("the shortcuts and context draft", () => {
   it("starts from the saved settings and is not dirty", () => {
     const draft = draftFromSettings(settings);
-    expect(draft).toEqual({ answersModel: "gpt-4o-mini", shortcuts: settings.shortcuts, personalContext: "" });
+    expect(draft).toEqual({ shortcuts: settings.shortcuts, personalContext: "" });
     expect(isDraftDirty(draft, settings)).toBe(false);
   });
 
   it("is dirty once any field differs after trimming, and not for whitespace alone", () => {
     const draft = draftFromSettings(settings);
-    expect(isDraftDirty({ ...draft, answersModel: " gpt-4o-mini " }, settings)).toBe(false);
-    expect(isDraftDirty({ ...draft, answersModel: "gpt-4.1" }, settings)).toBe(true);
     expect(isDraftDirty({ ...draft, shortcuts: { ...draft.shortcuts, toggleListen: "cmdOrControl+shift+l" } }, settings)).toBe(true);
     expect(isDraftDirty({ ...draft, personalContext: "  Rust engineer.  " }, { ...settings, personalContext: "Rust engineer." })).toBe(false);
     expect(isDraftDirty({ ...draft, personalContext: "Rust engineer." }, settings)).toBe(true);
   });
 
-  it("is invalid with a blank model (Rust would accept it and every answer would fail)", () => {
+  it("is always valid (a blank shortcut turns that action off)", () => {
     expect(draftIsValid(draftFromSettings(settings))).toBe(true);
-    expect(draftIsValid({ ...draftFromSettings(settings), answersModel: "   " })).toBe(false);
-  });
-
-  it("a blank shortcut is valid: it turns that action off", () => {
     expect(draftIsValid({ ...draftFromSettings(settings), shortcuts: { quickHide: "", pushToAsk: "", toggleListen: "", readScreen: "" } })).toBe(true);
   });
 
   it("saves trimmed values and always all four shortcuts (the patch replaces the set)", () => {
     const patch = draftPatch({
-      answersModel: "  gpt-4.1 ",
       shortcuts: { quickHide: " cmdOrControl+shift+h ", pushToAsk: "", toggleListen: "alt+l ", readScreen: " alt+s " },
       personalContext: "  Senior Rust engineer.  ",
     });
     expect(patch).toEqual({
-      answersModel: "gpt-4.1",
       shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "", toggleListen: "alt+l", readScreen: "alt+s" },
       personalContext: "Senior Rust engineer.",
     });

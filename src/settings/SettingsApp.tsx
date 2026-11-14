@@ -5,12 +5,14 @@ import {
   deactivateLicense,
   getAppInfo,
   getLicenseStatus,
-  hasApiKey,
+  listProfiles,
   openExternal,
-  saveApiKey,
+  saveKey,
   saveSettings,
+  setActiveProvider,
+  testConnection,
 } from "../lib/ipc";
-import type { License, Settings, SettingsPatch, Shortcuts } from "../lib/models";
+import type { ConnectionTestResult, License, ProviderInfo, Settings, SettingsPatch, Shortcuts } from "../lib/models";
 import { errorCopyKey } from "../hub/hubLogic";
 import { WindowFrame } from "../windows/WindowFrame";
 import { applyAppearance, useSettingsBoot } from "../windows/useSettingsBoot";
@@ -68,17 +70,21 @@ const THEMES: readonly { value: Theme; labelKey: CatalogKey }[] = [
 ];
 
 /**
- * The OpenAI key (Keychain), and the saved settings. Language, theme and opacity apply
- * and save as soon as they change; the model and the shortcuts wait for Save, because
- * they are invalid while being typed. Rust re-registers the shortcuts when they change.
+ * The AI provider and its key (Keychain), and the saved settings. Language,
+ * theme, opacity and the provider apply and save as soon as they change; the
+ * shortcuts wait for Save, because an accelerator is invalid while being
+ * typed. Answer models are not editable: they come from the provider's
+ * profile. Rust re-registers the shortcuts when they change.
  */
 export function SettingsApp() {
   const { settings, setSettings, locale: bootLocale, bootErrorKey } = useSettingsBoot();
   const [locale, setLocaleState] = useState<Locale>(bootLocale);
   const [errorKey, setErrorKey] = useState<CatalogKey | null>(null);
-  const [keyStored, setKeyStored] = useState<boolean | null>(null);
+  const [providers, setProviders] = useState<ProviderInfo[] | null>(null);
   const [keyInput, setKeyInput] = useState("");
   const [savingKey, setSavingKey] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
   const [license, setLicense] = useState<License | null>(null);
   const [licenseInput, setLicenseInput] = useState("");
   const [savingLicense, setSavingLicense] = useState(false);
@@ -100,11 +106,19 @@ export function SettingsApp() {
     setOpacity((current) => current ?? settings.opacity);
   }, [settings]);
 
+  const refreshProviders = async (): Promise<void> => {
+    try {
+      setProviders(await listProfiles());
+    } catch (error: unknown) {
+      setErrorKey(errorCopyKey(error));
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
-    hasApiKey()
-      .then((stored) => {
-        if (!cancelled) setKeyStored(stored);
+    listProfiles()
+      .then((list) => {
+        if (!cancelled) setProviders(list);
       })
       .catch((error: unknown) => {
         if (!cancelled) setErrorKey(errorCopyKey(error));
@@ -142,16 +156,43 @@ export function SettingsApp() {
 
   async function storeKey(): Promise<void> {
     const key = keyInput.trim();
-    if (key === "" || savingKey) return;
+    const active = providers?.find((p) => p.active);
+    if (key === "" || savingKey || active === undefined) return;
     setSavingKey(true);
     try {
-      await saveApiKey(key);
+      await saveKey(active.id, key);
       setKeyInput("");
-      setKeyStored(true);
+      setTestResult(null);
+      await refreshProviders();
     } catch (error) {
       setErrorKey(errorCopyKey(error));
     } finally {
       setSavingKey(false);
+    }
+  }
+
+  async function chooseProvider(id: string): Promise<void> {
+    try {
+      const saved = await setActiveProvider(id);
+      setSettings(saved);
+      setTestResult(null);
+      await refreshProviders();
+    } catch (error) {
+      setErrorKey(errorCopyKey(error));
+    }
+  }
+
+  async function runConnectionTest(): Promise<void> {
+    const active = providers?.find((p) => p.active);
+    if (testing || active === undefined) return;
+    setTesting(true);
+    setTestResult(null);
+    try {
+      setTestResult(await testConnection(active.id));
+    } catch (error) {
+      setErrorKey(errorCopyKey(error));
+    } finally {
+      setTesting(false);
     }
   }
 
@@ -223,34 +264,79 @@ export function SettingsApp() {
   return (
     <WindowFrame titleKey="settings.title" locale={locale} errorKey={errorKey} onDismissError={() => setErrorKey(null)}>
       <section className="set-section">
-        <h2 className="win-label">{t("settings.apiKey")}</h2>
-        <form
-          className="win-row"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void storeKey();
-          }}
-        >
-          <input
-            className="win-input"
-            type="password"
-            autoComplete="off"
-            spellCheck={false}
-            value={keyInput}
-            placeholder={t("settings.keyPlaceholder")}
-            aria-label={t("settings.apiKey")}
-            onChange={(event) => setKeyInput(event.currentTarget.value)}
-          />
-          <button type="submit" className="win-btn win-btn-primary" disabled={savingKey || keyInput.trim() === ""}>
-            {t("settings.saveKey")}
-          </button>
-        </form>
-        {keyStored !== null && (
-          <p className={keyStored ? "set-status set-ok" : "set-status win-muted"}>
-            {keyStored ? t("settings.keySaved") : t("settings.keyNotSet")}
-          </p>
-        )}
+        <h2 className="win-label">{t("settings.aiProvider")}</h2>
+        {providers === null ? (
+          <p className="win-muted">{t("settings.loading")}</p>
+        ) : (
+          <>
+            <div className="seg" role="radiogroup" aria-label={t("settings.aiProvider")}>
+              {providers.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={p.active}
+                  className="seg-btn"
+                  onClick={() => void chooseProvider(p.id)}
+                >
+                  {p.displayName}
+                </button>
+              ))}
+            </div>
+            {(() => {
+              const active = providers.find((p) => p.active);
+              if (active === undefined) return null;
+              return (
+                <>
+                  <p className="win-hint">
+                    {t("settings.modelsLine")
+                      .replace("{stt}", active.sttModel ?? "—")
+                      .replace("{llm}", active.llmModel)}
+                  </p>
+                  {active.sttMode === "batch" && <p className="set-status win-muted">{t("settings.listeningNote")}</p>}
+                  <form
+                    className="win-row"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void storeKey();
+                    }}
+                  >
+                    <input
+                      className="win-input"
+                      type="password"
+                      autoComplete="off"
+                      spellCheck={false}
+                      value={keyInput}
+                      placeholder={t("settings.keyPlaceholder")}
+                      aria-label={t("settings.apiKey")}
+                      onChange={(event) => setKeyInput(event.currentTarget.value)}
+                    />
+                    <button type="submit" className="win-btn win-btn-primary" disabled={savingKey || keyInput.trim() === ""}>
+                      {t("settings.saveKey")}
+                    </button>
+                    <button type="button" className="win-btn" disabled={testing || !active.hasKey} onClick={() => void runConnectionTest()}>
+                      {testing ? "…" : t("settings.testConnection")}
+                    </button>
+                  </form>
+                  <p className={active.hasKey ? "set-status set-ok" : "set-status win-muted"}>
+                    {active.hasKey ? t("settings.keySaved") : t("settings.keyNotSet")}
+                  </p>
+                  {testResult !== null && (
+                    <p className={testResult.stt === null && testResult.llm === null ? "set-status set-ok" : "set-status win-muted"}>
+                      {testResult.stt === null && testResult.llm === null
+                        ? t("settings.testOk")
+                        : `${t("settings.testFail")}${testResult.stt !== null ? ` — ${testResult.stt}` : ""}${
+                            testResult.llm !== null ? ` — ${testResult.llm}` : ""
+                          }`}
+                    </p>
+                  )}
+                </>
+              );
+            })()}
         <p className="win-hint">{t("settings.apiKeyHint")}</p>
+        <p className="win-hint">{t("settings.providerHint")}</p>
+          </>
+        )}
       </section>
 
       <section className="set-section">
@@ -388,22 +474,6 @@ export function SettingsApp() {
               void saveDraft();
             }}
           >
-            <label className="win-label" htmlFor="set-model">
-              {t("settings.answersModel")}
-            </label>
-            <input
-              id="set-model"
-              className="win-input win-mono"
-              type="text"
-              spellCheck={false}
-              value={draft.answersModel}
-              onChange={(event) => {
-                const answersModel = event.currentTarget.value;
-                setJustSaved(false);
-                setDraft((current) => (current === null ? current : { ...current, answersModel }));
-              }}
-            />
-
             <label className="win-label" htmlFor="set-context">
               {t("settings.personalContext")}
             </label>

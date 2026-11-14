@@ -123,7 +123,10 @@ export type Settings = {
   language: string;
   theme: string;
   opacity: number;
-  answersModel: string;
+  /** The active AI provider's id ("openai" when unknown). Not user-editable here: `set_active_provider`. */
+  activeProvider: string;
+  /** Safety valve kept in the settings file (not the UI): per-provider model replacements. */
+  modelOverrides: Record<string, ModelOverride>;
   realtimeModel: string;
   /** Matched against each transcript line to decide `turn-detected`. Seeded by Rust on a clean install. */
   userKeywords: string[];
@@ -140,6 +143,30 @@ export type Settings = {
   translateTo: string;
 };
 
+/** `model_overrides` entry: a blank/absent field keeps the profile's documented default. */
+export type ModelOverride = {
+  stt?: string | null;
+  llm?: string | null;
+};
+
+/** `list_profiles`. `src-tauri/src/commands.rs` (`ProviderInfo`): one row per provider, never key material. */
+export type ProviderInfo = {
+  id: string;
+  displayName: string;
+  /** Which listen path the provider supports. */
+  sttMode: "streaming" | "batch";
+  sttModel: string | null;
+  llmModel: string;
+  hasKey: boolean;
+  active: boolean;
+};
+
+/** `test_connection`. `src-tauri/src/commands.rs` (`ConnectionTestResult`): `null` = that side passed. */
+export type ConnectionTestResult = {
+  stt: string | null;
+  llm: string | null;
+};
+
 /**
  * Input of `save_settings`. `src-tauri/src/settings.rs` (`SettingsPatch`): omit a key to leave it unchanged.
  * `userName` is a `string`, not `string | null`: Rust can't tell `null` from "absent", so
@@ -149,7 +176,6 @@ export type SettingsPatch = {
   language?: string;
   theme?: string;
   opacity?: number;
-  answersModel?: string;
   realtimeModel?: string;
   userKeywords?: string[];
   userName?: string;
@@ -207,6 +233,10 @@ export const IPC_ERROR_MESSAGE_KINDS = [
   "InvalidUrl",
   "OpenFailed",
   "License",
+  "UnknownProvider",
+  "ProviderKeyMissing",
+  "Provider",
+  "SttUnsupported",
 ] as const;
 export type IpcError =
   | { kind: (typeof IPC_ERROR_UNIT_KINDS)[number] }

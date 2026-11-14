@@ -18,18 +18,17 @@ export function clampOpacity(value: number): number {
 
 /**
  * The fields saved with the Save button, as typed. Language, theme and opacity apply
- * (and save) the moment they change; a model name or an accelerator would be invalid
- * halfway through typing, so these wait for Save.
+ * (and save) the moment they change; an accelerator would be invalid halfway
+ * through typing, so these wait for Save. Answer models are not here at all:
+ * they come from the chosen provider's profile (`list_profiles`).
  */
 export type SettingsDraft = {
-  answersModel: string;
   shortcuts: Shortcuts;
   personalContext: string;
 };
 
 export function draftFromSettings(settings: Settings): SettingsDraft {
   return {
-    answersModel: settings.answersModel,
     shortcuts: { ...settings.shortcuts },
     personalContext: settings.personalContext,
   };
@@ -38,7 +37,6 @@ export function draftFromSettings(settings: Settings): SettingsDraft {
 /** Always all four shortcuts: `SettingsPatch.shortcuts` replaces the saved set. */
 export function draftPatch(draft: SettingsDraft): SettingsPatch {
   return {
-    answersModel: draft.answersModel.trim(),
     shortcuts: {
       quickHide: draft.shortcuts.quickHide.trim(),
       pushToAsk: draft.shortcuts.pushToAsk.trim(),
@@ -49,9 +47,9 @@ export function draftPatch(draft: SettingsDraft): SettingsPatch {
   };
 }
 
-/** A blank model would be saved and make every answer fail. A blank shortcut is fine: it turns that action off. */
-export function draftIsValid(draft: SettingsDraft): boolean {
-  return draft.answersModel.trim() !== "";
+/** A blank shortcut is fine: it turns that action off. */
+export function draftIsValid(_draft: SettingsDraft): boolean {
+  return true;
 }
 
 /** How a stored license key is shown: only its last four characters, so shoulder surfers and screenshots learn nothing. */
@@ -63,7 +61,6 @@ export function maskKey(key: string): string {
 export function isDraftDirty(draft: SettingsDraft, saved: Settings): boolean {
   const patch = draftPatch(draft);
   return (
-    patch.answersModel !== saved.answersModel ||
     patch.personalContext !== saved.personalContext ||
     patch.shortcuts?.quickHide !== saved.shortcuts.quickHide ||
     patch.shortcuts?.pushToAsk !== saved.shortcuts.pushToAsk ||

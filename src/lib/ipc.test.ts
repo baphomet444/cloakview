@@ -148,6 +148,13 @@ const cases: Case[] = [
   ["list_sessions", () => ipc.listSessions("rewrite"), { query: "rewrite" }],
   ["get_session", () => ipc.getSession("s1"), { id: "s1" }],
   ["delete_session", () => ipc.deleteSession("s1"), { id: "s1" }],
+  // providers (one provider, one key)
+  ["list_profiles", () => ipc.listProfiles(), undefined],
+  // The camelCase trap: Rust's `provider_id` argument is `providerId` from JS.
+  ["save_key", () => ipc.saveKey("groq", "gsk-x"), { providerId: "groq", key: "gsk-x" }],
+  ["clear_key", () => ipc.clearKey("groq"), { providerId: "groq" }],
+  ["set_active_provider", () => ipc.setActiveProvider("together"), { providerId: "together" }],
+  ["test_connection", () => ipc.testConnection("openai"), { providerId: "openai" }],
 ];
 
 describe("wrappers", () => {
@@ -211,8 +218,9 @@ const settings: Settings = {
   language: "en",
   theme: "dark",
   opacity: 0.5,
-  answersModel: "gpt-4o-mini",
-  realtimeModel: "gpt-4o-mini-realtime",
+  activeProvider: "openai",
+  modelOverrides: {},
+  realtimeModel: "gpt-4o-mini-transcribe",
   userKeywords: [],
   userName: null,
   shortcuts: { quickHide: "", pushToAsk: "", toggleListen: "", readScreen: "" },
