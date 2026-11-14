@@ -214,7 +214,7 @@
   },
   "download": {
     "title": "Descargar CloakView gratis para macOS — notarizada",
-    "description": "Descarga el DMG de CloakView para Apple Silicon, comprueba su SHA-256 e instálalo en tres pasos. Firmada y notarizada por Apple; requiere macOS 14.2 o posterior.",
+    "description": "Descarga el DMG de CloakView para Apple Silicon, comprueba su SHA-256 e instálalo en 3 pasos. Firmada y notarizada por Apple; requiere macOS 14.2 o posterior.",
     "badge": "macOS 14.2+",
     "heading": "Elige tu versión",
     "intro": "Tu clave sigue siendo tuya. Elige una descarga; todas las opciones permanecen visibles sin importar tu dispositivo. Las descargas se abren en GitHub Releases.",
@@ -288,7 +288,7 @@
       },
       "troubleshooting": {
         "title": "Problemas: instalación, permisos y audio",
-        "description": "Soluciona los fallos habituales de CloakView: un atajo que no hace nada, un permiso denegado, falta de transcripción, una clave ausente o una conexión que falla."
+        "description": "Soluciona los fallos habituales de CloakView: un atajo que no hace nada, un permiso denegado, falta de transcripción, una clave ausente o una conexión caída."
       }
     }
   },
