@@ -48,9 +48,9 @@ export const CHECKED_AT: Record<Locale, string> = {
 
 export const compareIndex: Record<Locale, CompareIndex> = {
   en: {
-    title: "Compare CloakView with other AI meeting copilots",
+    title: "Compare CloakView with other AI copilots",
     description:
-      "How CloakView compares with Cluely, Smog AI and Final Round AI on price, screen-share stealth, whose models answer and where your transcripts end up.",
+      "How CloakView compares with Cluely, Smog AI and Final Round AI on price, screen-share stealth, whose models answer and where transcripts end up.",
     h1: "How CloakView compares",
     intro:
       "Three comparisons, same structure each time: what the tool costs, whether the overlay is actually hidden in the tier you would buy, whose models answer, and where the transcript ends up. Every claim about a rival comes from that vendor's own pricing or product pages.",
@@ -58,9 +58,9 @@ export const compareIndex: Record<Locale, CompareIndex> = {
     checkedLabel: "Prices checked",
   },
   es: {
-    title: "Compara CloakView con otros copilotos de reuniones",
+    title: "Compara CloakView con otros copilotos",
     description:
-      "Cómo se compara CloakView con Cluely, Smog AI y Final Round AI en precio, invisibilidad en la pantalla compartida, qué modelos responden y dónde acaban tus transcripciones.",
+      "Cómo se compara CloakView con Cluely, Smog AI y Final Round AI en precio, invisibilidad, modelos y dónde acaban tus transcripciones.",
     h1: "Cómo se compara CloakView",
     intro:
       "Tres comparativas con la misma estructura: cuánto cuesta la herramienta, si la ventana está realmente oculta en el plan que comprarías, qué modelos responden y dónde acaba la transcripción. Todo lo que decimos de cada rival sale de sus propias páginas de precios o de producto.",
@@ -124,7 +124,7 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
       vendorUrl: "https://cluely.com/pricing",
       title: "CloakView vs Cluely: price, stealth and privacy",
       description:
-        "Cluely sells screen-share undetectability as a separate top tier. CloakView hides the overlay in every tier and you pay OpenAI directly. Price, stealth and data, side by side.",
+        "Cluely sells screen-share undetectability as a separate top tier. CloakView hides the overlay in the free app, and you pay OpenAI for your own usage.",
       h1: "CloakView vs Cluely",
       standfirst:
         "Cluely sells undetectability as its most expensive tier. CloakView hides the overlay in the free app.",
@@ -247,7 +247,7 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
       vendorUrl: "https://smog-ai.com/pricing",
       title: "CloakView vs Smog AI: price, stealth and privacy",
       description:
-        "Smog AI includes stealth in its free tier and sells a $199 lifetime licence. CloakView is free with a one-time $99 Pro. How the two differ on cost, quotas and where your data lives.",
+        "Smog AI includes stealth in its free tier and sells a $199 lifetime licence. CloakView is free, with a $99 one-time Pro. Cost, quotas and data compared.",
       h1: "CloakView vs Smog AI",
       standfirst:
         "The closest pair on this site: both are native Mac overlays that stay invisible to a screen share.",
@@ -370,7 +370,7 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
       vendorUrl: "https://www.finalroundai.com/blog/final-round-ai-pricing",
       title: "CloakView vs Final Round AI: cost and stealth",
       description:
-        "Final Round AI charges $25 to $90 a month for live Copilot sessions, with no permanent free plan. CloakView is free with a one-time $99 Pro and your own OpenAI key.",
+        "Final Round AI charges $25 to $90 a month for live Copilot sessions and has no free plan. CloakView is free, with a one-time $99 Pro.",
       h1: "CloakView vs Final Round AI",
       standfirst:
         "One is an interview-prep suite with a live copilot attached. The other is only the live copilot.",
@@ -490,7 +490,7 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
       vendorUrl: "https://cluely.com/pricing",
       title: "CloakView vs Cluely: precio y privacidad",
       description:
-        "Cluely vende la invisibilidad en pantalla compartida como plan superior aparte. CloakView oculta la ventana en todos sus planes y le pagas a OpenAI directamente. Precio, invisibilidad y datos, lado a lado.",
+        "Cluely vende la invisibilidad como plan superior aparte. CloakView oculta la ventana en la app gratuita y tú le pagas a OpenAI tu propio consumo.",
       h1: "CloakView vs Cluely",
       standfirst:
         "Cluely vende la invisibilidad como su plan más caro. CloakView oculta la ventana en la app gratuita.",
@@ -613,7 +613,7 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
       vendorUrl: "https://smog-ai.com/pricing",
       title: "CloakView vs Smog AI: precio e invisibilidad",
       description:
-        "Smog AI incluye la invisibilidad en su plan gratuito y vende una licencia de por vida por 199 USD. CloakView es gratis, con Pro de 99 USD una sola vez. Coste, cuotas y datos, comparados.",
+        "Smog AI incluye la invisibilidad en su plan gratuito y vende una licencia de 199 USD. CloakView es gratis, con Pro de 99 USD una sola vez.",
       h1: "CloakView vs Smog AI",
       standfirst:
         "El par más cercano del sitio: las dos son ventanas nativas de Mac invisibles a la pantalla compartida.",
@@ -734,9 +734,9 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
     "final-round-ai": {
       name: "Final Round AI",
       vendorUrl: "https://www.finalroundai.com/blog/final-round-ai-pricing",
-      title: "CloakView vs Final Round AI: coste e invisibilidad",
+      title: "CloakView vs Final Round AI: coste y datos",
       description:
-        "Final Round AI cobra entre 25 y 90 USD al mes por sesiones en vivo y no tiene plan gratuito permanente. CloakView es gratis, con Pro de 99 USD una vez y tu clave de OpenAI.",
+        "Final Round AI cobra de 25 a 90 USD al mes por sesiones en vivo y no tiene plan gratis. CloakView es gratis, con Pro de 99 USD una vez.",
       h1: "CloakView vs Final Round AI",
       standfirst:
         "Una es una suite de preparación de entrevistas con copiloto en vivo. La otra es solo el copiloto en vivo.",

@@ -32,9 +32,9 @@ export function CompareIndex({ locale }: { locale: Locale }) {
                 href={comparePath(locale, slug)}
                 className="block rounded-xl border border-border bg-surface p-6 hover:border-accent"
               >
-                <span className="font-display text-xl font-semibold text-foreground">
+                <h2 className="font-display text-xl font-semibold text-foreground">
                   CloakView vs {doc.name}
-                </span>
+                </h2>
                 <span className="mt-2 block text-muted">{doc.standfirst}</span>
                 <span className="mt-3 block text-sm text-accent">{labels.readLabel} →</span>
               </Link>
