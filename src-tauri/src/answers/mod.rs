@@ -1,7 +1,6 @@
 use serde::Serialize;
 
 pub mod client;
-pub mod parse;
 
 /// Events surfaced from the Responses API stream. They travel from
 /// `client::stream_answer` to `commands::request_answer` over an `mpsc`

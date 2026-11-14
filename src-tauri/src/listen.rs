@@ -56,7 +56,6 @@ use crate::audio::{AudioChunk, AudioSource, AudioStatus};
 use crate::error::AppResult;
 use crate::events::{ERROR_EVENT, LISTEN_STATE_EVENT, TRANSCRIPT_DELTA_EVENT, TURN_DETECTED_EVENT};
 use crate::realtime::{self, RealtimeEvent};
-use crate::secrets;
 use crate::transcript::Turn;
 use serde::Serialize;
 use tauri::{Emitter, Manager};
@@ -134,18 +133,16 @@ impl SessionHandle {
     }
 }
 
-/// Resolves the OpenAI API key and starts `src` — in that order, and both
-/// *before* any task is spawned: `secrets::get_api_key()` surfaces
-/// `AppError::MissingApiKey` synchronously, so a missing key is never
-/// discovered from inside a spawned task. No `tauri` import — unit-tested
-/// directly via `start_without_key_is_missing_api_key`.
+/// Starts `src` — before any task is spawned: the caller resolves the key
+/// (and refuses batch-only providers) first, so a missing key or an
+/// unsupported provider is never discovered from inside a spawned task. No
+/// `tauri` import — unit-tested directly via `prepare_session`.
 fn prepare_session(
     mut src: Box<dyn AudioSource>,
-) -> AppResult<(String, Box<dyn AudioSource>, mpsc::Receiver<AudioStatus>)> {
-    let api_key = secrets::get_api_key()?;
+) -> AppResult<(Box<dyn AudioSource>, mpsc::Receiver<AudioStatus>)> {
     let (tx, rx) = mpsc::channel(32);
     src.start(tx)?;
-    Ok((api_key, src, rx))
+    Ok((src, rx))
 }
 
 /// Appends `turn`, dropping the oldest entry first once at capacity.
@@ -300,9 +297,16 @@ fn diag_entry(event: &str, payload: &serde_json::Value) -> String {
 /// parsed events back out) until cancelled, a fatal audio error, or the
 /// realtime session itself returns.
 pub fn start(model: String, include_mic: bool, app: tauri::AppHandle) -> AppResult<SessionHandle> {
+    // The active provider must support streaming STT (Phase 1: OpenAI only),
+    // and its key must be saved — both checked before anything starts.
+    let api_key = {
+        let state = app.state::<crate::state::AppState>();
+        let settings = state.settings.read().expect("settings lock");
+        crate::providers::active_streaming_key(&settings)?
+    };
     let gate = crate::audio::EchoGate::default();
     let src: Box<dyn AudioSource> = Box::new(crate::audio::screencapturekit::SckAudioSource::new(gate.clone())?);
-    let (api_key, mut src, status_rx) = prepare_session(src)?;
+    let (mut src, status_rx) = prepare_session(src)?;
 
     let (audio_tx, audio_rx) = mpsc::channel::<AudioChunk>(32);
     let (rt_tx, rt_rx) = mpsc::channel::<RealtimeEvent>(64);
@@ -372,14 +376,21 @@ pub fn start(model: String, include_mic: bool, app: tauri::AppHandle) -> AppResu
         // background request; the result is emitted as `"translation"`.
         let translation_dispatch: Option<Box<dyn Fn(String, i64) + Send + Sync>> =
             if app_state.is_pro() && !translate_to.is_empty() {
-                let key = api_key.clone();
-                let model = model.clone();
+                // Text work goes to the active provider's LLM model — the
+                // transcription model cannot translate.
+                let provider = crate::providers::resolve_active(
+                    &app_state.settings.read().expect("settings lock"),
+                ).ok();
                 let target = translate_to.clone();
                 let app = translation_app.clone();
                 Some(Box::new(move |text: String, ts: i64| {
-                    let (key, model, target, app) = (key.clone(), model.clone(), target.clone(), app.clone());
+                    let (provider, target, app) = (provider.clone(), target.clone(), app.clone());
                     tauri::async_runtime::spawn(async move {
-                        match crate::answers::client::translate(&key, &model, &text, &target).await {
+                        let Some(provider) = provider else {
+                            crate::diag::log("translation skipped: no active provider");
+                            return;
+                        };
+                        match crate::answers::client::translate(&provider, &text, &target).await {
                             Ok(translated) => {
                                 crate::diag::log(&format!("translation ({} chars)", translated.chars().count()));
                                 let _ = app.emit(
@@ -421,7 +432,6 @@ pub fn start(model: String, include_mic: bool, app: tauri::AppHandle) -> AppResu
 mod tests {
     use super::*;
     use crate::audio::FakeAudioSource;
-    use crate::error::AppError;
 
     /// Every `(event name, payload)` a test's `emit` was called with.
     type Recorded = std::sync::Arc<std::sync::Mutex<Vec<(String, serde_json::Value)>>>;
@@ -528,16 +538,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn start_without_key_is_missing_api_key() {
-        let _guard = secrets::TEST_LOCK.lock().unwrap();
-        keyring::set_default_credential_builder(keyring::mock::default_credential_builder());
-        let _ = secrets::clear_api_key();
-
+    async fn prepare_session_starts_the_source_with_the_resolved_key() {
         let src: Box<dyn AudioSource> =
             Box::new(FakeAudioSource { chunks: vec![], fail_after: None });
 
-        let result = prepare_session(src);
-        assert!(matches!(result, Err(AppError::MissingApiKey)));
+        let (_src, mut rx) = prepare_session(src).expect("prepare_session starts");
+        // The fake source reports end of stream immediately: it started.
+        assert!(matches!(rx.recv().await, Some(AudioStatus::Ended)));
     }
 
     #[tokio::test]

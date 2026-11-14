@@ -10,6 +10,7 @@ mod hotkeys;
 mod license;
 mod listen;
 mod platform;
+mod providers;
 pub mod realtime;
 mod screen;
 mod secrets;
@@ -46,6 +47,11 @@ ipc_commands![
     save_api_key,
     get_api_key_status,
     clear_api_key,
+    list_profiles,
+    save_key,
+    clear_key,
+    set_active_provider,
+    test_connection,
     get_settings,
     save_settings,
     create_note,
@@ -171,6 +177,12 @@ mod ipc_surface_tests {
         "get_api_key_status",
         "save_api_key",
         "clear_api_key",
+        // providers (not in design.md §5: added with the multi-provider launch)
+        "list_profiles",
+        "save_key",
+        "clear_key",
+        "set_active_provider",
+        "test_connection",
         // listen / answer
         "start_listen",
         "stop_listen",
