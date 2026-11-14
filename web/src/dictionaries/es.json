@@ -162,7 +162,7 @@
     "description": "La app es gratis, sin suscripción ni cuenta: solo pagas tu consumo de OpenAI. CloakView Pro es una compra opcional de 99 USD, una sola vez.",
     "hero": {
       "badge": "Gratis · Pro 99 USD pago único",
-      "title": "La app cuesta $0. Tu factura de OpenAI es cosa de ti y OpenAI.",
+      "title": "Precios de CloakView: app gratis y Pro por 99 USD, pago único",
       "body": "La app gratuita no tiene suscripción ni cuenta. Habla directo con OpenAI con tu propia clave de la API, y OpenAI te factura tu consumo a sus tarifas públicas — sin margen nuestro. Si quieres más, CloakView Pro es un pago único de 99 USD: sin suscripción, y sigue usando tu propia clave.",
       "points": [
         "Sin suscripción — la app es gratis y Pro es un pago único",
@@ -216,7 +216,7 @@
     "title": "Descargar CloakView gratis para macOS — notarizada",
     "description": "Descarga el DMG de CloakView para Apple Silicon, comprueba su SHA-256 e instálalo en 3 pasos. Firmada y notarizada por Apple; requiere macOS 14.2 o posterior.",
     "badge": "macOS 14.2+",
-    "heading": "Elige tu versión",
+    "heading": "Descarga CloakView para Mac",
     "intro": "Tu clave sigue siendo tuya. Elige una descarga; todas las opciones permanecen visibles sin importar tu dispositivo. Las descargas se abren en GitHub Releases.",
     "optionsLabel": "Plataformas disponibles",
     "recommended": "Recomendado para este Mac",
