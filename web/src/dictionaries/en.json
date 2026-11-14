@@ -22,9 +22,9 @@
     "title": "CloakView — private AI meeting copilot for Mac",
     "hero": {
       "kicker": "For macOS 14.2+",
-      "titleLead": "A meeting copilot only",
-      "titleHand": "you",
-      "titleTail": "can see",
+      "titleLead": "A meeting copilot that",
+      "titleHand": "stays out",
+      "titleTail": "of the window you share",
       "subtitle": "CloakView listens to your call, transcribes it live and suggests what to say next — in a private overlay that stays out of the window you share. Your API key, your control.",
       "ctaHow": "How it works",
       "ctaDownload": "Download for macOS",
@@ -433,8 +433,8 @@
     "release": "Release"
   },
   "privacy": {
-    "title": "Privacy Policy — local-first, no telemetry",
-    "description": "How CloakView handles your data: transcripts and notes stay on your Mac, with no CloakView backend, no account and no telemetry. What goes to OpenAI, and why.",
+    "title": "Privacy: no servers, your key, local notes",
+    "description": "Privacy at CloakView: no CloakView servers, your own OpenAI key, transcripts and notes stored on your Mac. What is sent, to whom, and what you can delete.",
     "updated": "Last updated",
     "jurisdiction": "Governed by the laws of Florida, USA.",
     "sections": {
