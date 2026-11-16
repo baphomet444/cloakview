@@ -28,10 +28,10 @@ export const siteConfig = {
   SHA256_ARM64: "0e90fc3e8317fba8c05af9bd13dd5dab53f941000667f1d63d4cf80fcf27c793" as string | null,
   SHA256_INTEL: null as string | null,
   SHA256_WINDOWS: null as string | null,
-  // CloakView Pro: URL de checkout de Lemon Squeezy en modo LIVE. Mientras sea
-  // null, la tarjeta de precio muestra "Coming soon". Nunca poner aquí la URL de
-  // modo TEST: las URLs live y test tienen el mismo aspecto, así que copiarla del
-  // producto después de "Copy to Live Mode", con la tienda ya aprobada.
+  // CloakView Pro: URL del checkout de Polar (el link del producto, "Buy").
+  // Mientras sea null, la tarjeta de precio muestra "Coming soon". Las keys las
+  // emite Polar por el beneficio License keys del producto; la app las valida
+  // contra api.polar.sh (ver src-tauri/src/license/polar.rs).
   PRO_CHECKOUT_URL: null as string | null,
 
   // --- Términos legales ---

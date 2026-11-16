@@ -89,10 +89,10 @@ export type Shortcuts = {
   readScreen: string;
 };
 
-/** `src-tauri/src/license.rs` (`License`): a `status` tag; an active license carries its Lemon Squeezy instance. */
+/** `src-tauri/src/license/mod.rs` (`License`): a `status` tag; an active license carries its activation and the store that sold it. */
 export type License =
   | { status: "inactive" }
-  | { status: "active"; key: string; instanceId: string };
+  | { status: "active"; key: string; instanceId: string; provider: "polar" | "lemonSqueezy" };
 
 /** `src-tauri/src/session.rs` (`Entry`): one thing that happened during an interview. */
 export type SessionEntry =

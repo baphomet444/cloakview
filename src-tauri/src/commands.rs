@@ -477,9 +477,10 @@ pub fn get_license_status(state: State<AppState>) -> crate::license::License {
     state.license.read().expect("license lock").clone()
 }
 
-/// Activates the key for this Mac with Lemon Squeezy and unlocks Pro. Rejects with
-/// `License` (message: a `license::Rejection` code) when Lemon Squeezy refuses the
-/// key, or the key is for another product, or Lemon Squeezy cannot be reached.
+/// Activates the key for this Mac with the store that sold it (Polar, or Lemon
+/// Squeezy for a key bought before the switch) and unlocks Pro. Rejects with
+/// `License` (message: a `license::Rejection` code) when the store refuses the key,
+/// or the key is for another product, or no store can be reached.
 #[tauri::command]
 pub async fn activate_license(
     app: AppHandle,
@@ -494,14 +495,14 @@ pub async fn activate_license(
     Ok(license)
 }
 
-/// Releases this Mac's activation on Lemon Squeezy (so the key can move to another
-/// Mac), then locks Pro and deletes the stored key. When Lemon Squeezy cannot be
-/// reached the license is kept, so the slot is never silently lost.
+/// Releases this Mac's activation at the store that sold the key (so the key can
+/// move to another Mac), then locks Pro and deletes the stored key. When the store
+/// cannot be reached the license is kept, so the slot is never silently lost.
 #[tauri::command]
 pub async fn deactivate_license(app: AppHandle, state: State<'_, AppState>) -> Result<crate::license::License, IpcError> {
     let current = state.license.read().expect("license lock").clone();
-    if let crate::license::License::Active { key, instance_id } = &current {
-        crate::license::deactivate(key, instance_id)
+    if let crate::license::License::Active { key, instance_id, provider } = &current {
+        crate::license::deactivate(key, instance_id, *provider)
             .await
             .map_err(|r| IpcError::from(AppError::from(r)))?;
     }
