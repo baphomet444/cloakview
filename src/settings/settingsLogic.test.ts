@@ -18,6 +18,7 @@ const settings: Settings = {
   activeProvider: "openai",
   modelOverrides: {},
   realtimeModel: "gpt-4o-mini-transcribe",
+  replyDelayMs: 1000,
   userKeywords: [],
   userName: null,
   shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "cmdOrControl+shift+space", toggleListen: "", readScreen: "" },

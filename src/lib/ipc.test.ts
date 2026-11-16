@@ -154,6 +154,7 @@ const cases: Case[] = [
   ["save_key", () => ipc.saveKey("groq", "gsk-x"), { providerId: "groq", key: "gsk-x" }],
   ["clear_key", () => ipc.clearKey("groq"), { providerId: "groq" }],
   ["set_active_provider", () => ipc.setActiveProvider("together"), { providerId: "together" }],
+  ["set_realtime_model", () => ipc.setRealtimeModel("gpt-4o-transcribe"), { model: "gpt-4o-transcribe" }],
   ["test_connection", () => ipc.testConnection("openai"), { providerId: "openai" }],
 ];
 
@@ -221,6 +222,7 @@ const settings: Settings = {
   activeProvider: "openai",
   modelOverrides: {},
   realtimeModel: "gpt-4o-mini-transcribe",
+  replyDelayMs: 1000,
   userKeywords: [],
   userName: null,
   shortcuts: { quickHide: "", pushToAsk: "", toggleListen: "", readScreen: "" },

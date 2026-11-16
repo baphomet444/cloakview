@@ -10,6 +10,7 @@ import {
   saveKey,
   saveSettings,
   setActiveProvider,
+  setRealtimeModel,
   testConnection,
 } from "../lib/ipc";
 import type { ConnectionTestResult, License, ProviderInfo, Settings, SettingsPatch, Shortcuts } from "../lib/models";
@@ -294,6 +295,35 @@ export function SettingsApp() {
                       .replace("{llm}", active.llmModel)}
                   </p>
                   {active.sttMode === "batch" && <p className="set-status win-muted">{t("settings.listeningNote")}</p>}
+                  {active.sttModelOptions.length > 0 && settings !== null && (
+                    <>
+                      <label className="win-label" htmlFor="set-realtime-model">
+                        {t("settings.realtimeModel")}
+                      </label>
+                      <Segmented
+                        id="set-realtime-model"
+                        options={active.sttModelOptions.map((model) => ({ value: model, label: model }))}
+                        value={settings.realtimeModel}
+                        onChange={(next) => void setRealtimeModel(next).then(setSettings).catch((error: unknown) => setErrorKey(errorCopyKey(error)))}
+                      />
+                      <p className="win-hint">{t("settings.realtimeModelHint")}</p>
+
+                      <label className="win-label" htmlFor="set-reply-delay">
+                        {t("settings.replyDelay")}
+                      </label>
+                      <input
+                        id="set-reply-delay"
+                        className="set-range"
+                        type="range"
+                        min={0}
+                        max={5000}
+                        step={250}
+                        value={settings.replyDelayMs}
+                        onChange={(event) => void save({ replyDelayMs: event.currentTarget.valueAsNumber })}
+                      />
+                      <p className="win-hint">{t("settings.replyDelayHint").replace("{ms}", String(settings.replyDelayMs))}</p>
+                    </>
+                  )}
                   <form
                     className="win-row"
                     onSubmit={(event) => {
@@ -530,7 +560,7 @@ function Segmented<V extends string>(props: {
   id: string;
   /** Extra classes on the group, e.g. `seg-styles` to wrap a long option list onto two rows. */
   className?: string;
-  options: readonly { value: V; labelKey: CatalogKey }[];
+  options: readonly { value: V; labelKey?: CatalogKey; label?: string }[];
   value: V;
   onChange: (value: V) => void;
 }) {
@@ -549,7 +579,7 @@ function Segmented<V extends string>(props: {
               if (!selected) props.onChange(option.value);
             }}
           >
-            {t(option.labelKey)}
+            {option.label ?? t(option.labelKey as CatalogKey)}
           </button>
         );
       })}

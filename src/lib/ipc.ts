@@ -55,6 +55,7 @@ export interface CommandSignatures {
   save_key: { args: { providerId: string; key: string }; result: void };
   clear_key: { args: { providerId: string }; result: void };
   set_active_provider: { args: { providerId: string }; result: Settings };
+  set_realtime_model: { args: { model: string }; result: Settings };
   test_connection: { args: { providerId: string }; result: ConnectionTestResult };
   get_settings: { args: undefined; result: Settings };
   save_settings: { args: { patch: SettingsPatch }; result: Settings };
@@ -127,6 +128,7 @@ export const COMMANDS = [
   "save_key",
   "clear_key",
   "set_active_provider",
+  "set_realtime_model",
   "test_connection",
 ] as const satisfies readonly (keyof CommandSignatures)[];
 
@@ -167,6 +169,9 @@ export function clearKey(providerId: string): Promise<void> {
 }
 export function setActiveProvider(providerId: string): Promise<Settings> {
   return call("set_active_provider", { providerId });
+}
+export function setRealtimeModel(model: string): Promise<Settings> {
+  return call("set_realtime_model", { model });
 }
 export function testConnection(providerId: string): Promise<ConnectionTestResult> {
   return call("test_connection", { providerId });

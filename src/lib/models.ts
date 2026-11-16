@@ -128,6 +128,8 @@ export type Settings = {
   /** Safety valve kept in the settings file (not the UI): per-provider model replacements. */
   modelOverrides: Record<string, ModelOverride>;
   realtimeModel: string;
+  /** How long to wait after the interviewer pauses before suggesting a reply (ms). */
+  replyDelayMs: number;
   /** Matched against each transcript line to decide `turn-detected`. Seeded by Rust on a clean install. */
   userKeywords: string[];
   userName: string | null;
@@ -157,6 +159,8 @@ export type ProviderInfo = {
   sttMode: "streaming" | "batch";
   sttModel: string | null;
   llmModel: string;
+  /** Models the provider supports for streaming STT; empty for batch-only providers. */
+  sttModelOptions: string[];
   hasKey: boolean;
   active: boolean;
 };
@@ -177,6 +181,8 @@ export type SettingsPatch = {
   theme?: string;
   opacity?: number;
   realtimeModel?: string;
+  /** How long to wait after the interviewer pauses before suggesting a reply (ms). */
+  replyDelayMs?: number;
   userKeywords?: string[];
   userName?: string;
   /** All three at once: it replaces the saved set. */
