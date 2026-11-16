@@ -14,7 +14,7 @@ pub enum ApiFlavor {
 }
 
 /// Everything needed to talk to one vendor with ONE key.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ProviderProfile {
     pub id: String,           // "openai", "groq", "together", ...
     pub display_name: String,
@@ -27,6 +27,10 @@ pub struct ProviderProfile {
     pub stt_mode: SttMode,
     pub stt_model: Option<String>, // None => provider cannot transcribe
     pub llm_model: String,
+    /// Which STT models the provider offers for the streaming listen path.
+    /// Empty for providers that cannot stream (Batch) or have no STT at all.
+    /// The first entry is the default.
+    pub stt_model_options: &'static [&'static str],
     /// Documented source for the model names above, for the launch audit.
     pub models_doc_url: &'static str,
 }
@@ -49,6 +53,10 @@ pub fn builtin_profiles() -> Vec<ProviderProfile> {
             // and the connection test use.
             stt_model: Some("gpt-4o-mini-transcribe".into()),
             llm_model: "gpt-4o-mini".into(),
+            stt_model_options: &[
+                "gpt-4o-mini-transcribe",
+                "gpt-4o-transcribe",
+            ],
             models_doc_url: "https://platform.openai.com/docs/models".into(),
         },
         ProviderProfile {
@@ -61,6 +69,7 @@ pub fn builtin_profiles() -> Vec<ProviderProfile> {
             // llama-3.3-70b-versatile was retired 2026-08-16; gpt-oss-120b is
             // in the current production table.
             llm_model: "openai/gpt-oss-120b".into(),
+            stt_model_options: &[],
             models_doc_url: "https://console.groq.com/docs/models".into(),
         },
         ProviderProfile {
@@ -73,6 +82,7 @@ pub fn builtin_profiles() -> Vec<ProviderProfile> {
             // Llama-3.3-70B left the serverless catalog; gpt-oss-120b is in
             // the current chat table.
             llm_model: "openai/gpt-oss-120b".into(),
+            stt_model_options: &[],
             models_doc_url: "https://docs.together.ai/docs/serverless-models".into(),
         },
     ]
@@ -97,6 +107,28 @@ mod tests {
             assert!(p.stt_model.is_some(), "{} lost its STT model", p.id);
             assert!(!p.llm_model.is_empty());
             assert!(!p.models_doc_url.is_empty(), "{} lacks its doc citation", p.id);
+        }
+    }
+
+    #[test]
+    fn openai_profile_lists_only_official_realtime_transcription_models() {
+        let openai = builtin_profiles()
+            .into_iter()
+            .find(|p| p.id == "openai")
+            .expect("openai profile exists");
+        assert_eq!(
+            openai.stt_model_options,
+            &["gpt-4o-mini-transcribe", "gpt-4o-transcribe"]
+        );
+        assert_eq!(openai.stt_model_options[0], "gpt-4o-mini-transcribe");
+    }
+
+    #[test]
+    fn non_streaming_providers_have_empty_stt_model_options() {
+        for p in builtin_profiles() {
+            if p.stt_mode == SttMode::Batch {
+                assert!(p.stt_model_options.is_empty(), "{} is batch and should not offer streaming STT model choices", p.id);
+            }
         }
     }
 }

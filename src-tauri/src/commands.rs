@@ -59,6 +59,9 @@ pub struct ProviderInfo {
     pub stt_mode: String,
     pub stt_model: Option<String>,
     pub llm_model: String,
+    /// Models the provider supports for streaming STT; empty for batch-only
+    /// providers. The UI uses this to populate the realtime model dropdown.
+    pub stt_model_options: Vec<String>,
     pub has_key: bool,
     pub active: bool,
 }
@@ -80,6 +83,7 @@ pub fn list_profiles(state: State<AppState>) -> Result<Vec<ProviderInfo>, IpcErr
                 },
                 stt_model: effective.stt_model,
                 llm_model: effective.llm_model,
+                stt_model_options: p.stt_model_options.iter().map(|s| (*s).to_string()).collect(),
                 has_key: secrets::has_key(&p.id).unwrap_or(false),
                 active: p.id == active.id,
             }
@@ -124,6 +128,32 @@ pub fn set_active_provider(
     drop(s);
     let _ = app.emit(SETTINGS_CHANGED_EVENT, saved.clone());
     Ok(saved)
+}
+
+/// Changes the realtime STT model used by the streaming listen path. The
+/// model must be one the active provider offers; unknown models fall back to
+/// the provider's default. Saves the settings file.
+#[tauri::command]
+pub fn set_realtime_model(
+    app: AppHandle,
+    state: State<AppState>,
+    model: String,
+) -> Result<Settings, IpcError> {
+    let settings = state.settings.read().expect("settings lock");
+    let profile = crate::providers::active_profile(&settings);
+    let allowed: std::collections::HashSet<&str> = profile.stt_model_options.iter().copied().collect();
+    let effective_model = if allowed.is_empty() || allowed.contains(model.as_str()) {
+        model
+    } else {
+        profile.stt_model_options.first().unwrap_or(&"").to_string()
+    };
+    let mut s = settings.clone();
+    s.realtime_model = effective_model;
+    settings::save_settings(&app, &s).map_err(IpcError::from)?;
+    drop(settings);
+    *state.settings.write().expect("settings lock") = s.clone();
+    let _ = app.emit(SETTINGS_CHANGED_EVENT, s.clone());
+    Ok(s)
 }
 
 /// Per-side result of `test_connection`. A failure message is a fixed

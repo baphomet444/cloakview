@@ -51,6 +51,7 @@ ipc_commands![
     save_key,
     clear_key,
     set_active_provider,
+    set_realtime_model,
     test_connection,
     get_settings,
     save_settings,
@@ -182,6 +183,7 @@ mod ipc_surface_tests {
         "save_key",
         "clear_key",
         "set_active_provider",
+        "set_realtime_model",
         "test_connection",
         // listen / answer
         "start_listen",
