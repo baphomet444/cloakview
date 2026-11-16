@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.3.0",
+    "date": "2026-11-16",
+    "title": {
+      "en": "Pro now runs on Polar, one Mac at a time",
+      "es": "Pro ahora se cobra con Polar, un Mac a la vez"
+    },
+    "body": {
+      "en": "CloakView Pro is now sold through Polar, which handles the payment, the tax and the receipt. A key unlocks Pro on one Mac at a time: enter it, and that Mac is the one it is bound to. To move it, release it first — Settings → Licence → Release this Mac, or the customer portal you get from Polar — then enter the same key on the other Mac. Releasing takes a second and the key keeps working; there is nothing to buy twice. The key is checked once when you enter it and again at launch, so a Mac released from elsewhere stops being Pro here. If the licence server is busy, the app keeps the activation it already has instead of locking you out. Keys bought before this version keep working.",
+      "es": "CloakView Pro ahora se vende por Polar, que gestiona el pago, los impuestos y el recibo. Una clave desbloquea Pro en un Mac a la vez: la introduces y ese Mac es al que queda ligada. Para moverla, primero libérala — Ajustes → Licencia → Liberar este Mac, o el portal de cliente que te da Polar — y después introduce la misma clave en el otro Mac. Liberar tarda un segundo y la clave sigue sirviendo; no hay que comprar dos veces. La clave se comprueba al introducirla y de nuevo al abrir la app, así que un Mac liberado desde otro sitio deja de ser Pro aquí. Si el servidor de licencias está ocupado, la app conserva la activación que ya tenía en vez de dejarte afuera. Las claves compradas antes de esta versión siguen funcionando."
+    }
+  },
+  {
     "version": "0.2.1",
     "date": "2026-11-14",
     "title": {
@@ -19,8 +31,8 @@
       "es": "CloakView Pro ya está aquí"
     },
     "body": {
-      "en": "CloakView Pro keys are now activated with Lemon Squeezy. A key is checked once when you enter it and rechecked at launch; each key works on up to 5 Macs, and you can free a Mac from Settings. Test-mode keys are refused, so only a real purchase unlocks Pro. Refusal messages now say what went wrong: wrong product, activation limit reached, disabled, expired, or the licence server could not be reached. If you entered a key in 0.1.1, enter it again after updating. The app itself stays free and keeps using your own OpenAI API key.",
-      "es": "Las claves de CloakView Pro ahora se activan con Lemon Squeezy. La clave se comprueba una vez al introducirla y de nuevo al abrir la app; cada clave sirve en hasta 5 Macs y puedes liberar un Mac desde Ajustes. Se rechazan las claves en modo prueba: solo una compra real desbloquea Pro. Los mensajes de rechazo ahora explican el motivo: otro producto, límite de activaciones alcanzado, desactivada, caducada o sin conexión con el servidor de licencias. Si introdujiste una clave en la 0.1.1, vuelve a introducirla tras actualizar. La app sigue siendo gratis y usa tu propia clave de API de OpenAI."
+      "en": "CloakView Pro keys are now activated with Lemon Squeezy. A key is checked once when you enter it and rechecked at launch, and you can free a Mac from Settings. Test-mode keys are refused, so only a real purchase unlocks Pro. Refusal messages now say what went wrong: wrong product, activation limit reached, disabled, expired, or the licence server could not be reached. If you entered a key in 0.1.1, enter it again after updating. The app itself stays free and keeps using your own OpenAI API key.",
+      "es": "Las claves de CloakView Pro ahora se activan con Lemon Squeezy. La clave se comprueba una vez al introducirla y de nuevo al abrir la app, y puedes liberar un Mac desde Ajustes. Se rechazan las claves en modo prueba: solo una compra real desbloquea Pro. Los mensajes de rechazo ahora explican el motivo: otro producto, límite de activaciones alcanzado, desactivada, caducada o sin conexión con el servidor de licencias. Si introdujiste una clave en la 0.1.1, vuelve a introducirla tras actualizar. La app sigue siendo gratis y usa tu propia clave de API de OpenAI."
     }
   },
   {

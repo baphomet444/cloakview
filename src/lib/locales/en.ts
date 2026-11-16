@@ -84,7 +84,7 @@ export const en = {
   "errors.generic": "Something went wrong",
   "errors.shortcutFailed": "A global shortcut couldn't be set up: another app may be using it. Choose a different one in Settings.",
   "errors.licenseInvalid": "That license key wasn't recognized. Check it against your purchase email.",
-  "errors.licenseLimit": "This key is already active on its maximum number of Macs. Deactivate it on another Mac first.",
+  "errors.licenseLimit": "This key is already active on another Mac. Deactivate it there, then enter it here.",
   "errors.licenseWrongProduct": "That key isn't for CloakView Pro.",
   "errors.licenseDisabled": "This license key has been disabled. Contact support if you think that's a mistake.",
   "errors.licenseExpired": "This license key has expired.",

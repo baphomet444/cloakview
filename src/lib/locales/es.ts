@@ -86,7 +86,7 @@ export const es: Catalog = {
   "errors.generic": "Algo salió mal",
   "errors.shortcutFailed": "No se pudo activar un atajo global: puede que otra app lo esté usando. Elige otro en Ajustes.",
   "errors.licenseInvalid": "No se reconoce esa clave de licencia. Compárala con el correo de tu compra.",
-  "errors.licenseLimit": "Esta clave ya está activa en el máximo de Macs permitido. Desactívala primero en otro Mac.",
+  "errors.licenseLimit": "Esta clave ya está activa en otro Mac. Desactívala ahí y vuelve a introducirla aquí.",
   "errors.licenseWrongProduct": "Esa clave no es de CloakView Pro.",
   "errors.licenseDisabled": "Esta clave de licencia se ha desactivado. Escribe a soporte si crees que es un error.",
   "errors.licenseExpired": "Esta clave de licencia ha caducado.",
