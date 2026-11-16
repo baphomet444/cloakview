@@ -13,8 +13,12 @@ use super::Rejection;
 
 /// Production. A sandbox key only exists under `sandbox-api.polar.sh`, so a test
 /// purchase can never unlock Pro in a shipped build: it simply is not a key this
-/// host knows.
-const API: &str = "https://api.polar.sh";
+/// host knows. Override at build time (`CLOAKVIEW_POLAR_API=https://sandbox-api.polar.sh`)
+/// to exercise a sandbox key against a sandbox organization.
+const API: &str = match option_env!("CLOAKVIEW_POLAR_API") {
+    Some(base) => base,
+    None => "https://api.polar.sh",
+};
 
 /// The Polar organization that sells CloakView Pro, as a build-time constant:
 /// `CLOAKVIEW_POLAR_ORG_ID=<uuid> cargo build --release`. Empty in a tree that was
