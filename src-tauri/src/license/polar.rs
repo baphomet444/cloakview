@@ -94,8 +94,9 @@ fn organization() -> Result<&'static str, Rejection> {
     Ok(ORGANIZATION_ID)
 }
 
-/// POSTs `payload` to a customer-portal license endpoint. A 5xx, a timeout or a
-/// non-JSON body is `Unreachable`: Polar did not decide anything about the key.
+/// POSTs `payload` to a customer-portal license endpoint. A 5xx, a timeout, a
+/// rate limit or a non-JSON body is `Unreachable`: Polar did not decide anything
+/// about the key, so the app keeps whatever it already knew.
 async fn post(endpoint: &str, payload: serde_json::Value) -> Result<(u16, String), Rejection> {
     let resp = reqwest::Client::new()
         .post(format!("{API}/v1/customer-portal/license-keys/{endpoint}"))
@@ -107,7 +108,10 @@ async fn post(endpoint: &str, payload: serde_json::Value) -> Result<(u16, String
         .map_err(|_| Rejection::Unreachable)?;
     let status = resp.status().as_u16();
     let body = resp.text().await.map_err(|_| Rejection::Unreachable)?;
-    if status >= 500 {
+    // 429 is the one 4xx that arrives without a verdict: the customer-portal
+    // endpoints throttle per address, and three launches in a row from one Mac
+    // is enough to trip it. Locking Pro over that would be a lie.
+    if status >= 500 || status == 429 || status == 408 {
         return Err(Rejection::Unreachable);
     }
     Ok((status, body))
@@ -122,6 +126,7 @@ fn refusal(status: u16, body: &str) -> Rejection {
     if body.to_ascii_lowercase().contains("\"detail\"") {
         // Polar said why, and it was about the key rather than the network.
         return match status {
+            408 | 429 => Rejection::Unreachable,
             400..=499 => Rejection::Invalid,
             _ => Rejection::Unreachable,
         };
@@ -273,6 +278,15 @@ mod tests {
         assert_eq!(refusal(403, r#"{ "detail": "License key is blocked." }"#), Rejection::Invalid);
         // A body without a verdict is not a decision about the key.
         assert_eq!(refusal(400, "<html>oops</html>"), Rejection::Unreachable);
+    }
+
+    #[test]
+    fn a_rate_limit_is_not_a_verdict_about_the_key() {
+        // The customer-portal endpoints throttle per address: three launches in a
+        // row from one Mac trips a 429. Reading that as a bad key would drop a
+        // paying customer out of Pro, so it has to stay undecided.
+        assert_eq!(refusal(429, r#"{ "detail": "Too many requests." }"#), Rejection::Unreachable);
+        assert_eq!(refusal(408, r#"{ "detail": "Request timeout." }"#), Rejection::Unreachable);
     }
 
     #[test]
