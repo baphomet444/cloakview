@@ -25,6 +25,10 @@ pub struct Settings {
     /// The OpenAI Realtime transcription model for the streaming listen
     /// path (used only while the active provider is "openai").
     pub realtime_model: String,
+    /// How long `listen::pump` waits after the interviewer stops speaking
+    /// before firing `"turn-detected"`. Configurable because some speakers
+    /// pause mid-thought. Milliseconds, clamped to 0..=5000.
+    pub reply_delay_ms: u64,
     /// Keywords `listen::pump` checks against each `Transcript`'s text —
     /// via `detect::is_user_turn` — to decide whether `"turn-detected"`
     /// fires. Seeded with the spec's example phrase so a clean install
@@ -67,6 +71,10 @@ impl Default for Settings {
             // session actually uses (older saves naming a conversation model
             // fall back inside `realtime::client::transcription_model`).
             realtime_model: "gpt-4o-mini-transcribe".into(),
+            // Wait one second after the interviewer pauses before suggesting a
+            // reply; long enough to avoid mid-sentence triggers, short enough
+            // to feel responsive.
+            reply_delay_ms: 1000,
             // The spec's example phrase (design.md §5, `detect`) and its
             // punctuation-free variant — Whisper frequently drops the ¿?.
             // Lowercase because `detect` compares case-insensitively anyway.
@@ -155,6 +163,7 @@ mod tests {
             active_provider: "groq".into(),
             model_overrides: Default::default(),
             realtime_model: "gpt-4o-mini-transcribe".into(),
+            reply_delay_ms: 1000,
             user_keywords: vec!["opinas".into()],
             user_name: Some("Ana".into()),
             shortcuts: crate::hotkeys::Shortcuts::default(),
@@ -174,6 +183,7 @@ mod tests {
                 "activeProvider": "groq",
                 "modelOverrides": {},
                 "realtimeModel": "gpt-4o-mini-transcribe",
+                "replyDelayMs": 1000,
                 "userKeywords": ["opinas"],
                 "userName": "Ana",
                 "shortcuts": {

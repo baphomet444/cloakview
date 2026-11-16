@@ -50,6 +50,9 @@ pub struct SettingsPatch {
     pub theme: Option<String>,
     pub opacity: Option<f64>,
     pub realtime_model: Option<String>,
+    /// How long to wait after the interviewer pauses before firing
+    /// `"turn-detected"`. Clamped to 0..=5000 ms on the Rust side.
+    pub reply_delay_ms: Option<u64>,
     pub user_keywords: Option<Vec<String>>,
     /// `None` = leave unchanged. A blank string clears the name (a plain
     /// `Option<String>` can't tell "absent" from "set to null" once
@@ -82,6 +85,9 @@ pub fn apply_patch(s: &mut Settings, patch: SettingsPatch) {
     }
     if let Some(v) = patch.realtime_model {
         s.realtime_model = v;
+    }
+    if let Some(v) = patch.reply_delay_ms {
+        s.reply_delay_ms = v.clamp(0, 5000);
     }
     if let Some(v) = patch.user_keywords {
         s.user_keywords = v;
@@ -195,6 +201,21 @@ mod tests {
         assert_eq!(s.answer_style, "interview");
     }
 
+    #[test]
+    fn patch_clamps_reply_delay_ms_to_a_sensible_range() {
+        let mut s = Settings::default();
+        assert_eq!(s.reply_delay_ms, 1000);
+
+        apply_patch(&mut s, SettingsPatch { reply_delay_ms: Some(2500), ..Default::default() });
+        assert_eq!(s.reply_delay_ms, 2500);
+
+        apply_patch(&mut s, SettingsPatch { reply_delay_ms: Some(10_000), ..Default::default() });
+        assert_eq!(s.reply_delay_ms, 5000);
+
+        apply_patch(&mut s, SettingsPatch { reply_delay_ms: Some(0), ..Default::default() });
+        assert_eq!(s.reply_delay_ms, 0);
+    }
+
     /// A `settings.json` written by the shipped 0.2.1 build (schema at tag
     /// `v0.2.1`: it has `answersModel`, no provider fields) must load
     /// cleanly on the new build: no error, every field it set preserved, new
@@ -247,6 +268,7 @@ mod tests {
         // New fields pick up their defaults; the removed `answersModel` is ignored.
         assert_eq!(s.active_provider, "openai");
         assert!(s.model_overrides.is_empty());
+        assert_eq!(s.reply_delay_ms, 1000);
 
         // 0.2.1's saved value is kept verbatim, and the model the realtime
         // session actually sends is the same one 0.2.1 sent — the new

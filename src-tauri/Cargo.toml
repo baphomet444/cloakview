@@ -40,3 +40,7 @@ cpal = "0.18.2"
 block2 = "0.6.2"
 # One provider, one key: the STT/LLM abstraction the whole app talks to.
 cv_providers = { path = "crates/cv_providers" }
+
+[dev-dependencies]
+# Time control for the debounce tests in listen.rs.
+tokio = { version = "1", features = ["full", "test-util"] }
