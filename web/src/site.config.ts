@@ -32,7 +32,10 @@ export const siteConfig = {
   // Mientras sea null, la tarjeta de precio muestra "Coming soon". Las keys las
   // emite Polar por el beneficio License keys del producto; la app las valida
   // contra api.polar.sh (ver src-tauri/src/license/polar.rs).
-  PRO_CHECKOUT_URL: null as string | null,
+  PRO_CHECKOUT_URL:
+    "https://buy.polar.sh/polar_cl_ogcfheRmLpOwHZJtGYQlcNTJcoaNp58vHcpiY30iI2g" as
+      | string
+      | null,
 
   // --- Términos legales ---
   LEGAL_UPDATED: "2026-11-13", // ISO date: Fase 7

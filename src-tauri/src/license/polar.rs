@@ -20,13 +20,14 @@ const API: &str = match option_env!("CLOAKVIEW_POLAR_API") {
     None => "https://api.polar.sh",
 };
 
-/// The Polar organization that sells CloakView Pro, as a build-time constant:
-/// `CLOAKVIEW_POLAR_ORG_ID=<uuid> cargo build --release`. Empty in a tree that was
-/// never given the id, and then activation reports `unreachable` instead of
-/// pretending the key is bad.
+/// The Polar organization that sells CloakView Pro. The id is not a secret — every
+/// licence call carries it — so the production one is compiled in and a release build
+/// needs no environment. `CLOAKVIEW_POLAR_ORG_ID` exists only to point a build at a
+/// sandbox organization; setting it empty still disables Polar on purpose, and then
+/// activation reports `unreachable` instead of pretending the key is bad.
 const ORGANIZATION_ID: &str = match option_env!("CLOAKVIEW_POLAR_ORG_ID") {
     Some(id) => id,
-    None => "",
+    None => "90b662c1-9ae1-4b1b-8299-b2a1efd51419",
 };
 
 /// The activation Polar granted this Mac. Only the fields CloakView acts on.
