@@ -51,14 +51,18 @@ function HandUnderline() {
 function HeroShot({ dict }: { dict: HeroProps["dict"] }) {
   return (
     <figure className="mx-auto w-full max-w-4xl">
+      {/* Sin marco: el archivo trae los negros igualados al fondo de la página y
+          los cuatro bordes fundidos a negro, así que la foto se apoya en el
+          fondo en vez de quedar dentro de una tarjeta. El ancho no pasa de
+          896 px porque el original es de 1280 y más allá se vería blando. */}
       <Image
-        src="/media/desk-hero.jpg"
+        src="/media/desk-hero-bleed.jpg"
         alt={dict.heroImageAlt}
         width={1280}
         height={720}
         priority
         sizes="(min-width: 896px) 896px, calc(100vw - 3rem)"
-        className="h-auto w-full rounded-2xl border border-border shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_40px_80px_-24px_rgb(0_0_0/0.9)]"
+        className="h-auto w-full"
       />
     </figure>
   );
