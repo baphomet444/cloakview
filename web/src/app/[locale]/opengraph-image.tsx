@@ -8,19 +8,6 @@ import { OG_IMAGE_SIZE } from "@/lib/seo";
 // The social image shared by every page (each page links it through `ogImages`).
 export const size = OG_IMAGE_SIZE;
 export const contentType = "image/png";
-// Generates locale-aware alt text so the Spanish social image carries the Spanish caption.
-// (All pages also pass `dict.meta.ogAlt` to `ogImages()`; this covers any route that relies
-// on the file-convention metadata rather than an explicit `generateMetadata`.)
-export async function generateImageMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale: raw } = await params;
-  const locale: Locale = raw === "es" ? "es" : "en";
-  const { meta } = await getDictionary(locale);
-  return [{ id: "main", alt: meta.ogAlt }];
-}
 
 // Unbounded (SIL OFL, licence in assets/fonts), read from disk like the logo so a render
 // never depends on a font CDN. Two weights: bold for the name and the feature line.

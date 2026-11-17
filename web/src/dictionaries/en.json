@@ -256,10 +256,10 @@
   },
   "meta": {
     "siteName": "CloakView",
-    "ogTagline": "A Meeting Copilot only you can see",
+    "ogTagline": "A meeting copilot only you can see",
     "ogFeatures": "Live transcription • Private suggestions • Your API key",
     "ogFootnote": "Works alongside Zoom, Google Meet and Microsoft Teams. No account, no telemetry.",
-    "ogAlt": "CloakView — A Meeting Copilot only you can see"
+    "ogAlt": "CloakView — A meeting copilot only you can see"
   },
   "guide": {
     "title": "Guide: install, permissions, API key, shortcuts",
