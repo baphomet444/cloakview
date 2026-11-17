@@ -32,7 +32,7 @@
       "annotation": "tu clave, tu control",
       "platformsNote": "Funciona junto a Zoom, Google Meet y Microsoft Teams",
       "mockupAlt": "Overlay de CloakView: transcripción en vivo de una llamada con un turno resaltado, una respuesta sugerida y un indicador de escucha, visible solo para ti.",
-      "heroImageAlt": "CloakView abierto en un MacBook durante una videollamada: la transcripción en vivo y una respuesta sugerida flotan sobre la llamada, y quien lo usa no toca el teclado.",
+      "heroImageAlt": "CloakView abierto en un MacBook durante una videollamada: el panel Preguntar muestra una respuesta sugerida a una pregunta de la llamada y el de Ajustes tiene la clave ya guardada. Quien lo usa no toca el teclado.",
       "mockup": {
         "windowTitle": "CloakView — Reunión semanal",
         "live": "En vivo",

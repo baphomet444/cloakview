@@ -50,7 +50,7 @@ function HeroShot({ dict }: HeroProps) {
   return (
     <figure className="mx-auto w-full max-w-4xl">
       <Image
-        src="/media/desk.jpg"
+        src="/media/desk-hero.jpg"
         alt={dict.heroImageAlt}
         width={1280}
         height={720}

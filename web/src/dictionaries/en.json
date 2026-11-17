@@ -32,7 +32,7 @@
       "annotation": "your key, your control",
       "platformsNote": "Works alongside Zoom, Google Meet and Microsoft Teams",
       "mockupAlt": "CloakView overlay: live transcript of a call with one highlighted turn, a suggested reply and a listening indicator, visible only to you.",
-      "heroImageAlt": "CloakView open on a MacBook during a video call: the live transcript and a suggested reply float over the call, and the person using it keeps both hands off the keyboard.",
+      "heroImageAlt": "CloakView open on a MacBook during a video call: the Ask panel holds a suggested reply to a question from the call, and the Settings panel shows the API key already saved. The person using it keeps both hands off the keyboard.",
       "mockup": {
         "windowTitle": "CloakView — Weekly sync",
         "live": "Live",
