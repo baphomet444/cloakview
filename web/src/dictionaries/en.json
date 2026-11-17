@@ -252,7 +252,42 @@
         "button": "Download Windows",
         "unavailable": "Not available in v1"
       }
-    ]
+    ],
+    "figure": {
+      "alt": "The CloakView toolbar: Listen, Ask, Screen, Notes, History and Settings, with the reply-delay slider and the Close button.",
+      "caption": "Everything the app does lives in that bar: six views, a delay slider and one button to hide it."
+    },
+    "whatYouGet": {
+      "title": "What the DMG contains",
+      "intro": "One file, 9.2 MB, published on GitHub Releases and signed plus notarized by Apple.",
+      "items": [
+        "CloakView 0.2.1 for Apple Silicon (arm64). There is no Intel build in v1.",
+        "A checksums file next to the DMG, so you can match the SHA-256 before you open anything.",
+        "No installer and no helper process: open the DMG, drag the app to Applications, eject."
+      ]
+    },
+    "requirements": {
+      "title": "Requirements",
+      "items": [
+        "macOS 14.2 or later.",
+        "A Mac with Apple Silicon. Intel Macs and Windows are not supported in v1.",
+        "Screen & System Audio Recording and Microphone permission, granted the first time you press Listen.",
+        "An OpenAI API key with billing enabled. The app ships with no key of its own."
+      ]
+    },
+    "install": {
+      "title": "Install in three steps",
+      "steps": [
+        "Open the DMG and drag CloakView into Applications, then eject the DMG.",
+        "Launch it and press Listen. macOS asks for screen and system-audio access, then for the microphone.",
+        "Paste your OpenAI key in Settings and save it. When the key works, the app reports Connection OK."
+      ]
+    },
+    "verify": {
+      "title": "Check the checksum before you install",
+      "text": "Run this in Terminal and compare the output with the SHA-256 shown above, or with the one in the release notes:",
+      "command": "shasum -a 256 ~/Downloads/CloakView_0.2.1_aarch64.dmg"
+    }
   },
   "meta": {
     "siteName": "CloakView",
@@ -426,7 +461,41 @@
     ],
     "excludeTitle": "Do not include",
     "exclude": "Never send API keys, meeting audio, transcripts or private call details — especially in public issues.",
-    "troubleshooting": "Read the troubleshooting guide"
+    "troubleshooting": "Read the troubleshooting guide",
+    "before": {
+      "title": "Before you write",
+      "text": "Most setup problems are a permission or a key, and the guide walks through both with the exact macOS panes. It is faster than waiting for a reply."
+    },
+    "quickFixes": {
+      "title": "Fix it in a minute",
+      "items": [
+        {
+          "label": "Other participants are missing from the transcript",
+          "href": "/guide/troubleshooting#system-audio"
+        },
+        {
+          "label": "Your own voice is missing",
+          "href": "/guide/troubleshooting#mic"
+        },
+        {
+          "label": "The API key is rejected",
+          "href": "/guide/troubleshooting#invalid-key"
+        },
+        {
+          "label": "macOS blocks the app at first launch",
+          "href": "/guide/troubleshooting#gatekeeper"
+        },
+        {
+          "label": "A global shortcut does nothing",
+          "href": "/guide/troubleshooting#shortcut"
+        }
+      ]
+    },
+    "licence": {
+      "title": "Pro licences and receipts",
+      "text": "CloakView Pro is sold through Polar. The key and the receipt arrive by email from Polar; if a key will not activate, send us the order email and we chase it with them.",
+      "link": "Email us about a licence"
+    }
   },
   "changelog": {
     "title": "Changelog: release notes for every version",

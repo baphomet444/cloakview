@@ -252,7 +252,42 @@
         "button": "Descargar para Windows",
         "unavailable": "No disponible en v1"
       }
-    ]
+    ],
+    "figure": {
+      "alt": "La barra de CloakView: Listen, Ask, Screen, Notes, History y Settings, con el control de retardo de respuesta y el botón Close.",
+      "caption": "Todo lo que hace la app vive en esa barra: seis vistas, un control de retardo y un botón para esconderla."
+    },
+    "whatYouGet": {
+      "title": "Qué trae el DMG",
+      "intro": "Un archivo de 9,2 MB publicado en GitHub Releases, firmado y notarizado por Apple.",
+      "items": [
+        "CloakView 0.2.1 para Apple Silicon (arm64). No hay versión Intel en la v1.",
+        "Un archivo de checksums junto al DMG para comparar el SHA-256 antes de abrir nada.",
+        "Sin instalador ni proceso auxiliar: abrís el DMG, arrastrás la app a Aplicaciones y lo expulsás."
+      ]
+    },
+    "requirements": {
+      "title": "Requisitos",
+      "items": [
+        "macOS 14.2 o posterior.",
+        "Una Mac con Apple Silicon. Las Mac Intel y Windows no están soportadas en la v1.",
+        "Permiso de Grabación de pantalla y audio del sistema, y de Micrófono, que macOS pide la primera vez que pulsás Listen.",
+        "Una clave de API de OpenAI con facturación activa. La app no trae ninguna clave."
+      ]
+    },
+    "install": {
+      "title": "Instalar en tres pasos",
+      "steps": [
+        "Abrí el DMG, arrastrá CloakView a Aplicaciones y expulsá el DMG.",
+        "Abrila y pulsá Listen. macOS pide acceso a la pantalla y al audio del sistema, y después al micrófono.",
+        "Pegá tu clave de OpenAI en Settings y guardala. Si la clave funciona, la app muestra Connection OK."
+      ]
+    },
+    "verify": {
+      "title": "Verificá el checksum antes de instalar",
+      "text": "Corré esto en Terminal y compará el resultado con el SHA-256 de arriba, o con el de las notas del release:",
+      "command": "shasum -a 256 ~/Downloads/CloakView_0.2.1_aarch64.dmg"
+    }
   },
   "meta": {
     "siteName": "CloakView",
@@ -426,7 +461,41 @@
     ],
     "excludeTitle": "Qué no incluir",
     "exclude": "Nunca envíes claves de API, audio de reuniones, transcripciones ni detalles privados de llamadas — especialmente en issues públicos.",
-    "troubleshooting": "Leer la guía de solución de problemas"
+    "troubleshooting": "Leer la guía de solución de problemas",
+    "before": {
+      "title": "Antes de escribir",
+      "text": "Casi todos los problemas de puesta en marcha son un permiso o una clave, y la guía explica los dos con los paneles exactos de macOS. Es más rápido que esperar una respuesta."
+    },
+    "quickFixes": {
+      "title": "Se arregla en un minuto",
+      "items": [
+        {
+          "label": "Faltan los demás participantes en la transcripción",
+          "href": "/guide/troubleshooting#system-audio"
+        },
+        {
+          "label": "Falta tu propia voz",
+          "href": "/guide/troubleshooting#mic"
+        },
+        {
+          "label": "La clave de API es rechazada",
+          "href": "/guide/troubleshooting#invalid-key"
+        },
+        {
+          "label": "macOS bloquea la app al abrirla",
+          "href": "/guide/troubleshooting#gatekeeper"
+        },
+        {
+          "label": "Un atajo global no responde",
+          "href": "/guide/troubleshooting#shortcut"
+        }
+      ]
+    },
+    "licence": {
+      "title": "Licencias Pro y recibos",
+      "text": "CloakView Pro se vende por Polar. La clave y el recibo llegan por correo desde Polar; si una clave no activa, mandanos el correo del pedido y lo resolvemos con ellos.",
+      "link": "Escribinos por una licencia"
+    }
   },
   "changelog": {
     "title": "Novedades: notas de todas las versiones",

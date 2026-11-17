@@ -82,6 +82,8 @@ export type CompareLabels = {
   sourceLabel: string;
   othersHeading: string;
   readLabel: string;
+  figureAlt: string;
+  figureCaption: string;
 };
 
 export const compareLabels: Record<Locale, CompareLabels> = {
@@ -99,6 +101,10 @@ export const compareLabels: Record<Locale, CompareLabels> = {
     sourceLabel: "Figures from",
     othersHeading: "Other comparisons",
     readLabel: "Read the comparison",
+    figureAlt:
+      "Diagram: the window on the left, shared with the call, stays clean; the CloakView overlay on the right sits on your own screen.",
+    figureCaption:
+      "The overlay is drawn on your Mac only, so it never lands in the window you share.",
   },
   es: {
     tableFeature: "Apartado",
@@ -114,6 +120,10 @@ export const compareLabels: Record<Locale, CompareLabels> = {
     sourceLabel: "Datos de",
     othersHeading: "Otras comparativas",
     readLabel: "Leer la comparativa",
+    figureAlt:
+      "Diagrama: la ventana de la izquierda, la que ve la llamada, queda limpia; el overlay de CloakView, a la derecha, vive en tu propia pantalla.",
+    figureCaption:
+      "El overlay se dibuja solo en tu Mac, así que nunca aparece en la ventana que compartís.",
   },
 };
 

@@ -9,6 +9,7 @@ import {
   compareSlugs,
   type CompareSlug,
 } from "@/content/compare";
+import { MediaFigure } from "@/components/media-figure";
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
@@ -72,6 +73,16 @@ export function CompareView({ locale, slug }: { locale: Locale; slug: CompareSlu
         {doc.intro.map((paragraph) => (
           <p key={paragraph.slice(0, 32)}>{paragraph}</p>
         ))}
+      </div>
+
+      <div className="mt-10">
+        <MediaFigure
+          src="/media/share-vs-overlay.jpg"
+          width={1200}
+          height={630}
+          alt={labels.figureAlt}
+          caption={labels.figureCaption}
+        />
       </div>
 
       <Section id="compare-table" title={locale === "en" ? "Side by side" : "Lado a lado"}>
