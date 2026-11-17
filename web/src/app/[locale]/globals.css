@@ -174,8 +174,17 @@ body::before {
     linear-gradient(to bottom, var(--border) 1px, transparent 1px);
   background-size: 56px 56px;
   background-position: center top;
-  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 75%);
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 75%);
+  /* La rejilla es textura del titular, no del lienzo: el degradado vertical la
+     apaga antes de llegar a la foto, porque si sigue hasta el borde de la imagen
+     la retícula corta en seco y delata el rectángulo. */
+  -webkit-mask-image:
+    radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 75%),
+    linear-gradient(to bottom, #000 0%, #000 34%, transparent 52%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 75%),
+    linear-gradient(to bottom, #000 0%, #000 34%, transparent 52%);
+  mask-composite: intersect;
 }
 
 @keyframes listen {
