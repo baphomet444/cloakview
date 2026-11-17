@@ -17,27 +17,27 @@ export function HowItWorks({ dict }: { dict: Dictionary["home"]["how"] }) {
             {dict.subtitle}
           </p>
         </div>
-        {/* La banda es el encabezado real de la ventana: muestra la barra de pestañas
-            y el arranque de los paneles, sin texto que haya que leer de cerca. */}
-        <figure className="mx-auto mt-12 w-full max-w-5xl">
-          {/* En pantallas angostas el ancho completo encoge los rótulos a la nada,
-              así que ahí se recorta a la barra de pestañas; los paneles asomando
-              a la mitad se leen como un error de recorte. */}
+        {/* A sangre, sin tarjeta: los bordes del archivo ya vienen fundidos al color
+            de la sección y los negros emparejados a él, así el encabezado de la
+            ventana flota en el fondo en vez de recortarse contra un rectángulo.
+            En pantallas angostas se recorta a la barra de pestañas, porque los
+            paneles asomando a la mitad se leen como un error. */}
+        <figure className="mt-12 w-full">
           <Image
-            src="/media/panels-band-crop.jpg"
+            src="/media/panels-band-bleed-crop.jpg"
             alt={dict.bandAlt}
             width={900}
             height={280}
             sizes="calc(100vw - 3rem)"
-            className="h-auto w-full rounded-2xl border border-border shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_30px_60px_-30px_rgb(0_0_0/0.9)] sm:hidden"
+            className="h-auto w-full sm:hidden"
           />
           <Image
-            src="/media/panels-band.jpg"
+            src="/media/panels-band-bleed.jpg"
             alt={dict.bandAlt}
             width={1280}
             height={426}
             sizes="(min-width: 1024px) 1024px, calc(100vw - 3rem)"
-            className="hidden h-auto w-full rounded-2xl border border-border shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_30px_60px_-30px_rgb(0_0_0/0.9)] sm:block"
+            className="hidden h-auto w-full sm:block"
           />
         </figure>
         <ol className="mt-12 grid border-t border-border md:grid-cols-3">
