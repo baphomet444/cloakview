@@ -1,9 +1,11 @@
 import Image from "next/image";
 import type { Dictionary } from "@/lib/get-dictionary";
+import type { Locale } from "@/site.config";
 import { DownloadButton } from "@/components/download-button";
 
 type HeroProps = {
   dict: Dictionary["home"]["hero"];
+  locale: Locale;
 };
 
 /**
@@ -46,7 +48,7 @@ function HandUnderline() {
  * 1280×720 es todo lo que hay, así que se limita a 896 px de ancho: más grande
  * se vería blanda en una pantalla retina.
  */
-function HeroShot({ dict }: HeroProps) {
+function HeroShot({ dict }: { dict: HeroProps["dict"] }) {
   return (
     <figure className="mx-auto w-full max-w-4xl">
       <Image
@@ -62,7 +64,18 @@ function HeroShot({ dict }: HeroProps) {
   );
 }
 
-export function Hero({ dict }: HeroProps) {
+/**
+ * El eslogan ocupa tres líneas en inglés; en español la frase es casi el doble
+ * de larga y con el mismo cuerpo se parte en cinco, así que el castellano baja
+ * un escalón por breakpoint. No es una traducción más corta: es la misma línea,
+ * con el cuerpo que le deja respirar.
+ */
+const TITLE_SIZE: Record<Locale, string> = {
+  en: "text-[2.5rem] min-[360px]:text-5xl sm:text-7xl md:text-8xl lg:text-9xl",
+  es: "text-[2.25rem] min-[360px]:text-4xl sm:text-6xl md:text-7xl lg:text-8xl",
+};
+
+export function Hero({ dict, locale }: HeroProps) {
   return (
     <section className="relative isolate overflow-x-clip">
       {/* Rejilla de 1px cada 56px con máscara radial */}
@@ -74,7 +87,7 @@ export function Hero({ dict }: HeroProps) {
           {dict.kicker}
         </p>
 
-        <h1 className="mt-7 font-display text-[2.5rem] min-[360px]:text-5xl leading-[0.92] font-extrabold tracking-[-0.03em] text-balance text-foreground sm:text-7xl md:text-8xl lg:text-9xl">
+        <h1 className={`mt-7 font-display ${TITLE_SIZE[locale]} leading-[0.92] font-extrabold tracking-[-0.03em] text-balance text-foreground`}>
           {dict.titleLead}{" "}
           <span className="relative isolate inline-block -rotate-2 px-[0.04em] font-hand text-[1.08em] leading-[0.8] font-bold tracking-normal text-accent">
             {dict.titleHand}

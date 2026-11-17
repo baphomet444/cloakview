@@ -40,7 +40,7 @@ export default async function HomePage({
 
   return (
     <>
-      <Hero dict={dict.home.hero} />
+      <Hero dict={dict.home.hero} locale={locale} />
       <HowItWorks dict={dict.home.how} />
       <FeaturesGrid dict={dict.home.features} />
       <CostsSection dict={dict.home.costs} />
