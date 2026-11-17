@@ -14,9 +14,10 @@
     "terms": "Términos",
     "cookies": "Cookies",
     "changelog": "Novedades",
-    "instagram": "Instagram",
     "rights": "Todos los derechos reservados.",
-    "compare": "Comparativas"
+    "compare": "Comparativas",
+    "follow": "Seguinos",
+    "navLabel": "Pie de página"
   },
   "home": {
     "title": "CloakView — copiloto privado de IA para reuniones",

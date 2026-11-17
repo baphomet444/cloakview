@@ -14,9 +14,10 @@
     "terms": "Terms",
     "cookies": "Cookies",
     "changelog": "Changelog",
-    "instagram": "Instagram",
     "rights": "All rights reserved.",
-    "compare": "Compare"
+    "compare": "Compare",
+    "follow": "Follow",
+    "navLabel": "Footer"
   },
   "home": {
     "title": "CloakView — private AI meeting copilot for Mac",

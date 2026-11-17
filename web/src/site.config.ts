@@ -25,7 +25,9 @@ export const siteConfig = {
   SUPPORT_EMAIL: "support@getcloakview.com",
   LEGAL_ENTITY: "PLACEHOLDER LLC", // TODO: razón social real antes de producción
   // Sustituir solo por hashes SHA-256 publicados para los artefactos reales.
-  SHA256_ARM64: "0e90fc3e8317fba8c05af9bd13dd5dab53f941000667f1d63d4cf80fcf27c793" as string | null,
+  SHA256_ARM64:
+    "0e90fc3e8317fba8c05af9bd13dd5dab53f941000667f1d63d4cf80fcf27c793" as
+      string | null,
   SHA256_INTEL: null as string | null,
   SHA256_WINDOWS: null as string | null,
   // CloakView Pro: URL del checkout de Polar (el link del producto, "Buy").
@@ -34,8 +36,7 @@ export const siteConfig = {
   // contra api.polar.sh (ver src-tauri/src/license/polar.rs).
   PRO_CHECKOUT_URL:
     "https://buy.polar.sh/polar_cl_ogcfheRmLpOwHZJtGYQlcNTJcoaNp58vHcpiY30iI2g" as
-      | string
-      | null,
+      string | null,
 
   // --- Términos legales ---
   LEGAL_UPDATED: "2026-11-13", // ISO date: Fase 7
@@ -46,6 +47,28 @@ export const siteConfig = {
 } as const;
 
 export type Locale = (typeof siteConfig.locales)[number];
+
+/** Redes con perfil público. Para sumar una: agregá acá su URL y su glifo en social-links.tsx. */
+export type SocialName =
+  | "github"
+  | "instagram"
+  | "x"
+  | "youtube"
+  | "linkedin"
+  | "discord"
+  | "telegram"
+  | "tiktok"
+  | "mastodon"
+  | "bluesky";
+
+export const SOCIAL_LINKS: readonly {
+  name: SocialName;
+  url: string;
+  label: string;
+}[] = [
+  { name: "github", url: siteConfig.GITHUB_REPO, label: "GitHub" },
+  { name: "instagram", url: siteConfig.INSTAGRAM_URL, label: "Instagram" },
+];
 
 /** True mientras el repo de GitHub no se haya creado todavía. */
 export function isGithubPending(): boolean {
