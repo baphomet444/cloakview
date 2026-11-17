@@ -56,7 +56,7 @@ function HeroShot({ dict }: { dict: HeroProps["dict"] }) {
           fondo en vez de quedar dentro de una tarjeta. El ancho no pasa de
           896 px porque el original es de 1280 y más allá se vería blando. */}
       <Image
-        src="/media/desk-hero-veil.jpg"
+        src="/media/desk-hero-window.jpg"
         alt={dict.heroImageAlt}
         width={1280}
         height={910}
