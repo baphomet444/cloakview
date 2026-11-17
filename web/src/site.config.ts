@@ -16,6 +16,12 @@ export const siteConfig = {
     en: "Your private meeting copilot. Your API key, your control.",
     es: "Tu copiloto privado de reuniones. Tu clave, tu control.",
   },
+  // El eslogan oficial, palabra por palabra (el del hero y el de las imágenes para redes).
+  // Va en el schema y en cualquier lugar donde una frase corta valga más que el resumen.
+  tagline: {
+    en: "A meeting copilot only you can see",
+    es: "Un copiloto de reuniones que solo tú puedes ver",
+  },
 
   // --- Placeholders pendientes de valores reales ---
   GITHUB_RELEASES: "https://github.com/baphomet444/cloakview/releases/latest",

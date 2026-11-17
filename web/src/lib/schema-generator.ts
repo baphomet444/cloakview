@@ -16,7 +16,7 @@ export function generateSoftwareApplicationSchema(locale: Locale) {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: siteConfig.name,
-    description: siteConfig.description[locale],
+    description: siteConfig.tagline[locale],
     url: locale === "en" ? siteConfig.url : `${siteConfig.url}/es`,
     inLanguage: locale,
     // One of the values Google accepts; "Productivity" is not.
@@ -26,8 +26,8 @@ export function generateSoftwareApplicationSchema(locale: Locale) {
       ? "macOS 14.2 o posterior, Mac con Apple Silicon"
       : "macOS 14.2 or later, Mac with Apple Silicon",
     image: `${siteConfig.url}/brand/logo.png`,
-    author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url, sameAs: [siteConfig.INSTAGRAM_URL] },
-    sameAs: [siteConfig.INSTAGRAM_URL],
+    author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url, sameAs: [siteConfig.INSTAGRAM_URL, siteConfig.GITHUB_REPO] },
+    sameAs: [siteConfig.INSTAGRAM_URL, siteConfig.GITHUB_REPO],
     // The free app, plus CloakView Pro only once it can actually be bought: the Pro
     // offer appears with `PRO_CHECKOUT_URL`, the same switch as the buy button.
     offers: [
