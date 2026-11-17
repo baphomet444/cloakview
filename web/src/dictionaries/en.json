@@ -479,7 +479,7 @@
       },
       "contacts": {
         "title": "Contact",
-        "content": "If you have questions about this privacy policy, contact us at {{email}}."
+        "content": "CloakView is operated by TRUST PILOT LLC. If you have questions about this privacy policy, contact us at {{email}}."
       }
     }
   },
@@ -507,7 +507,7 @@
       },
       "legalEntity": {
         "title": "Legal Entity",
-        "content": "CloakView is offered by PLACEHOLDER LLC (pending legal registration — this placeholder will be updated before v1 release)."
+        "content": "CloakView is offered by TRUST PILOT LLC."
       },
       "intellectualProperty": {
         "title": "Intellectual Property",
@@ -571,7 +571,7 @@
       },
       "questions": {
         "title": "Questions?",
-        "content": "If you have questions about cookies or tracking, email us at {{email}}."
+        "content": "CloakView is operated by TRUST PILOT LLC. If you have questions about cookies or tracking, email us at {{email}}."
       }
     }
   },

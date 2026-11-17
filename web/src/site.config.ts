@@ -29,7 +29,7 @@ export const siteConfig = {
   // Perfil limpio, sin los parámetros del QR con el que se compartió.
   INSTAGRAM_URL: "https://www.instagram.com/cloak_view",
   SUPPORT_EMAIL: "support@getcloakview.com",
-  LEGAL_ENTITY: "PLACEHOLDER LLC", // TODO: razón social real antes de producción
+  LEGAL_ENTITY: "TRUST PILOT LLC",
   // Sustituir solo por hashes SHA-256 publicados para los artefactos reales.
   SHA256_ARM64:
     "0e90fc3e8317fba8c05af9bd13dd5dab53f941000667f1d63d4cf80fcf27c793" as
@@ -45,7 +45,7 @@ export const siteConfig = {
       string | null,
 
   // --- Términos legales ---
-  LEGAL_UPDATED: "2026-11-13", // ISO date: Fase 7
+  LEGAL_UPDATED: "2026-11-17", // ISO date: cambió la entidad legal
   LEGAL_JURISDICTION: "Florida, USA",
 
   locales: ["en", "es"] as const,
