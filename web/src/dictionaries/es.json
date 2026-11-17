@@ -58,6 +58,7 @@
     },
     "how": {
       "title": "Cómo funciona",
+      "bandAlt": "La ventana de CloakView Pro sobre fondo negro, con la barra de pestañas (Listen, Ask, Screen, Notes, History, Settings) y el comienzo de los paneles Ask, Settings y Notes.",
       "subtitle": "Tres pasos. Sin cuenta, sin nube, sin intermediarios.",
       "steps": [
         {

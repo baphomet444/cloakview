@@ -58,6 +58,7 @@
     },
     "how": {
       "title": "How it works",
+      "bandAlt": "The CloakView Pro window on a black background: the tab bar with Listen, Ask, Screen, Notes, History and Settings, and the tops of the Ask, Settings and Notes panels below it.",
       "subtitle": "Three steps. No account, no cloud, no middleman.",
       "steps": [
         {

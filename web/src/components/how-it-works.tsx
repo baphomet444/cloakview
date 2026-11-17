@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Dictionary } from "@/lib/get-dictionary";
 
 /** Banda horizontal a sangre con tres pasos numerados. */
@@ -16,6 +17,29 @@ export function HowItWorks({ dict }: { dict: Dictionary["home"]["how"] }) {
             {dict.subtitle}
           </p>
         </div>
+        {/* La banda es el encabezado real de la ventana: muestra la barra de pestañas
+            y el arranque de los paneles, sin texto que haya que leer de cerca. */}
+        <figure className="mx-auto mt-12 w-full max-w-5xl">
+          {/* En pantallas angostas el ancho completo encoge los rótulos a la nada,
+              así que ahí se recorta a la barra de pestañas; los paneles asomando
+              a la mitad se leen como un error de recorte. */}
+          <Image
+            src="/media/panels-band-crop.jpg"
+            alt={dict.bandAlt}
+            width={900}
+            height={280}
+            sizes="calc(100vw - 3rem)"
+            className="h-auto w-full rounded-2xl border border-border shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_30px_60px_-30px_rgb(0_0_0/0.9)] sm:hidden"
+          />
+          <Image
+            src="/media/panels-band.jpg"
+            alt={dict.bandAlt}
+            width={1280}
+            height={426}
+            sizes="(min-width: 1024px) 1024px, calc(100vw - 3rem)"
+            className="hidden h-auto w-full rounded-2xl border border-border shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_30px_60px_-30px_rgb(0_0_0/0.9)] sm:block"
+          />
+        </figure>
         <ol className="mt-12 grid border-t border-border md:grid-cols-3">
           {dict.steps.map((step, i) => (
             <li
