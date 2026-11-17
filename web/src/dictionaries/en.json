@@ -22,9 +22,9 @@
     "title": "CloakView — private AI meeting copilot for Mac",
     "hero": {
       "kicker": "For macOS 14.2+",
-      "titleLead": "A meeting copilot that",
-      "titleHand": "stays out",
-      "titleTail": "of the window you share",
+      "titleLead": "A meeting copilot only",
+      "titleHand": "you",
+      "titleTail": "can see",
       "subtitle": "CloakView listens to your call, transcribes it live and suggests what to say next — in a private overlay that stays out of the window you share. Your API key, your control.",
       "ctaHow": "How it works",
       "ctaDownload": "Download for macOS",

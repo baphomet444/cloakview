@@ -22,9 +22,9 @@
     "title": "CloakView — copiloto privado de IA para reuniones",
     "hero": {
       "kicker": "Para macOS 14.2+",
-      "titleLead": "Un copiloto de reuniones que",
-      "titleHand": "se queda fuera",
-      "titleTail": "de la ventana que compartes",
+      "titleLead": "Un copiloto de reuniones",
+      "titleHand": "que solo tú",
+      "titleTail": "puedes ver",
       "subtitle": "CloakView escucha tu llamada, la transcribe en vivo y sugiere qué decir — en una ventana privada que se queda fuera de la ventana que compartes. Tu clave, tu control.",
       "ctaHow": "Cómo funciona",
       "ctaDownload": "Descargar para macOS",
