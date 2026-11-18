@@ -87,6 +87,27 @@ fn language_code(setting: &str) -> Option<&'static str> {
     }
 }
 
+/// OpenAI's own speech detector, for the models that support it (all but
+/// `gpt-live-transcribe`). The client VAD (`audio::vad`) only measures loudness,
+/// so a video's music or sound effects count as speech there and get sent to be
+/// transcribed — and the model invents captions from them. The server detector
+/// is trained on speech: it opens a turn for a voice, not for music.
+fn uses_server_vad(model: &str) -> bool {
+    !model.contains("live-transcribe")
+}
+
+/// The server detector's settings: a higher `threshold` (default 0.5) needs
+/// clearer speech to open a turn, which suits a noisy call or a video.
+fn server_turn_detection() -> serde_json::Value {
+    serde_json::json!({
+        "type": "server_vad",
+        "threshold": SERVER_VAD_THRESHOLD,
+        "prefix_padding_ms": 300,
+        "silence_duration_ms": 700,
+    })
+}
+const SERVER_VAD_THRESHOLD: f64 = 0.6;
+
 fn session_update(transcription: &Transcription, source: Source) -> serde_json::Value {
     let model = transcription_model(&transcription.model);
     let mut config = serde_json::json!({ "model": model });
@@ -99,17 +120,26 @@ fn session_update(transcription: &Transcription, source: Source) -> serde_json::
             config["language"] = serde_json::json!(code);
         }
     }
+    // Per-token confidence, so a caption the model invented from noise can be
+    // told apart (see `parse::confidence`). `gpt-live-transcribe` reports none.
+    let include = if model.contains("live-transcribe") {
+        serde_json::json!([])
+    } else {
+        serde_json::json!(["item.input_audio_transcription.logprobs"])
+    };
     serde_json::json!({
         "type": "session.update",
         "session": {
             "type": "transcription",
+            "include": include,
             "audio": {
                 "input": {
                     "format": { "type": "audio/pcm", "rate": TARGET_SAMPLE_RATE },
                     "noise_reduction": { "type": source.noise_reduction() },
                     "transcription": config,
-                    // These models have no server-side turn detection: `Vad` decides.
-                    "turn_detection": null,
+                    // The server decides where speech is (see `uses_server_vad`);
+                    // `gpt-live-transcribe` has no server detection, so `Vad` decides.
+                    "turn_detection": if uses_server_vad(model) { server_turn_detection() } else { serde_json::Value::Null },
                 }
             }
         }
@@ -162,9 +192,18 @@ pub async fn run_session(
 
                 // A new connection has an empty buffer, so turn tracking starts over too.
                 let mut vad = source.vad();
+                let server_vad = uses_server_vad(transcription_model(&transcription.model));
                 'session: loop {
                     tokio::select! {
                         chunk = audio_in.recv() => match chunk {
+                            Some(c) if server_vad => {
+                                // Everything goes out; the server finds the speech in it.
+                                let b64 = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &c.pcm_s16le);
+                                let frame = serde_json::json!({ "type": "input_audio_buffer.append", "audio": b64 });
+                                if write.send(frame.to_string().into()).await.is_err() {
+                                    break 'session;
+                                }
+                            }
                             Some(c) => {
                                 let turn = vad.push(c);
                                 for chunk in turn.send {
@@ -197,7 +236,26 @@ pub async fn run_session(
                         },
                         msg = read.next() => match msg {
                             Some(Ok(tokio_tungstenite::tungstenite::Message::Text(txt))) => {
-                                if let Some(ev) = parse_frame(txt.as_str()).map(|ev| source.label(ev)) {
+                                if server_vad && txt.as_str().contains("\"input_audio_buffer.committed\"") {
+                                    crate::diag::log("input_audio_buffer.committed (server)");
+                                }
+                                let confidence = crate::realtime::parse::confidence(txt.as_str());
+                                if let Some((mean, tokens)) = confidence {
+                                    // A number only, never what was said.
+                                    crate::diag::log(&format!("transcript confidence {mean:.2} ({tokens} tokens)"));
+                                }
+                                let event = parse_frame(txt.as_str()).filter(|ev| match ev {
+                                    // A caption invented from music or noise never reaches the
+                                    // transcript, so it is never answered either.
+                                    RealtimeEvent::Transcript { text, .. }
+                                        if crate::realtime::parse::is_probably_invented(text, confidence) =>
+                                    {
+                                        crate::diag::log("transcript dropped: probably invented from non-speech audio");
+                                        false
+                                    }
+                                    _ => true,
+                                });
+                                if let Some(ev) = event.map(|ev| source.label(ev)) {
                                     if matches!(ev, RealtimeEvent::Transcript { .. }) {
                                         backoff.reset();
                                     }
@@ -243,13 +301,17 @@ mod tests {
     }
 
     #[test]
-    fn the_session_is_a_transcription_session_without_server_turn_detection() {
+    fn the_server_finds_the_speech_except_for_the_live_model() {
         let v = session_update(&transcription("gpt-4o-mini-realtime", ""), Source::Remote);
         let input = &v["session"]["audio"]["input"];
         assert_eq!(v["session"]["type"], "transcription");
         assert_eq!(input["format"]["rate"], 24_000);
         assert_eq!(input["transcription"]["model"], DEFAULT_TRANSCRIPTION_MODEL);
-        assert!(input["turn_detection"].is_null());
+        assert_eq!(input["turn_detection"]["type"], "server_vad");
+        assert_eq!(input["turn_detection"]["threshold"], SERVER_VAD_THRESHOLD);
+        // `gpt-live-transcribe` has no server detection: the client VAD decides.
+        let live = session_update(&transcription("gpt-live-transcribe", ""), Source::Remote);
+        assert!(live["session"]["audio"]["input"]["turn_detection"].is_null());
     }
 
     #[test]
@@ -258,6 +320,15 @@ mod tests {
         let mine = session_update(&transcription("", ""), Source::Mine);
         assert_eq!(remote["session"]["audio"]["input"]["noise_reduction"], serde_json::json!({ "type": "near_field" }));
         assert_eq!(mine["session"]["audio"]["input"]["noise_reduction"], serde_json::json!({ "type": "far_field" }));
+    }
+
+    #[test]
+    fn confidence_is_asked_for_except_from_the_live_model() {
+        let include = |model: &str| session_update(&transcription(model, ""), Source::Remote)["session"]["include"].clone();
+        assert_eq!(include("gpt-4o-transcribe"), serde_json::json!(["item.input_audio_transcription.logprobs"]));
+        assert_eq!(include(""), serde_json::json!(["item.input_audio_transcription.logprobs"]));
+        // `gpt-live-transcribe` reports no confidence.
+        assert_eq!(include("gpt-live-transcribe"), serde_json::json!([]));
     }
 
     #[test]
