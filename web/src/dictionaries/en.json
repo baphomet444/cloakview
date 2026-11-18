@@ -286,7 +286,7 @@
     "verify": {
       "title": "Check the checksum before you install",
       "text": "Run this in Terminal and compare the output with the SHA-256 shown above, or with the one in the release notes:",
-      "command": "shasum -a 256 ~/Downloads/CloakView_0.3.1_aarch64.dmg"
+      "command": "shasum -a 256 ~/Downloads/CloakView_0.3.2_aarch64.dmg"
     }
   },
   "meta": {

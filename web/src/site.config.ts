@@ -32,7 +32,7 @@ export const siteConfig = {
   LEGAL_ENTITY: "TRUST PILOT LLC",
   // Sustituir solo por hashes SHA-256 publicados para los artefactos reales.
   SHA256_ARM64:
-    "159e815363c1a2c3e38bc56e02459fe882fa707de6e1f5ce3b71f45045f29151" as
+    "668a11ac20ef365015f40d80d53c68af5169aecaa29ccdc14dc7372ea44b29e9" as
       string | null,
   SHA256_INTEL: null as string | null,
   SHA256_WINDOWS: null as string | null,
