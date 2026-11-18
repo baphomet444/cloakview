@@ -31,8 +31,12 @@ pub fn parse_frame(json: &str) -> Option<RealtimeEvent> {
                 })
             }
         }
+        // The provider's error text goes to the UI (`error` event) and the
+        // diagnostics log: scrub it like every other boundary crossing.
         "error" => Some(RealtimeEvent::Error {
-            message: v.get("error")?.get("message")?.as_str()?.to_string(),
+            message: cv_providers::redact::scrub_secrets(
+                v.get("error")?.get("message")?.as_str()?,
+            ),
         }),
         _ => None,
     }

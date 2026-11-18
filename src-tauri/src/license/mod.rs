@@ -80,10 +80,6 @@ pub enum Rejection {
     WrongProduct,
     Disabled,
     Expired,
-    /// A test-mode key from the old store. Only real purchases unlock Pro in the
-    /// shipped app; a Polar sandbox key never reaches this verdict because the
-    /// sandbox is a different host.
-    TestMode,
     /// The store could not be reached, or answered with a server error.
     Unreachable,
 }
@@ -97,7 +93,6 @@ impl Rejection {
             Rejection::WrongProduct => "wrongProduct",
             Rejection::Disabled => "disabled",
             Rejection::Expired => "expired",
-            Rejection::TestMode => "testMode",
             Rejection::Unreachable => "unreachable",
         }
     }
@@ -275,7 +270,6 @@ mod tests {
             Rejection::WrongProduct,
             Rejection::Disabled,
             Rejection::Expired,
-            Rejection::TestMode,
             Rejection::Unreachable,
         ]
         .iter()
@@ -283,7 +277,7 @@ mod tests {
         .collect();
         assert_eq!(
             codes,
-            ["empty", "invalid", "limit", "wrongProduct", "disabled", "expired", "testMode", "unreachable"]
+            ["empty", "invalid", "limit", "wrongProduct", "disabled", "expired", "unreachable"]
         );
     }
 }

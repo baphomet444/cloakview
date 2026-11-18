@@ -40,6 +40,12 @@ export function errorCopyKey(error: unknown): CatalogKey {
       return "errors.openFailed";
     case "License":
       return licenseCopyKey(error.message);
+    case "ProviderKeyMissing":
+      return "errors.providerKeyMissing";
+    case "SttUnsupported":
+      return "errors.sttUnsupported";
+    case "UnknownProvider":
+      return "errors.unknownProvider";
     default:
       return "errors.generic";
   }
@@ -56,8 +62,6 @@ function licenseCopyKey(code: string): CatalogKey {
       return "errors.licenseDisabled";
     case "expired":
       return "errors.licenseExpired";
-    case "testMode":
-      return "errors.licenseTestMode";
     case "unreachable":
       return "errors.licenseUnreachable";
     default:

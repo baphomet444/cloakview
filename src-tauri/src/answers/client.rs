@@ -1,29 +1,27 @@
-use crate::answers::{parse::parse_sse_line, parse::LineBuffer, AnswersEvent};
+use crate::answers::AnswersEvent;
 use crate::transcript::Turn;
-use futures_util::StreamExt;
-use tokio::sync::mpsc::error::TrySendError;
+use cv_providers::{ChatMessage, Part, Provider, SuggestionEvent, SuggestionRequest};
+use std::sync::Arc;
 
-const URL: &str = "https://api.openai.com/v1/responses";
 const CHARS_PER_TOKEN: usize = 4;
 const CONTEXT_TOKEN_BUDGET: usize = 2_000;
 
-/// Builds the Responses API `input` array from recent context, budgeted
-/// by (approximate) tokens rather than turn count: walk `context` from
-/// most recent backward, keep accepting turns while under
+/// Builds the conversation messages from recent context, budgeted by
+/// (approximate) tokens rather than turn count: walk `context` from most
+/// recent backward, keep accepting turns while under
 /// `CONTEXT_TOKEN_BUDGET * CHARS_PER_TOKEN` chars, then restore
 /// chronological order before appending the live `question`.
 ///
-/// `chars/4` is an approximation, not a real tokenizer — fine for a
-/// soft context budget, not for exact token accounting.
+/// `chars/4` is an approximation, not a real tokenizer — fine for a soft
+/// context budget, not for exact token accounting.
 ///
 /// Budget is counted in `chars()`, not bytes (`str::len()`): a multi-byte
-/// UTF-8 character such as `'á'` is 2 bytes but 1 char, so measuring by
-/// byte length burns the budget roughly twice as fast as intended for
-/// accented text. When the next (older) turn would overrun the remaining
-/// budget, it is truncated to exactly what's left and kept — never
-/// dropped outright, even when it's the single most recent turn and the
-/// first one considered.
-fn build_input(context: &[Turn], question: Option<&str>, unanswered: &[(bool, String)]) -> Vec<serde_json::Value> {
+/// UTF-8 character such as `'á'` is 2 bytes but 1 char, so measuring by byte
+/// length burns the budget roughly twice as fast as intended for accented
+/// text. When the next (older) turn would overrun the remaining budget, it is
+/// truncated to exactly what's left and kept — never dropped outright, even
+/// when it's the single most recent turn and the first one considered.
+fn build_messages(context: &[Turn], question: Option<&str>, unanswered: &[(bool, String)]) -> Vec<ChatMessage> {
     let mut budget_chars = CONTEXT_TOKEN_BUDGET * CHARS_PER_TOKEN;
     let mut selected: Vec<(bool, String)> = Vec::new();
     for turn in context.iter().rev() {
@@ -42,27 +40,27 @@ fn build_input(context: &[Turn], question: Option<&str>, unanswered: &[(bool, St
     }
     selected.reverse();
 
-    let mut input: Vec<serde_json::Value> = selected
+    let mut messages: Vec<ChatMessage> = selected
         .into_iter()
         .map(|(is_user_turn, text)| {
-            serde_json::json!({
-                "role": if is_user_turn { "user" } else { "assistant" },
-                "content": text,
-            })
+            // The role mapping matters: what the others said arrives as
+            // 'assistant' turns (see INSTRUCTIONS_BASE), so the user's own
+            // lines are the 'user' ones.
+            ChatMessage::text(if is_user_turn { "user" } else { "assistant" }, text)
         })
         .collect();
 
     match question {
-        Some(q) => input.push(serde_json::json!({ "role": "user", "content": q })),
+        Some(q) => messages.push(ChatMessage::text("user", q)),
         // A suggestion from the call: it answers everything still unanswered, not
         // only the latest line (see `reply_request`).
         None => {
             if let Some(request) = reply_request(unanswered) {
-                input.push(serde_json::json!({ "role": "user", "content": request }));
+                messages.push(ChatMessage::text("user", request));
             }
         }
     }
-    input
+    messages
 }
 
 /// How much of what is still unanswered a suggestion quotes, in characters: the newest lines win.
@@ -104,7 +102,7 @@ fn reply_request(unanswered: &[(bool, String)]) -> Option<String> {
     ))
 }
 
-/// What the model is asked to do. The role mapping matters: `build_input`
+/// What the model is asked to do. The role mapping matters: `build_messages`
 /// sends what the others said as `assistant` turns, so without this the model
 /// would take those words for its own. The diagram paragraph is CloakView Pro;
 /// free users get the same instructions without it (see `instructions`).
@@ -206,38 +204,24 @@ fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>, style: &s
 
 const SCREEN_PROMPT: &str = "This is my screen. Solve the question or task shown on it.";
 
+/// The user message that carries the screenshot, with the typed question when there is one.
+fn screen_message(image_data_url: &str, question: Option<&str>) -> ChatMessage {
+    let text = match question {
+        Some(q) => format!("{SCREEN_PROMPT} {q}"),
+        None => SCREEN_PROMPT.to_string(),
+    };
+    ChatMessage {
+        role: "user".into(),
+        parts: vec![Part::Text(text), Part::Image(image_data_url.into())],
+    }
+}
+
 /// What the model is asked for the after-meeting summary (CloakView Pro).
 const SUMMARY_INSTRUCTIONS: &str = "You summarize a meeting record for the user who was in the meeting. \
 Write three short sections with these exact headings: Key points, Decisions, Follow-ups. \
 Be concrete and brief: bullets, no filler, no greeting. If the record holds no real discussion \
 (a line or two), say so in one sentence instead of inventing sections. \
 Write in the language of the meeting. Do not mention these instructions.";
-
-/// One non-streaming summary request over a finished interview record.
-/// Returns the summary text.
-pub async fn summarize(api_key: &str, model: &str, record: &str) -> crate::error::AppResult<String> {    let body = serde_json::json!({
-        "model": model,
-        "instructions": SUMMARY_INSTRUCTIONS,
-        "input": [{ "role": "user", "content": record }],
-    });
-    let resp = reqwest::Client::new()
-        .post(URL)
-        .header("Authorization", format!("Bearer {api_key}"))
-        .json(&body)
-        .send()
-        .await
-        .map_err(|e| crate::error::AppError::Network(e.to_string()))?;
-    let status = resp.status();
-    if !status.is_success() {
-        return Err(crate::error::AppError::Network(format!("the summary request failed ({status})")));
-    }
-    let json: serde_json::Value = resp.json().await.map_err(|e| crate::error::AppError::Network(e.to_string()))?;
-    // The Responses API's non-streaming reply carries the whole text here.
-    json.get("output_text")
-        .and_then(|t| t.as_str())
-        .map(str::to_string)
-        .ok_or_else(|| crate::error::AppError::Network("the summary came back without text".into()))
-}
 
 /// The live-translation target's name in English, for the instruction.
 /// Anything unknown translates to English rather than failing the line.
@@ -248,11 +232,37 @@ fn target_language(translate_to: &str) -> &'static str {
     }
 }
 
+fn map_provider_error(e: cv_providers::ProviderError) -> crate::error::AppError {
+    use cv_providers::ProviderError as PE;
+    match e {
+        PE::MissingKey(id) => crate::error::AppError::ProviderKeyMissing(id),
+        PE::UnknownProfile(id) => crate::error::AppError::UnknownProvider(id),
+        // `user_message` is a fixed category with our own text: provider
+        // bodies (which can echo a masked key fragment) never reach the UI
+        // event or the diagnostics log this AppError gets printed in.
+        other => crate::error::AppError::Provider(other.user_message()),
+    }
+}
+
+/// One non-streaming summary request over a finished interview record.
+/// Returns the summary text.
+pub async fn summarize(
+    provider: &Arc<dyn Provider>,
+    record: &str,
+) -> crate::error::AppResult<String> {
+    provider
+        .suggest(&SuggestionRequest {
+            instructions: SUMMARY_INSTRUCTIONS.into(),
+            messages: vec![ChatMessage::text("user", record)],
+        })
+        .await
+        .map_err(map_provider_error)
+}
+
 /// One non-streaming translation of a single transcript line (CloakView Pro
 /// live translation). Returns the translated text.
 pub async fn translate(
-    api_key: &str,
-    model: &str,
+    provider: &Arc<dyn Provider>,
     text: &str,
     translate_to: &str,
 ) -> crate::error::AppResult<String> {
@@ -261,45 +271,16 @@ pub async fn translate(
          no quotes, no notes, no explanation.",
         target_language(translate_to)
     );
-    let body = serde_json::json!({
-        "model": model,
-        "instructions": instructions,
-        "input": [{ "role": "user", "content": text }],
-    });
-    let resp = reqwest::Client::new()
-        .post(URL)
-        .header("Authorization", format!("Bearer {api_key}"))
-        .json(&body)
-        .send()
+    provider
+        .suggest(&SuggestionRequest {
+            instructions,
+            messages: vec![ChatMessage::text("user", text)],
+        })
         .await
-        .map_err(|e| crate::error::AppError::Network(e.to_string()))?;
-    let status = resp.status();
-    if !status.is_success() {
-        return Err(crate::error::AppError::Network(format!("the translation request failed ({status})")));
-    }
-    let json: serde_json::Value = resp.json().await.map_err(|e| crate::error::AppError::Network(e.to_string()))?;
-    json.get("output_text")
-        .and_then(|t| t.as_str())
-        .map(str::to_string)
-        .ok_or_else(|| crate::error::AppError::Network("the translation came back without text".into()))
+        .map_err(map_provider_error)
 }
 
-/// The user turn that carries the screenshot, with the typed question when there is one.
-fn image_message(image_data_url: &str, question: Option<&str>) -> serde_json::Value {
-    let text = match question {
-        Some(q) => format!("{SCREEN_PROMPT} {q}"),
-        None => SCREEN_PROMPT.to_string(),
-    };
-    serde_json::json!({
-        "role": "user",
-        "content": [
-            { "type": "input_text", "text": text },
-            { "type": "input_image", "image_url": image_data_url },
-        ],
-    })
-}
-
-/// Everything about one answer request that isn't the API plumbing.
+/// Everything about one answer request that isn't the provider plumbing.
 pub struct AnswerRequest {
     pub context: Vec<Turn>,
     pub question: Option<String>,
@@ -318,18 +299,15 @@ pub struct AnswerRequest {
     pub style: String,
 }
 
-/// Spawns the Responses API streaming request and returns a bounded
-/// receiver of parsed events plus the task's `JoinHandle`.
+/// Spawns the streaming suggestion through the active provider and returns a
+/// bounded receiver of parsed events plus the task's `JoinHandle`.
 ///
-/// Uses `mpsc::channel(64)` (bounded, not unbounded) with `try_send`:
-/// - `Full`: drop this delta; the next successful delta still carries the
-///   UI forward, and blocking here would stall the HTTP read loop on a
-///   slow/stuck frontend.
-/// - `Closed`: stop the task immediately instead of draining a live HTTP
-///   stream to completion nobody is listening to anymore.
+/// The provider owns the HTTP stream; this task only translates its events
+/// into `AnswersEvent`s. Bounded channel with `try_send` semantics live in
+/// the crate's stream implementation (drop deltas on a slow consumer, exit on
+/// closed).
 pub fn stream_answer(
-    api_key: String,
-    model: String,
+    provider: Arc<dyn Provider>,
     request: AnswerRequest,
 ) -> (tokio::sync::mpsc::Receiver<AnswersEvent>, tokio::task::JoinHandle<()>) {
     let (tx, rx) = tokio::sync::mpsc::channel(64);
@@ -337,63 +315,36 @@ pub fn stream_answer(
     let handle = tokio::spawn(async move {
         let AnswerRequest { context, question, unanswered, image, pro, about_user, style } = request;
         let for_screen = image.is_some();
-        let input = match image.as_deref() {
+        let messages = match image.as_deref() {
             // The screen stands on its own: the call's transcript would only distract.
-            Some(image) => vec![image_message(image, question.as_deref())],
-            None => build_input(&context, question.as_deref(), &unanswered),
+            Some(image) => vec![screen_message(image, question.as_deref())],
+            None => build_messages(&context, question.as_deref(), &unanswered),
         };
-        let instructions = instructions(for_screen, pro, about_user.as_deref(), &style);
-        let body = serde_json::json!({
-            "model": model,
-            "instructions": instructions,
-            "input": input,
-            "stream": true,
-        });
+        let suggestion = SuggestionRequest {
+            instructions: instructions(for_screen, pro, about_user.as_deref(), &style),
+            messages,
+        };
 
-        let resp = reqwest::Client::new()
-            .post(URL)
-            .header("Authorization", format!("Bearer {api_key}"))
-            .json(&body)
-            .send()
-            .await;
-
-        let resp = match resp {
-            Ok(r) => r,
+        let mut events = match provider.suggest_stream(&suggestion).await {
+            Ok(events) => events,
             Err(e) => {
-                let _ = tx.try_send(AnswersEvent::Error { message: e.to_string() });
+                let _ = tx.try_send(AnswersEvent::Error { message: map_provider_error(e).to_string() });
                 return;
             }
         };
 
-        let mut stream = resp.bytes_stream();
-        let mut buf = LineBuffer::default();
-
-        while let Some(chunk) = stream.next().await {
-            let bytes = match chunk {
-                Ok(b) => b,
-                Err(e) => {
-                    let _ = tx.try_send(AnswersEvent::Error { message: e.to_string() });
-                    return;
-                }
+        while let Some(event) = events.recv().await {
+            let mapped = match event {
+                SuggestionEvent::Delta(text) => AnswersEvent::Delta { text },
+                SuggestionEvent::Done => AnswersEvent::Done,
+                SuggestionEvent::Failed(message) => AnswersEvent::Error { message },
             };
-            let text = String::from_utf8_lossy(&bytes);
-
-            for line in buf.push(&text) {
-                let Some(event) = parse_sse_line(&line) else { continue };
-                let done = matches!(event, AnswersEvent::Done | AnswersEvent::Error { .. });
-
-                match tx.try_send(event) {
-                    Ok(()) => {}
-                    Err(TrySendError::Full(_)) => {
-                        // Drop this delta; keep reading. A later delta (or
-                        // Done/Error) still reaches the receiver.
-                    }
-                    Err(TrySendError::Closed(_)) => return,
-                }
-
-                if done {
-                    return;
-                }
+            let stop = matches!(mapped, AnswersEvent::Done | AnswersEvent::Error { .. });
+            if tx.try_send(mapped).is_err() {
+                return;
+            }
+            if stop {
+                return;
             }
         }
     });
@@ -403,7 +354,7 @@ pub fn stream_answer(
 
 #[cfg(test)]
 mod build_input_tests {
-    use super::build_input;
+    use super::build_messages;
     use crate::transcript::Turn;
 
     fn turn(is_user_turn: bool, text: String, ts: i64) -> Turn {
@@ -415,34 +366,33 @@ mod build_input_tests {
         let context: Vec<Turn> = (0..20)
             .map(|i| turn(i % 2 == 0, "x".repeat(500), i as i64))
             .collect();
-        let input = build_input(&context, None, &[]);
+        let messages = build_messages(&context, None, &[]);
 
-        assert!(!input.is_empty(), "budget starved out every turn");
-        assert!(input.len() < 20, "all 20 turns fit: budget math is wrong");
+        assert!(!messages.is_empty(), "budget starved out every turn");
+        assert!(messages.len() < 20, "all 20 turns fit: budget math is wrong");
 
         let newest = context.last().unwrap();
-        assert_eq!(
-            input.last().unwrap()["content"],
-            serde_json::json!(newest.text),
-            "last entry should be the most recent turn"
-        );
+        let last_text: String = messages.last().unwrap().parts.iter().filter_map(|p| match p {
+            cv_providers::Part::Text(t) => Some(t.as_str()),
+            _ => None,
+        }).collect();
+        assert_eq!(last_text, newest.text, "last message should be the most recent turn");
     }
 
     #[test]
     fn oversized_newest_turn_is_truncated_not_dropped() {
         let context = vec![turn(true, "x".repeat(200_000), 0)];
-        let input = build_input(&context, None, &[]);
+        let messages = build_messages(&context, None, &[]);
 
-        assert_eq!(
-            input.len(),
-            1,
-            "an oversized newest turn must be truncated, never dropped entirely"
-        );
-        let content = input[0]["content"].as_str().unwrap();
+        assert_eq!(messages.len(), 1, "an oversized newest turn must be truncated, never dropped entirely");
+        let text: String = messages[0].parts.iter().filter_map(|p| match p {
+            cv_providers::Part::Text(t) => Some(t.as_str()),
+            _ => None,
+        }).collect();
         assert!(
-            content.chars().count() < 200_000,
+            text.chars().count() < 200_000,
             "expected truncation, got the full {}-char turn",
-            content.chars().count()
+            text.chars().count()
         );
     }
 
@@ -456,32 +406,34 @@ mod build_input_tests {
         let text: String = "á".repeat(n_chars);
         let context = vec![turn(true, text.clone(), 0)];
 
-        let input = build_input(&context, None, &[]);
+        let messages = build_messages(&context, None, &[]);
 
-        assert_eq!(input.len(), 1, "turn should fit whole, not be dropped");
+        assert_eq!(messages.len(), 1, "turn should fit whole, not be dropped");
+        let kept: String = messages[0].parts.iter().filter_map(|p| match p {
+            cv_providers::Part::Text(t) => Some(t.as_str()),
+            _ => None,
+        }).collect();
         assert_eq!(
-            input[0]["content"].as_str().unwrap().chars().count(),
+            kept.chars().count(),
             n_chars,
             "turn should not be truncated either -- it fits under the char budget"
         );
     }
 
     #[test]
-    fn a_screenshot_goes_as_one_user_turn_with_text_and_image() {
-        let v = super::image_message("data:image/jpeg;base64,AAAA", Some("Only question 2."));
-        assert_eq!(v["role"], "user");
-        assert_eq!(v["content"][0]["type"], "input_text");
-        assert!(v["content"][0]["text"].as_str().unwrap().ends_with("Only question 2."));
-        assert_eq!(v["content"][1], serde_json::json!({ "type": "input_image", "image_url": "data:image/jpeg;base64,AAAA" }));
+    fn others_are_assistant_turns_and_the_user_is_user() {
+        let context = vec![turn(false, "them".into(), 0), turn(true, "me".into(), 1)];
+        let messages = build_messages(&context, Some("typed question"), &[]);
+        assert_eq!(messages[0].role, "assistant");
+        assert_eq!(messages[1].role, "user");
+        assert_eq!(messages[2].role, "user", "the typed question trails the transcript");
     }
 
     #[test]
     fn question_is_appended_as_user_turn() {
-        let input = build_input(&[], Some("q"), &[]);
-        assert_eq!(
-            input,
-            vec![serde_json::json!({ "role": "user", "content": "q" })]
-        );
+        let messages = build_messages(&[], Some("q"), &[]);
+        assert_eq!(messages.len(), 1);
+        assert_eq!(messages[0].role, "user");
     }
 
     fn line(mine: bool, text: &str) -> (bool, String) {
@@ -499,11 +451,14 @@ mod build_input_tests {
             line(true, "Sure."),
             line(false, "And why this company?"),
         ];
-        let input = build_input(&context, None, &unanswered);
-        assert_eq!(input.len(), 3, "the conversation, then the request");
-        let last = input.last().unwrap();
-        assert_eq!(last["role"], "user");
-        let request = last["content"].as_str().unwrap();
+        let messages = super::build_messages(&context, None, &unanswered);
+        assert_eq!(messages.len(), 3, "the conversation, then the request");
+        let last = messages.last().unwrap();
+        assert_eq!(last.role, "user");
+        let request = match last.parts.as_slice() {
+            [cv_providers::Part::Text(text)] => text.as_str(),
+            other => panic!("expected one text part, got {other:?}"),
+        };
         let first = request.find("Them: Tell me about yourself.").expect("first question quoted");
         let mine = request.find("Me: Sure.").expect("the user's own line quoted");
         let second = request.find("Them: And why this company?").expect("second question quoted");
@@ -513,16 +468,16 @@ mod build_input_tests {
 
     #[test]
     fn a_typed_question_is_not_replaced_by_the_unanswered_lines() {
-        let input = build_input(&[], Some("What's their stack?"), &[line(false, "Any questions for us?")]);
-        assert_eq!(input, vec![serde_json::json!({ "role": "user", "content": "What's their stack?" })]);
+        let messages = super::build_messages(&[], Some("What's their stack?"), &[line(false, "Any questions for us?")]);
+        assert_eq!(messages, vec![cv_providers::ChatMessage::text("user", "What's their stack?")]);
     }
 
     #[test]
     fn with_nothing_new_from_the_other_side_the_conversation_ends_as_before() {
         let context = vec![turn(false, "Any questions?".into(), 1)];
         // Only the user's own words are new: there is nothing of theirs to quote.
-        let input = build_input(&context, None, &[line(true, "Let me think.")]);
-        assert_eq!(input, vec![serde_json::json!({ "role": "assistant", "content": "Any questions?" })]);
+        let messages = super::build_messages(&context, None, &[line(true, "Let me think.")]);
+        assert_eq!(messages, vec![cv_providers::ChatMessage::text("assistant", "Any questions?")]);
     }
 
     #[test]
@@ -597,5 +552,71 @@ mod instructions_tests {
         let balanced = instructions(false, true, None, "balanced");
         assert!(!balanced.contains("STAR"));
         assert!(!balanced.contains("sales call"));
+    }
+}
+
+#[cfg(test)]
+mod redaction_tests {
+    use super::map_provider_error;
+
+    /// The blocking security test for the provider-error surfaces: a 401
+    /// body echoing a masked key fragment must not reach the UI-facing
+    /// message, the IPC payload, or the diagnostics log (which prints the
+    /// `AppError`'s `Display`).
+    #[test]
+    fn a_key_fragment_in_a_401_body_never_reaches_ui_ipc_or_log() {
+        let fragment = "sk-AbCdEf1234GhIjKl5678mnop";
+        let provider_err = || {
+            cv_providers::ProviderError::Api {
+                status: 401,
+                body: format!(
+                    r#"{{"error":{{"message":"Incorrect API key provided: {fragment}.","type":"invalid_request_error","code":"invalid_api_key"}}}}"#
+                ),
+            }
+        };
+
+        // 1. The message the UI shows (what `test_connection` and the answer
+        //    error event carry).
+        let ui_message = provider_err().user_message();
+        assert!(!ui_message.contains("sk-AbCdEf"), "UI message leaked the fragment: {ui_message}");
+        assert!(!ui_message.contains("Incorrect API key"), "UI message leaked the body: {ui_message}");
+        assert!(ui_message.contains("401"), "the status helps the user; keep it: {ui_message}");
+
+        // 2. The app-level error: its `Display` is exactly what `diag::log`
+        //    writes (the log surface).
+        let app_err = map_provider_error(provider_err());
+        let log_line = app_err.to_string();
+        assert!(!log_line.contains("sk-AbCdEf"), "log line leaked the fragment: {log_line}");
+        assert!(!log_line.contains("Incorrect API key"), "log line leaked the body: {log_line}");
+
+        // 3. The IPC payload the frontend receives.
+        let ipc: crate::error::IpcError = app_err.into();
+        let ipc_json = serde_json::to_string(&ipc).unwrap();
+        assert!(!ipc_json.contains("sk-AbCdEf"), "IPC payload leaked the fragment: {ipc_json}");
+        assert!(!ipc_json.contains("Incorrect API key"), "IPC payload leaked the body: {ipc_json}");
+    }
+
+    /// Even the provider error's own `Display` (used in any `{e}` context)
+    /// must not carry the body.
+    #[test]
+    fn provider_error_display_never_includes_the_body() {
+        let fragment = "sk-AbCdEf1234GhIjKl5678mnop";
+        let err = cv_providers::ProviderError::Api {
+            status: 401,
+            body: format!("Incorrect API key provided: {fragment}."),
+        };
+        let display = err.to_string();
+        assert!(!display.contains(fragment), "Display leaked the body: {display}");
+        assert!(display.contains("401"));
+    }
+
+    /// The scrubber is the second defense on app-owned strings too.
+    #[test]
+    fn scrub_strips_key_fragments_from_any_string() {
+        let scrubbed = cv_providers::redact::scrub_secrets(
+            "x-api-key: gsk_AAAAbbbb1111CCCC2222dddd received",
+        );
+        assert!(!scrubbed.contains("gsk_AAAA"));
+        assert!(scrubbed.contains("[redacted]"));
     }
 }

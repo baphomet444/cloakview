@@ -27,6 +27,14 @@ pub enum AppError {
     ProRequired,
     #[error("license error: {0}")]
     License(String),
+    #[error("unknown AI provider '{0}'")]
+    UnknownProvider(String),
+    #[error("no API key stored for provider '{0}'")]
+    ProviderKeyMissing(String),
+    #[error("{0}")]
+    Provider(String),
+    #[error("live listening needs a streaming provider; '{0}' transcribes in batches, which listening does not support yet")]
+    SttUnsupported(String),
 }
 
 pub type AppResult<T> = Result<T, AppError>;
@@ -46,6 +54,10 @@ pub enum IpcError {
     OpenFailed(String),
     ProRequired,
     License(String),
+    UnknownProvider(String),
+    ProviderKeyMissing(String),
+    Provider(String),
+    SttUnsupported(String),
 }
 
 impl From<AppError> for IpcError {
@@ -63,6 +75,10 @@ impl From<AppError> for IpcError {
             AppError::OpenFailed(m) => IpcError::OpenFailed(m),
             AppError::ProRequired => IpcError::ProRequired,
             AppError::License(m) => IpcError::License(m),
+            AppError::UnknownProvider(m) => IpcError::UnknownProvider(m),
+            AppError::ProviderKeyMissing(m) => IpcError::ProviderKeyMissing(m),
+            AppError::Provider(m) => IpcError::Provider(m),
+            AppError::SttUnsupported(m) => IpcError::SttUnsupported(m),
         }
     }
 }

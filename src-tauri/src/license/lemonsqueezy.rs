@@ -27,14 +27,11 @@ pub struct LsResponse {
     pub meta: Option<LsMeta>,
 }
 
+/// Test-mode keys are deliberately not told apart (owner decision, 9afd025): only
+/// the store owner can create one, and it unlocks Pro like a real purchase.
 #[derive(Debug, serde::Deserialize)]
 pub struct LsKey {
     pub status: String,
-    /// True for a key issued by a store in test mode. Real purchases are false.
-    /// A response that omits it (an error body) defaults to false, so only a key
-    /// Lemon Squeezy positively marks as test is refused.
-    #[serde(default)]
-    pub test_mode: bool,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -60,12 +57,6 @@ impl LsResponse {
     fn key_status(&self) -> Option<&str> {
         self.license_key.as_ref().map(|k| k.status.as_str())
     }
-
-    /// Whether this is a test-mode key. A response without `license_key` names no
-    /// mode, so it is not counted as test (it will fail for another reason).
-    fn is_test(&self) -> bool {
-        self.license_key.as_ref().is_some_and(|k| k.test_mode)
-    }
 }
 
 /// Reads an HTTP answer from the License API. A 4xx carries a JSON verdict on the
@@ -82,9 +73,6 @@ pub fn interpret_http(status: u16, body: &str) -> Result<LsResponse, Rejection> 
 pub fn activation_outcome(resp: &LsResponse) -> Result<String, Rejection> {
     if resp.is_foreign() {
         return Err(Rejection::WrongProduct);
-    }
-    if resp.is_test() {
-        return Err(Rejection::TestMode);
     }
     if resp.activated {
         if let Some(instance) = &resp.instance {
@@ -109,7 +97,6 @@ pub fn activation_outcome(resp: &LsResponse) -> Result<String, Rejection> {
 pub fn still_valid(resp: &LsResponse) -> bool {
     resp.valid
         && !resp.is_foreign()
-        && !resp.is_test()
         && !matches!(resp.key_status(), Some("disabled" | "expired"))
 }
 
@@ -133,9 +120,9 @@ async fn post(endpoint: &str, form: &[(&str, &str)]) -> Result<LsResponse, Rejec
 pub async fn activate(key: &str, instance_name: &str) -> Result<String, Rejection> {
     let resp = post("activate", &[("license_key", key), ("instance_name", instance_name)]).await?;
     let outcome = activation_outcome(&resp);
-    // A key Lemon Squeezy activated before we refused it (wrong product, or a
-    // test-mode key) has taken a slot; release it so refusing costs nothing.
-    if matches!(outcome, Err(Rejection::WrongProduct | Rejection::TestMode)) {
+    // A key Lemon Squeezy activated for another product has taken a slot;
+    // release it so refusing it costs nothing.
+    if matches!(outcome, Err(Rejection::WrongProduct)) {
         if let Some(instance) = &resp.instance {
             let _ = post("deactivate", &[("license_key", key), ("instance_id", &instance.id)]).await;
         }
@@ -212,22 +199,18 @@ mod tests {
     }
 
     #[test]
-    fn a_test_mode_key_is_refused_at_activation_and_at_launch() {
-        // Even a key Lemon Squeezy activated for our product is refused when it is test mode.
+    fn a_test_mode_key_unlocks_pro_like_a_real_one() {
+        // Owner decision (9afd025): a test-mode key activates and survives the recheck.
         let activated_test = response(serde_json::json!({
             "activated": true,
             "instance": { "id": "inst-1" },
             "license_key": { "status": "active", "test_mode": true }
         }));
-        assert_eq!(activation_outcome(&activated_test), Err(Rejection::TestMode));
-        // And a stored test key no longer passes the launch-time recheck.
-        assert!(!still_valid(&response(serde_json::json!({
+        assert_eq!(activation_outcome(&activated_test), Ok("inst-1".to_string()));
+        assert!(still_valid(&response(serde_json::json!({
             "valid": true,
             "license_key": { "status": "active", "test_mode": true }
         }))));
-        // A real (production) key is unaffected.
-        let real = response(serde_json::json!({ "activated": true, "instance": { "id": "inst-1" } }));
-        assert_eq!(activation_outcome(&real), Ok("inst-1".to_string()));
     }
 
     #[test]

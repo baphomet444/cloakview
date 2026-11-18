@@ -46,6 +46,172 @@ pub fn clear_api_key() -> Result<(), IpcError> {
     secrets::clear_api_key().map_err(IpcError::from)
 }
 
+// --- providers (one provider, one key; not in design.md §5) ---
+
+/// What `list_profiles` reports per provider: identity, mode and effective
+/// (override-applied) models — never key material.
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderInfo {
+    pub id: String,
+    pub display_name: String,
+    /// "streaming" or "batch": which listen path the provider supports.
+    pub stt_mode: String,
+    pub stt_model: Option<String>,
+    pub llm_model: String,
+    /// Models the provider supports for streaming STT; empty for batch-only
+    /// providers. The UI uses this to populate the realtime model dropdown.
+    pub stt_model_options: Vec<String>,
+    pub has_key: bool,
+    pub active: bool,
+}
+
+#[tauri::command]
+pub fn list_profiles(state: State<AppState>) -> Result<Vec<ProviderInfo>, IpcError> {
+    let settings = state.settings.read().expect("settings lock");
+    let active = crate::providers::active_profile(&settings);
+    let infos = crate::providers::profiles()
+        .into_iter()
+        .map(|p| {
+            let effective = crate::providers::effective_profile(&settings, &p.id);
+            ProviderInfo {
+                id: p.id.clone(),
+                display_name: p.display_name.clone(),
+                stt_mode: match p.stt_mode {
+                    cv_providers::SttMode::Streaming => "streaming".into(),
+                    cv_providers::SttMode::Batch => "batch".into(),
+                },
+                stt_model: effective.stt_model,
+                llm_model: effective.llm_model,
+                stt_model_options: p.stt_model_options.iter().map(|s| (*s).to_string()).collect(),
+                has_key: secrets::has_key(&p.id).unwrap_or(false),
+                active: p.id == active.id,
+            }
+        })
+        .collect();
+    Ok(infos)
+}
+
+#[tauri::command]
+pub fn save_key(provider_id: String, key: String) -> Result<(), IpcError> {
+    if crate::providers::find_profile(&provider_id).is_none() {
+        return Err(IpcError::from(AppError::UnknownProvider(provider_id)));
+    }
+    secrets::save_key(&provider_id, key).map_err(IpcError::from)
+}
+
+#[tauri::command]
+pub fn clear_key(provider_id: String) -> Result<(), IpcError> {
+    if crate::providers::find_profile(&provider_id).is_none() {
+        return Err(IpcError::from(AppError::UnknownProvider(provider_id)));
+    }
+    secrets::clear_key(&provider_id).map_err(IpcError::from)
+}
+
+/// Makes the provider active: it must exist and be able to transcribe, so
+/// the listen button keeps working. Saves the settings file.
+#[tauri::command]
+pub fn set_active_provider(
+    app: AppHandle,
+    state: State<AppState>,
+    provider_id: String,
+) -> Result<Settings, IpcError> {
+    let profile = crate::providers::find_profile(&provider_id)
+        .ok_or_else(|| IpcError::from(AppError::UnknownProvider(provider_id.clone())))?;
+    if profile.stt_model.is_none() {
+        return Err(IpcError::from(AppError::SttUnsupported(profile.display_name)));
+    }
+    let mut s = state.settings.write().expect("settings lock");
+    s.active_provider = profile.id.clone();
+    settings::save_settings(&app, &s).map_err(IpcError::from)?;
+    let saved = s.clone();
+    drop(s);
+    let _ = app.emit(SETTINGS_CHANGED_EVENT, saved.clone());
+    Ok(saved)
+}
+
+/// Changes the realtime STT model used by the streaming listen path. The
+/// model must be one the active provider offers; unknown models fall back to
+/// the provider's default. Saves the settings file.
+#[tauri::command]
+pub fn set_realtime_model(
+    app: AppHandle,
+    state: State<AppState>,
+    model: String,
+) -> Result<Settings, IpcError> {
+    let settings = state.settings.read().expect("settings lock");
+    let profile = crate::providers::active_profile(&settings);
+    let allowed: std::collections::HashSet<&str> = profile.stt_model_options.iter().copied().collect();
+    let effective_model = if allowed.is_empty() || allowed.contains(model.as_str()) {
+        model
+    } else {
+        profile.stt_model_options.first().unwrap_or(&"").to_string()
+    };
+    let mut s = settings.clone();
+    s.realtime_model = effective_model;
+    settings::save_settings(&app, &s).map_err(IpcError::from)?;
+    drop(settings);
+    *state.settings.write().expect("settings lock") = s.clone();
+    let _ = app.emit(SETTINGS_CHANGED_EVENT, s.clone());
+    Ok(s)
+}
+
+/// Per-side result of `test_connection`. A failure message is a fixed
+/// category with our own text (never the provider's body, never key
+/// material) so the UI can show why it failed.
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConnectionTestResult {
+    pub stt: Option<String>,
+    pub llm: Option<String>,
+}
+
+/// One real STT call and one real LLM call against `provider_id`, with the
+/// stored key. `None` = that side passed. A provider ships only if this
+/// passes with a real key.
+#[tauri::command]
+pub async fn test_connection(
+    state: State<'_, AppState>,
+    provider_id: String,
+) -> Result<ConnectionTestResult, IpcError> {
+    let settings = state.settings.read().expect("settings lock").clone();
+    let provider = crate::providers::resolve_by_id(&provider_id, &settings).map_err(IpcError::from)?;
+
+    // STT: two quiet seconds of tone as a tiny WAV, enough to prove auth,
+    // the endpoint and the model name. An empty transcript is not a failure.
+    let stt = if provider.supports_stt() {
+        let tone: Vec<i16> = (0..32_000).map(|i| ((i as f32 * 0.3).sin() * 2_000.0) as i16).collect();
+        let seg = cv_providers::AudioSegment {
+            pcm16_mono_16k: tone,
+            source: cv_providers::AudioSource::Microphone,
+        };
+        match provider.transcribe(&seg, None).await {
+            Ok(_) => None,
+            // Fixed-category, key-free message: provider bodies (which can
+            // echo a masked key fragment in 401s) never cross IPC.
+            Err(e) => Some(e.user_message()),
+        }
+    } else {
+        Some("this provider has no speech-to-text model".into())
+    };
+
+    // LLM: one one-token-ish prompt the model cannot fail to answer.
+    let llm = match provider
+        .suggest(&cv_providers::SuggestionRequest {
+            instructions: "Answer with one word.".into(),
+            messages: vec![cv_providers::ChatMessage::text("user", "Say OK.")],
+        })
+        .await
+    {
+        Ok(text) if !text.trim().is_empty() => None,
+        Ok(_) => Some("the model answered with no text".into()),
+        Err(e) => Some(e.user_message()),
+    };
+
+    crate::diag::log(&format!("test_connection {provider_id}: stt {} llm {}", stt.is_none(), llm.is_none()));
+    Ok(ConnectionTestResult { stt, llm })
+}
+
 // --- settings (Task 4) ---
 
 #[tauri::command]
@@ -198,7 +364,10 @@ pub async fn request_answer(
 pub async fn read_screen(app: AppHandle, state: State<'_, AppState>) -> Result<(), IpcError> {
     // Pro gate first: fail before taking a screenshot that could not be sent anyway.
     state.license.read().expect("license lock").require_pro().map_err(IpcError::from)?;
-    secrets::get_api_key().map_err(IpcError::from)?;
+    {
+        let settings = state.settings.read().expect("settings lock");
+        crate::providers::resolve_active(&settings).map_err(IpcError::from)?;
+    }
     let image = tokio::task::spawn_blocking(crate::screen::capture)
         .await
         .map_err(|e| IpcError::from(AppError::Audio(e.to_string())))?
@@ -218,10 +387,13 @@ async fn start_answer(
     question: Option<String>,
     image: Option<String>,
 ) -> Result<(), IpcError> {
-    let api_key = secrets::get_api_key().map_err(IpcError::from)?;
-    let (model, personal_context, answer_style) = {
+    let provider = {
+        let settings = state.settings.read().expect("settings lock");
+        crate::providers::resolve_active(&settings).map_err(IpcError::from)?
+    };
+    let (personal_context, answer_style) = {
         let s = state.settings.read().expect("settings lock");
-        (s.answers_model.clone(), s.personal_context.clone(), s.answer_style.clone())
+        (s.personal_context.clone(), s.answer_style.clone())
     };
     // Personal context is CloakView Pro: free users' notes stay on this Mac.
     let about_user = state.is_pro().then_some(personal_context).filter(|c| !c.trim().is_empty());
@@ -261,8 +433,7 @@ async fn start_answer(
             .unwrap_or_default()
     };
     let (mut rx, handle) = crate::answers::client::stream_answer(
-        api_key,
-        model,
+        provider,
         crate::answers::client::AnswerRequest {
             context,
             question,
@@ -404,18 +575,18 @@ pub fn finish_session(app: AppHandle, state: State<AppState>) -> Result<SessionS
 /// `summary-saved`. Every failure is a log line — the interview itself is
 /// already saved by now, so the summary is best-effort.
 fn spawn_summary(app: AppHandle, state: &State<'_, AppState>, session: &crate::session::FinishedSession) {
-    let Ok(api_key) = secrets::get_api_key() else {
-        crate::diag::log("after-meeting summary skipped: no api key");
+    let settings = state.settings.read().expect("settings lock").clone();
+    let Ok(provider) = crate::providers::resolve_active(&settings) else {
+        crate::diag::log("after-meeting summary skipped: no active provider key");
         return;
     };
-    let model = state.settings.read().expect("settings lock").answers_model.clone();
     let record = crate::session::summary_input(session);
     let title = format!("{} — summary", crate::session::title(session.started_ms));
     let started_ms = session.started_ms;
     // `tauri::async_runtime::spawn`, not `tokio::spawn`: this runs on a sync
     // command thread, which has no tokio context of its own.
     tauri::async_runtime::spawn(async move {
-        match crate::answers::client::summarize(&api_key, &model, &record).await {
+        match crate::answers::client::summarize(&provider, &record).await {
             Ok(text) => {
                 let note = {
                     let state = app.state::<AppState>();

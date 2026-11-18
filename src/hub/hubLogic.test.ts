@@ -50,7 +50,6 @@ describe("errorCopyKey", () => {
     [{ kind: "License", message: "wrongProduct" }, "errors.licenseWrongProduct"],
     [{ kind: "License", message: "disabled" }, "errors.licenseDisabled"],
     [{ kind: "License", message: "expired" }, "errors.licenseExpired"],
-    [{ kind: "License", message: "testMode" }, "errors.licenseTestMode"],
     [{ kind: "License", message: "unreachable" }, "errors.licenseUnreachable"],
     [{ kind: "License", message: "empty" }, "errors.licenseInvalid"],
     [{ kind: "License", message: "something new" }, "errors.licenseInvalid"],

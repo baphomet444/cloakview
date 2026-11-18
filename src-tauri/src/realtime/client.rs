@@ -60,7 +60,7 @@ const DEFAULT_TRANSCRIPTION_MODEL: &str = "gpt-4o-mini-transcribe";
 /// The model for the session. Settings saved by earlier versions name a
 /// conversation model (`gpt-4o-mini-realtime`), which a transcription session
 /// cannot use, so anything that is not a transcription model falls back to the default.
-fn transcription_model(setting: &str) -> &str {
+pub(crate) fn transcription_model(setting: &str) -> &str {
     let setting = setting.trim();
     if setting.contains("transcribe") {
         setting
@@ -215,8 +215,9 @@ pub async fn run_session(
                 }
             }
             Err(e) => {
-                crate::diag::log(&format!("realtime connect failed: {e}"));
-                let _ = events_out.try_send(RealtimeEvent::Error { message: e.to_string() });
+                let message = cv_providers::redact::scrub_secrets(&e.to_string());
+                crate::diag::log(&format!("realtime connect failed: {message}"));
+                let _ = events_out.try_send(RealtimeEvent::Error { message });
             }
         }
         tokio::time::sleep(backoff.next_delay()).await;

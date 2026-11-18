@@ -56,7 +56,6 @@ use crate::audio::{AudioChunk, AudioSource, AudioStatus};
 use crate::error::AppResult;
 use crate::events::{ERROR_EVENT, LISTEN_STATE_EVENT, TRANSCRIPT_DELTA_EVENT, TURN_DETECTED_EVENT};
 use crate::realtime::{self, RealtimeEvent};
-use crate::secrets;
 use crate::transcript::Turn;
 use serde::Serialize;
 use tauri::{Emitter, Manager};
@@ -86,10 +85,18 @@ struct Translation<'a> {
 /// Everything `pump` needs that isn't a channel: the per-session snapshot
 /// (turn-detection inputs, live translation). Bundled so the signatures
 /// stay under clippy's argument limit.
-#[derive(Default)]
 struct SessionOptions<'a> {
     detection: TurnDetection<'a>,
     translation: Option<Translation<'a>>,
+    /// How long to wait after the interviewer pauses before firing
+    /// `"turn-detected"`. Milliseconds.
+    reply_delay_ms: u64,
+}
+
+impl Default for SessionOptions<'_> {
+    fn default() -> Self {
+        Self { detection: TurnDetection::default(), translation: None, reply_delay_ms: 1000 }
+    }
 }
 
 /// State surfaced to the frontend under the `"listen-state"` event.
@@ -134,18 +141,16 @@ impl SessionHandle {
     }
 }
 
-/// Resolves the OpenAI API key and starts `src` — in that order, and both
-/// *before* any task is spawned: `secrets::get_api_key()` surfaces
-/// `AppError::MissingApiKey` synchronously, so a missing key is never
-/// discovered from inside a spawned task. No `tauri` import — unit-tested
-/// directly via `start_without_key_is_missing_api_key`.
+/// Starts `src` — before any task is spawned: the caller resolves the key
+/// (and refuses batch-only providers) first, so a missing key or an
+/// unsupported provider is never discovered from inside a spawned task. No
+/// `tauri` import — unit-tested directly via `prepare_session`.
 fn prepare_session(
     mut src: Box<dyn AudioSource>,
-) -> AppResult<(String, Box<dyn AudioSource>, mpsc::Receiver<AudioStatus>)> {
-    let api_key = secrets::get_api_key()?;
+) -> AppResult<(Box<dyn AudioSource>, mpsc::Receiver<AudioStatus>)> {
     let (tx, rx) = mpsc::channel(32);
     src.start(tx)?;
-    Ok((api_key, src, rx))
+    Ok((src, rx))
 }
 
 /// Appends `turn`, dropping the oldest entry first once at capacity.
@@ -199,7 +204,19 @@ async fn pump(
     emit: &(dyn Fn(&str, serde_json::Value) + Send + Sync),
 ) {
     let mut realtime_open = true;
+    // A pending "turn-detected" is armed when the interviewer says something
+    // that would trigger an answer; we wait `reply_delay_ms` of silence (no
+    // further interviewer transcript) before firing, so a mid-sentence pause
+    // doesn't cut the speaker off.
+    let mut pending_deadline: Option<tokio::time::Instant> = None;
+    let delay = std::time::Duration::from_millis(options.reply_delay_ms);
+
     loop {
+        let timer = match pending_deadline {
+            Some(deadline) => futures_util::future::Either::Left(tokio::time::sleep_until(deadline)),
+            None => futures_util::future::Either::Right(std::future::pending()),
+        };
+
         if realtime_open {
             tokio::select! {
                 status = audio_status.recv() => {
@@ -220,24 +237,32 @@ async fn pump(
                                 (t.dispatch)(turn.text.clone(), turn.ts);
                             }
                         }
-                        // The cue to suggest an answer: the user was addressed
-                        // (keyword or name), or what was said asks for a reply.
-                        // The user's own words (the microphone) never ask for a reply.
-                        if !turn.is_user_turn
-                            && (crate::detect::is_user_turn(
+                        if turn.is_user_turn {
+                            // The user started speaking: the interviewer's turn is over.
+                            pending_deadline = None;
+                        } else if !turn.text.trim().is_empty() {
+                            let triggers = crate::detect::is_user_turn(
                                 &turn.text,
                                 options.detection.keywords,
                                 options.detection.user_name,
                                 turn.is_user_turn,
-                            ) || crate::detect::asks_for_reply(&turn.text))
-                        {
-                            emit(TURN_DETECTED_EVENT, serde_json::Value::Null);
+                            ) || crate::detect::asks_for_reply(&turn.text);
+                            if triggers {
+                                // Arm (or re-arm) the debounce timer.
+                                pending_deadline = Some(tokio::time::Instant::now() + delay);
+                            } else if pending_deadline.is_some() {
+                                // The interviewer is still talking; keep waiting.
+                                pending_deadline = Some(tokio::time::Instant::now() + delay);
+                            }
                         }
                     }
                     // Unreachable today (see module doc) — kept so a future
                     // `parse_frame` producing this doesn't silently need
                     // new wiring here too.
-                    Some(RealtimeEvent::TurnBoundary) => emit(TURN_DETECTED_EVENT, serde_json::Value::Null),
+                    Some(RealtimeEvent::TurnBoundary) => {
+                        pending_deadline = None;
+                        emit(TURN_DETECTED_EVENT, serde_json::Value::Null);
+                    }
                     Some(RealtimeEvent::Error { message }) => {
                         emit(ERROR_EVENT, serde_json::Value::String(message));
                     }
@@ -245,12 +270,19 @@ async fn pump(
                         LISTEN_STATE_EVENT,
                         serde_json::to_value(ListenState::Connected).expect("ListenState serializes"),
                     ),
-                    Some(RealtimeEvent::Closed) => emit(
-                        LISTEN_STATE_EVENT,
-                        serde_json::to_value(ListenState::Reconnecting).expect("ListenState serializes"),
-                    ),
+                    Some(RealtimeEvent::Closed) => {
+                        pending_deadline = None;
+                        emit(
+                            LISTEN_STATE_EVENT,
+                            serde_json::to_value(ListenState::Reconnecting).expect("ListenState serializes"),
+                        );
+                    }
                     None => realtime_open = false, // run_session ended; keep pumping audio until it also closes.
                 },
+                _ = timer => {
+                    pending_deadline = None;
+                    emit(TURN_DETECTED_EVENT, serde_json::Value::Null);
+                }
             }
         } else {
             let status = audio_status.recv().await;
@@ -304,9 +336,16 @@ pub fn start(
     include_mic: bool,
     app: tauri::AppHandle,
 ) -> AppResult<SessionHandle> {
+    // The active provider must support streaming STT (Phase 1: OpenAI only),
+    // and its key must be saved — both checked before anything starts.
+    let api_key = {
+        let state = app.state::<crate::state::AppState>();
+        let settings = state.settings.read().expect("settings lock");
+        crate::providers::active_streaming_key(&settings)?
+    };
     let gate = crate::audio::EchoGate::default();
     let src: Box<dyn AudioSource> = Box::new(crate::audio::screencapturekit::SckAudioSource::new(gate.clone())?);
-    let (api_key, mut src, status_rx) = prepare_session(src)?;
+    let (mut src, status_rx) = prepare_session(src)?;
 
     let (audio_tx, audio_rx) = mpsc::channel::<AudioChunk>(32);
     let (rt_tx, rt_rx) = mpsc::channel::<RealtimeEvent>(64);
@@ -374,26 +413,35 @@ pub fn start(
         let app_state = app.state::<crate::state::AppState>();
         // Snapshot, once per session: later `save_settings` calls do not
         // reach a running session (documented in the module doc).
-        let (user_keywords, user_name, translate_to, answers_model) = {
+        let (user_keywords, user_name, translate_to, reply_delay_ms) = {
             let s = app_state.settings.read().expect("settings lock");
-            (s.user_keywords.clone(), s.user_name.clone(), s.translate_to.clone(), s.answers_model.clone())
+            (
+                s.user_keywords.clone(),
+                s.user_name.clone(),
+                s.translate_to.clone(),
+                s.reply_delay_ms,
+            )
         };
         let detection = TurnDetection { keywords: &user_keywords, user_name: user_name.as_deref() };
         // Live translation (CloakView Pro): each transcribed line goes to one
         // background request; the result is emitted as `"translation"`.
         let translation_dispatch: Option<Box<dyn Fn(String, i64) + Send + Sync>> =
             if app_state.is_pro() && !translate_to.is_empty() {
-                let key = api_key.clone();
-                // A text model, as for answers: translation goes through the Responses
-                // API, which refuses the transcription model (`realtime_model`) this
-                // session listens with — every line used to fail there.
-                let model = answers_model.clone();
+                // Text work goes to the active provider's LLM model — the
+                // transcription model cannot translate.
+                let provider = crate::providers::resolve_active(
+                    &app_state.settings.read().expect("settings lock"),
+                ).ok();
                 let target = translate_to.clone();
                 let app = translation_app.clone();
                 Some(Box::new(move |text: String, ts: i64| {
-                    let (key, model, target, app) = (key.clone(), model.clone(), target.clone(), app.clone());
+                    let (provider, target, app) = (provider.clone(), target.clone(), app.clone());
                     tauri::async_runtime::spawn(async move {
-                        match crate::answers::client::translate(&key, &model, &text, &target).await {
+                        let Some(provider) = provider else {
+                            crate::diag::log("translation skipped: no active provider");
+                            return;
+                        };
+                        match crate::answers::client::translate(&provider, &text, &target).await {
                             Ok(translated) => {
                                 crate::diag::log(&format!("translation ({} chars)", translated.chars().count()));
                                 let _ = app.emit(
@@ -418,7 +466,7 @@ pub fn start(
                 audio_tx,
                 rt_rx,
                 &app_state.transcript,
-                SessionOptions { detection, translation },
+                SessionOptions { detection, translation, reply_delay_ms },
                 &emit_generic,
             ) => {}
             res = realtime_task => {
@@ -436,7 +484,6 @@ pub fn start(
 mod tests {
     use super::*;
     use crate::audio::FakeAudioSource;
-    use crate::error::AppError;
 
     /// Every `(event name, payload)` a test's `emit` was called with.
     type Recorded = std::sync::Arc<std::sync::Mutex<Vec<(String, serde_json::Value)>>>;
@@ -453,6 +500,13 @@ mod tests {
     /// Runs `pump` over a single remote `Transcript` with the given
     /// detection inputs and returns the names of the events it emitted.
     async fn emitted_names_for(text: &str, detection: TurnDetection<'_>) -> Vec<String> {
+        emitted_names_for_with_delay(text, detection, 0).await
+    }
+
+    /// Same as `emitted_names_for` but with a configurable `reply_delay_ms`.
+    /// Use `0` to see `"turn-detected"` immediately; use a positive value and
+    /// `tokio::time::pause` to test the debounce behaviour.
+    async fn emitted_names_for_with_delay(text: &str, detection: TurnDetection<'_>, reply_delay_ms: u64) -> Vec<String> {
         let (_status_tx, status_rx) = mpsc::channel::<AudioStatus>(1);
         let (audio_tx, _audio_rx) = mpsc::channel::<AudioChunk>(1);
         let (rt_tx, rt_rx) = mpsc::channel::<RealtimeEvent>(1);
@@ -472,7 +526,7 @@ mod tests {
         // (the queued `Transcript` is handled on its first scheduling).
         let _ = tokio::time::timeout(
             std::time::Duration::from_millis(200),
-            pump(status_rx, audio_tx, rt_rx, &transcript, SessionOptions { detection, translation: None }, &emit),
+            pump(status_rx, audio_tx, rt_rx, &transcript, SessionOptions { detection, translation: None, reply_delay_ms }, &emit),
         )
         .await;
 
@@ -543,16 +597,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn start_without_key_is_missing_api_key() {
-        let _guard = secrets::TEST_LOCK.lock().unwrap();
-        keyring::set_default_credential_builder(keyring::mock::default_credential_builder());
-        let _ = secrets::clear_api_key();
-
+    async fn prepare_session_starts_the_source_with_the_resolved_key() {
         let src: Box<dyn AudioSource> =
             Box::new(FakeAudioSource { chunks: vec![], fail_after: None });
 
-        let result = prepare_session(src);
-        assert!(matches!(result, Err(AppError::MissingApiKey)));
+        let (_src, mut rx) = prepare_session(src).expect("prepare_session starts");
+        // The fake source reports end of stream immediately: it started.
+        assert!(matches!(rx.recv().await, Some(AudioStatus::Ended)));
     }
 
     #[tokio::test]
@@ -608,7 +659,11 @@ mod tests {
                 audio_tx,
                 rt_rx,
                 &transcript,
-                SessionOptions { detection: TurnDetection::default(), translation: Some(Translation { dispatch: &dispatch }) },
+                SessionOptions {
+                    detection: TurnDetection::default(),
+                    translation: Some(Translation { dispatch: &dispatch }),
+                    reply_delay_ms: 0,
+                },
                 &|_, _| {},
             ),
         )
@@ -734,7 +789,7 @@ mod tests {
 
             let _ = tokio::time::timeout(
                 std::time::Duration::from_millis(200),
-                pump(status_rx, audio_tx, rt_rx, &transcript, SessionOptions { detection, translation: None }, &emit),
+                pump(status_rx, audio_tx, rt_rx, &transcript, SessionOptions { detection, translation: None, reply_delay_ms: 0 }, &emit),
             )
             .await;
 
@@ -766,7 +821,7 @@ mod tests {
 
             let _ = tokio::time::timeout(
                 std::time::Duration::from_millis(200),
-                pump(status_rx, audio_tx, rt_rx, &transcript, SessionOptions { detection, translation: None }, &emit),
+                pump(status_rx, audio_tx, rt_rx, &transcript, SessionOptions { detection, translation: None, reply_delay_ms: 0 }, &emit),
             )
             .await;
 
@@ -778,6 +833,169 @@ mod tests {
                 "no keyword match should emit transcript-delta only, got {events:?}"
             );
         }
+    }
+
+    /// Spawn `pump` in a `'static` task for time-advance tests. Returns the
+    /// audio-status sender (must be kept alive or the pump exits), the
+    /// realtime-event sender and the shared event recorder.
+    async fn spawn_pump_for_test(
+        reply_delay_ms: u64,
+    ) -> (
+        mpsc::Sender<AudioStatus>,
+        mpsc::Sender<RealtimeEvent>,
+        Recorded,
+    ) {
+        let (status_tx, status_rx) = mpsc::channel::<AudioStatus>(1);
+        let (audio_tx, _audio_rx) = mpsc::channel::<AudioChunk>(1);
+        let (rt_tx, rt_rx) = mpsc::channel::<RealtimeEvent>(4);
+        let transcript = std::sync::Arc::new(tokio::sync::Mutex::new(Vec::<Turn>::new()));
+        let (emit, emitted) = recording_emit();
+
+        tokio::spawn(async move {
+            pump(
+                status_rx,
+                audio_tx,
+                rt_rx,
+                &transcript,
+                SessionOptions {
+                    detection: TurnDetection::default(),
+                    translation: None,
+                    reply_delay_ms,
+                },
+                &emit,
+            )
+            .await
+        });
+
+        // Let the spawned task start before the test continues.
+        tokio::task::yield_now().await;
+
+        (status_tx, rt_tx, emitted)
+    }
+
+    fn recorded_names(emitted: &Recorded) -> Vec<String> {
+        let events = emitted.lock().unwrap();
+        events.iter().map(|(n, _)| n.clone()).collect()
+    }
+
+    /// Small real-time sleep used by the debounce tests. Avoids the scheduler
+    /// edge-cases that come with `tokio::time::pause()` plus `tokio::spawn`.
+    async fn wait(ms: u64) {
+        tokio::time::sleep(std::time::Duration::from_millis(ms)).await;
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn turn_detected_is_debounced_by_reply_delay_ms() {
+        let (_status_tx, rt_tx, emitted) = spawn_pump_for_test(60).await;
+
+        rt_tx
+            .send(RealtimeEvent::Transcript {
+                speaker: "remote".into(),
+                text: "¿tú qué opinas?".into(),
+                is_user_turn: false,
+            })
+            .await
+            .unwrap();
+        wait(20).await;
+        assert_eq!(
+            recorded_names(&emitted),
+            vec![TRANSCRIPT_DELTA_EVENT],
+            "turn-detected should be delayed"
+        );
+
+        // Right before the deadline nothing has fired yet.
+        wait(30).await;
+        assert_eq!(
+            recorded_names(&emitted),
+            vec![TRANSCRIPT_DELTA_EVENT],
+            "turn-detected should still be pending"
+        );
+
+        // Cross the deadline.
+        wait(30).await;
+        assert_eq!(
+            recorded_names(&emitted),
+            vec![TRANSCRIPT_DELTA_EVENT, TURN_DETECTED_EVENT],
+            "turn-detected should fire after the delay"
+        );
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn a_second_interviewer_line_resets_the_reply_delay_timer() {
+        let (_status_tx, rt_tx, emitted) = spawn_pump_for_test(60).await;
+
+        rt_tx
+            .send(RealtimeEvent::Transcript {
+                speaker: "remote".into(),
+                text: "¿tú qué opinas?".into(),
+                is_user_turn: false,
+            })
+            .await
+            .unwrap();
+        wait(20).await;
+        assert_eq!(recorded_names(&emitted), vec![TRANSCRIPT_DELTA_EVENT]);
+
+        // A second line arrives halfway through the delay: the timer resets.
+        rt_tx
+            .send(RealtimeEvent::Transcript {
+                speaker: "remote".into(),
+                text: "espera, dejame reformular".into(),
+                is_user_turn: false,
+            })
+            .await
+            .unwrap();
+        wait(20).await;
+
+        // Right before the new deadline no turn-detected has fired yet.
+        wait(30).await;
+        assert_eq!(
+            recorded_names(&emitted),
+            vec![TRANSCRIPT_DELTA_EVENT, TRANSCRIPT_DELTA_EVENT],
+            "second line should reset the timer, no turn-detected yet"
+        );
+
+        // Cross the new deadline.
+        wait(30).await;
+        assert_eq!(
+            recorded_names(&emitted),
+            vec![TRANSCRIPT_DELTA_EVENT, TRANSCRIPT_DELTA_EVENT, TURN_DETECTED_EVENT],
+            "turn-detected fires after the reset delay"
+        );
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn user_speaking_cancels_pending_turn_detected() {
+        let (_status_tx, rt_tx, emitted) = spawn_pump_for_test(60).await;
+
+        rt_tx
+            .send(RealtimeEvent::Transcript {
+                speaker: "remote".into(),
+                text: "¿tú qué opinas?".into(),
+                is_user_turn: false,
+            })
+            .await
+            .unwrap();
+        wait(20).await;
+        assert_eq!(recorded_names(&emitted), vec![TRANSCRIPT_DELTA_EVENT]);
+
+        // The user starts speaking before the delay elapses: cancel pending.
+        rt_tx
+            .send(RealtimeEvent::Transcript {
+                speaker: "you".into(),
+                text: "yo creo que...".into(),
+                is_user_turn: true,
+            })
+            .await
+            .unwrap();
+        wait(20).await;
+
+        // Even after the original deadline, nothing fires.
+        wait(80).await;
+        assert_eq!(
+            recorded_names(&emitted),
+            vec![TRANSCRIPT_DELTA_EVENT, TRANSCRIPT_DELTA_EVENT],
+            "user speaking should cancel the pending turn-detected"
+        );
     }
 
     #[test]
