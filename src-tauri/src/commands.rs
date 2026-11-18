@@ -408,7 +408,7 @@ async fn start_answer(
     // of questions still waiting (`SessionLog::unanswered`), not only the latest line.
     // `answered` marks them done once it finishes.
     let (unanswered, answered) = if question.is_none() && image.is_none() {
-        let (lines, mark) = state.session_log.lock().expect("session log lock").unanswered(crate::db::now_ms());
+        let (lines, mark) = state.session_log.lock().expect("session log lock").unanswered();
         (lines, Some(mark))
     } else {
         (Vec::new(), None)

@@ -386,6 +386,19 @@ body,
   gap: 4px;
 }
 
+/* An earlier question and answer: kept on screen above the current one, a step back. */
+.ask-exchange {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--win-line);
+}
+
+.ask-earlier {
+  opacity: 0.72;
+}
+
 .ask-question,
 .ask-answer {
   margin: 0;

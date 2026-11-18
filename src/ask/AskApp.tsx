@@ -17,7 +17,7 @@ import { errorCopyKey } from "../hub/hubLogic";
 import { RichText } from "../rich/RichText";
 import { WindowFrame } from "../windows/WindowFrame";
 import { useSettingsBoot } from "../windows/useSettingsBoot";
-import { ASK_IDLE, askReducer, isBusy, questionArg } from "./askLogic";
+import { ASK_IDLE, askReducer, isBusy, isNearBottom, questionArg, shouldQueueHeard, type AskSource } from "./askLogic";
 
 /**
  * Ask a question about the conversation (or send nothing, for a suggested reply) and
@@ -35,12 +35,33 @@ export function AskApp() {
     if (bootErrorKey !== null) setWindowErrorKey(bootErrorKey);
   }, [bootErrorKey]);
   const busy = isBusy(state);
-  // Where the question on screen came from: typed here, heard on the call, or read from the screen.
-  const [source, setSource] = useState<"typed" | "heard" | "screen">("typed");
   // The last thing said on the call: `turn-detected` carries no text, and always
   // follows the `transcript-delta` of the line that caused it. Shown until Rust says
-  // what the suggestion really answers (`answer-prompt`: often several questions).
+  // what the suggestion really answers (`answer-prompt`).
   const lastHeard = useRef("");
+  // The listeners below are registered once, so they read the state through this.
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  // A question heard while a suggestion from the call is still being written waits
+  // for it (`shouldQueueHeard`), then gets its own answer below it.
+  const heardWaiting = useRef(false);
+
+  // Follow the answer as it streams in, unless the user scrolled up to read.
+  const threadRef = useRef<HTMLDivElement>(null);
+  const following = useRef(true);
+  useEffect(() => {
+    const body = threadRef.current?.closest(".win-body");
+    if (!(body instanceof HTMLElement)) return;
+    const onScroll = () => {
+      following.current = isNearBottom(body);
+    };
+    body.addEventListener("scroll", onScroll, { passive: true });
+    return () => body.removeEventListener("scroll", onScroll);
+  }, [state.phase === "idle"]);
+  useEffect(() => {
+    const body = threadRef.current?.closest(".win-body");
+    if (body instanceof HTMLElement && following.current) body.scrollTop = body.scrollHeight;
+  }, [state.answer, state.question, state.earlier.length, state.phase]);
 
   // The three answer events. Each `subscribe*` resolves to its unlisten function
   // asynchronously, so the cleanup copes with running before that happens.
@@ -48,34 +69,52 @@ export function AskApp() {
     let cancelled = false;
     const stops: UnlistenFn[] = [];
     const keep = (stop: UnlistenFn) => (cancelled ? stop() : stops.push(stop));
+    // A suggestion from the call: shown below the earlier ones, and followed.
+    const suggestHeard = (): void => {
+      following.current = true;
+      dispatch({ type: "send", question: lastHeard.current, source: "heard" as AskSource });
+      requestAnswer().catch((error: unknown) => dispatch({ type: "error", key: errorCopyKey(error) }));
+    };
+    // The suggestion being written ended: a question that waited for it goes next.
+    const nextHeard = (): void => {
+      if (!heardWaiting.current) return;
+      heardWaiting.current = false;
+      suggestHeard();
+    };
     Promise.all([
       subscribeAnswerDelta((text) => dispatch({ type: "delta", text })).then(keep),
-      subscribeAnswerDone(() => dispatch({ type: "done" })).then(keep),
+      subscribeAnswerDone(() => {
+        dispatch({ type: "done" });
+        nextHeard();
+      }).then(keep),
       subscribeTranscriptDelta((turn) => {
         // The user's own words (microphone) are not what a suggestion answers.
         if (!turn.isUserTurn) lastHeard.current = turn.text;
       }).then(keep),
       // Rust took a screenshot and is answering what is on it.
       subscribeAnswerStarted(() => {
-        setSource("screen");
-        dispatch({ type: "send", question: t("ask.screenQuestion") });
+        following.current = true;
+        dispatch({ type: "send", question: t("ask.screenQuestion"), source: "screen" });
       }).then(keep),
-      // A suggestion from the call is starting: every question it answers, as Rust
-      // worked it out (the run of questions since the last settled suggestion).
-      subscribeAnswerPrompt((prompt) => {
-        setSource("heard");
-        dispatch({ type: "prompt", question: prompt });
-      }).then(keep),
-      // Something on the call asks for a reply: suggest one without being asked.
-      // The transcript is the context, so no question is sent. A suggestion still
-      // streaming is replaced (Rust aborts it), and the new one covers its questions too.
+      // A suggestion from the call is starting: the questions it answers, as Rust
+      // worked them out (everything since the last finished suggestion).
+      subscribeAnswerPrompt((prompt) => dispatch({ type: "prompt", question: prompt })).then(keep),
+      // Something on the call asks for a reply: suggest one without being asked. The
+      // transcript is the context, so no question is sent. One still being written is
+      // left to finish; the new question waits and is answered on its own after it.
       subscribeTurnDetected(() => {
-        setSource("heard");
-        dispatch({ type: "send", question: lastHeard.current });
-        requestAnswer().catch((error: unknown) => dispatch({ type: "error", key: errorCopyKey(error) }));
+        if (shouldQueueHeard(stateRef.current)) {
+          heardWaiting.current = true;
+          return;
+        }
+        suggestHeard();
       }).then(keep),
       // Shared with the realtime side; the reducer ignores it unless a question is in flight.
-      subscribeError(() => dispatch({ type: "error", key: "errors.generic" })).then(keep),
+      subscribeError(() => {
+        const wasBusy = isBusy(stateRef.current);
+        dispatch({ type: "error", key: "errors.generic" });
+        if (wasBusy) nextHeard();
+      }).then(keep),
     ])
       // Every listener is registered: an answer started from now on will be shown.
       .then(() => announceAskReady())
@@ -93,8 +132,8 @@ export function AskApp() {
   async function send(): Promise<void> {
     if (busy) return;
     const question = questionArg(input);
-    setSource("typed");
-    dispatch({ type: "send", question: question ?? "" });
+    following.current = true;
+    dispatch({ type: "send", question: question ?? "", source: "typed" });
     setInput("");
     try {
       await requestAnswer(question);
@@ -104,6 +143,7 @@ export function AskApp() {
   }
 
   async function stop(): Promise<void> {
+    heardWaiting.current = false;
     dispatch({ type: "stop" });
     try {
       await stopAnswer();
@@ -154,10 +194,28 @@ export function AskApp() {
       {state.phase === "idle" ? (
         <p className="win-empty">{t("ask.empty")}</p>
       ) : (
-        <div className="ask-thread" aria-live="polite">
+        <div className="ask-thread" aria-live="polite" ref={threadRef}>
+          {state.earlier.map((exchange, index) => (
+            <div className="ask-exchange ask-earlier" key={index}>
+              {exchange.question !== "" && (
+                <section className="ask-block">
+                  <h2 className="win-label">{t(sourceLabel(exchange.source))}</h2>
+                  <p className="ask-question">{exchange.question}</p>
+                </section>
+              )}
+              {exchange.answer !== "" && (
+                <section className="ask-block">
+                  <h2 className="win-label">{t("ask.suggestion")}</h2>
+                  <div className="ask-answer">
+                    <RichText text={exchange.answer} />
+                  </div>
+                </section>
+              )}
+            </div>
+          ))}
           {state.question !== "" && (
             <section className="ask-block">
-              <h2 className="win-label">{t(source === "heard" ? "ask.heard" : source === "screen" ? "ask.screen" : "ask.you")}</h2>
+              <h2 className="win-label">{t(sourceLabel(state.source))}</h2>
               <p className="ask-question">{state.question}</p>
             </section>
           )}
@@ -175,4 +233,9 @@ export function AskApp() {
       )}
     </WindowFrame>
   );
+}
+
+/** The heading over a question: who asked it. */
+function sourceLabel(source: AskSource): CatalogKey {
+  return source === "heard" ? "ask.heard" : source === "screen" ? "ask.screen" : "ask.you";
 }

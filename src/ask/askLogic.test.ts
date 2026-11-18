@@ -1,18 +1,52 @@
 import { describe, expect, it } from "vitest";
-import { ASK_IDLE, askReducer, isBusy, questionArg, type AskState } from "./askLogic";
+import {
+  ASK_IDLE,
+  askReducer,
+  isBusy,
+  isNearBottom,
+  MAX_EARLIER,
+  questionArg,
+  shouldQueueHeard,
+  type AskState,
+} from "./askLogic";
 
-const thinking: AskState = { phase: "thinking", question: "q", answer: "", errorKey: null };
-const streaming: AskState = { phase: "streaming", question: "q", answer: "Hel", errorKey: null };
+const thinking: AskState = { ...ASK_IDLE, phase: "thinking", question: "q" };
+const streaming: AskState = { ...ASK_IDLE, phase: "streaming", question: "q", answer: "Hel" };
 
 describe("askReducer", () => {
-  it("send clears the previous answer and error, and waits for the first delta", () => {
-    const before: AskState = { phase: "error", question: "old", answer: "partial", errorKey: "errors.generic" };
-    expect(askReducer(before, { type: "send", question: "new" })).toEqual({
+  it("send starts a new answer below and keeps the previous one on screen", () => {
+    const before: AskState = { ...ASK_IDLE, phase: "error", question: "old", answer: "partial", errorKey: "errors.generic" };
+    expect(askReducer(before, { type: "send", question: "new", source: "heard" })).toEqual({
       phase: "thinking",
+      source: "heard",
       question: "new",
       answer: "",
       errorKey: null,
+      earlier: [{ source: "typed", question: "old", answer: "partial" }],
     });
+  });
+
+  it("a run of questions builds a thread instead of rewriting one answer", () => {
+    let state = askReducer(ASK_IDLE, { type: "send", question: "Tell me about yourself.", source: "heard" });
+    state = askReducer(state, { type: "delta", text: "I build payment systems." });
+    state = askReducer(state, { type: "done" });
+    state = askReducer(state, { type: "send", question: "Why this company?", source: "heard" });
+    state = askReducer(state, { type: "delta", text: "Your mission." });
+    expect(state.earlier).toEqual([
+      { source: "heard", question: "Tell me about yourself.", answer: "I build payment systems." },
+    ]);
+    expect(state).toMatchObject({ question: "Why this company?", answer: "Your mission." });
+  });
+
+  it("nothing empty is kept, and only the newest MAX_EARLIER stay", () => {
+    expect(askReducer(ASK_IDLE, { type: "send", question: "q" }).earlier).toEqual([]);
+    let state: AskState = ASK_IDLE;
+    for (let i = 0; i < MAX_EARLIER + 5; i++) {
+      state = askReducer(state, { type: "send", question: `q${i}` });
+      state = askReducer(state, { type: "done" });
+    }
+    expect(state.earlier).toHaveLength(MAX_EARLIER);
+    expect(state.earlier[0].question).toBe("q4");
   });
 
   it("deltas append in order and switch thinking to streaming", () => {
@@ -24,7 +58,7 @@ describe("askReducer", () => {
 
   it("prompt shows every question the suggestion in flight answers, and is ignored once it ended", () => {
     const run = "Tell me about yourself.\nWhy this company?";
-    expect(askReducer(thinking, { type: "prompt", question: run })).toEqual({ ...thinking, question: run });
+    expect(askReducer(thinking, { type: "prompt", question: run })).toEqual({ ...thinking, source: "heard", question: run });
     expect(askReducer(streaming, { type: "prompt", question: run })).toMatchObject({ question: run, answer: "Hel" });
     const done: AskState = { ...streaming, phase: "done" };
     expect(askReducer(done, { type: "prompt", question: run })).toBe(done);
@@ -50,7 +84,7 @@ describe("askReducer", () => {
   // realtime error while nothing was asked, must not rewrite what the window shows.
   it.each<[string, AskState]>([
     ["idle", ASK_IDLE],
-    ["done", { phase: "done", question: "q", answer: "final", errorKey: null }],
+    ["done", { ...ASK_IDLE, phase: "done", question: "q", answer: "final" }],
   ])("ignores deltas, done and errors when %s", (_label, state) => {
     expect(askReducer(state, { type: "delta", text: "late" })).toBe(state);
     expect(askReducer(state, { type: "done" })).toBe(state);
@@ -59,8 +93,8 @@ describe("askReducer", () => {
   });
 
   it("dismiss clears the error and keeps the partial answer; it does nothing without an error", () => {
-    const failed: AskState = { phase: "error", question: "q", answer: "Hel", errorKey: "errors.generic" };
-    expect(askReducer(failed, { type: "dismiss" })).toEqual({ phase: "done", question: "q", answer: "Hel", errorKey: null });
+    const failed: AskState = { ...ASK_IDLE, phase: "error", question: "q", answer: "Hel", errorKey: "errors.generic" };
+    expect(askReducer(failed, { type: "dismiss" })).toEqual({ ...ASK_IDLE, phase: "done", question: "q", answer: "Hel" });
     expect(askReducer(streaming, { type: "dismiss" })).toBe(streaming);
     expect(askReducer(ASK_IDLE, { type: "dismiss" })).toBe(ASK_IDLE);
   });
@@ -90,5 +124,26 @@ describe("questionArg", () => {
   it("sends nothing for a blank input, so Rust suggests a reply from the transcript alone", () => {
     expect(questionArg("   ")).toBeUndefined();
     expect(questionArg("")).toBeUndefined();
+  });
+});
+
+describe("shouldQueueHeard", () => {
+  it("a question heard while a suggestion from the call is being written waits for it", () => {
+    expect(shouldQueueHeard({ ...streaming, source: "heard" })).toBe(true);
+    expect(shouldQueueHeard({ ...thinking, source: "heard" })).toBe(true);
+  });
+
+  it("otherwise it starts right away", () => {
+    expect(shouldQueueHeard({ ...streaming, phase: "done", source: "heard" })).toBe(false);
+    expect(shouldQueueHeard({ ...streaming, source: "typed" })).toBe(false);
+    expect(shouldQueueHeard(ASK_IDLE)).toBe(false);
+  });
+});
+
+describe("isNearBottom", () => {
+  it("follows the answer only while the user is at the bottom", () => {
+    expect(isNearBottom({ scrollTop: 600, scrollHeight: 1000, clientHeight: 400 })).toBe(true);
+    expect(isNearBottom({ scrollTop: 560, scrollHeight: 1000, clientHeight: 400 })).toBe(true);
+    expect(isNearBottom({ scrollTop: 200, scrollHeight: 1000, clientHeight: 400 })).toBe(false);
   });
 });
