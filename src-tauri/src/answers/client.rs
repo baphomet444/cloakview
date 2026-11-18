@@ -23,7 +23,7 @@ const CONTEXT_TOKEN_BUDGET: usize = 2_000;
 /// budget, it is truncated to exactly what's left and kept — never
 /// dropped outright, even when it's the single most recent turn and the
 /// first one considered.
-fn build_input(context: &[Turn], question: Option<&str>) -> Vec<serde_json::Value> {
+fn build_input(context: &[Turn], question: Option<&str>, unanswered: &[(bool, String)]) -> Vec<serde_json::Value> {
     let mut budget_chars = CONTEXT_TOKEN_BUDGET * CHARS_PER_TOKEN;
     let mut selected: Vec<(bool, String)> = Vec::new();
     for turn in context.iter().rev() {
@@ -52,10 +52,56 @@ fn build_input(context: &[Turn], question: Option<&str>) -> Vec<serde_json::Valu
         })
         .collect();
 
-    if let Some(q) = question {
-        input.push(serde_json::json!({ "role": "user", "content": q }));
+    match question {
+        Some(q) => input.push(serde_json::json!({ "role": "user", "content": q })),
+        // A suggestion from the call: it answers everything still unanswered, not
+        // only the latest line (see `reply_request`).
+        None => {
+            if let Some(request) = reply_request(unanswered) {
+                input.push(serde_json::json!({ "role": "user", "content": request }));
+            }
+        }
     }
     input
+}
+
+/// How much of what is still unanswered a suggestion quotes, in characters: the newest lines win.
+const UNANSWERED_CHARS: usize = 2_000;
+
+/// The request for a suggestion from the call, quoting the whole run of what is
+/// still waiting for a reply (`SessionLog::unanswered`), so that when the other side
+/// asked several questions (in one breath, or one after another) the reply covers
+/// all of them. `None` when the other side said nothing new: the conversation
+/// itself then ends with what to reply to, as before.
+fn reply_request(unanswered: &[(bool, String)]) -> Option<String> {
+    if !unanswered.iter().any(|(mine, _)| !mine) {
+        return None;
+    }
+    let mut budget = UNANSWERED_CHARS;
+    let mut lines: Vec<String> = Vec::new();
+    for (mine, text) in unanswered.iter().rev() {
+        if budget == 0 {
+            break;
+        }
+        let who = if *mine { "Me" } else { "Them" };
+        let count = text.chars().count();
+        let text = if count <= budget {
+            budget -= count;
+            text.clone()
+        } else {
+            // The oldest line that does not fit keeps its end, where the question usually is.
+            let kept: String = text.chars().skip(count - budget).collect();
+            budget = 0;
+            format!("…{kept}")
+        };
+        lines.push(format!("{who}: {text}"));
+    }
+    lines.reverse();
+    Some(format!(
+        "Suggest what I should say now. This is what was said on the call that I still have to reply to, oldest first:\n\n{}\n\n\
+         Answer every question or request they made in it, in the order they made them — not only the last one.",
+        lines.join("\n")
+    ))
 }
 
 /// What the model is asked to do. The role mapping matters: `build_input`
@@ -65,11 +111,18 @@ fn build_input(context: &[Turn], question: Option<&str>) -> Vec<serde_json::Valu
 const INSTRUCTIONS_BASE: &str = "You are a private copilot for the user during a live meeting or interview. \
 In the conversation, messages with the role 'assistant' are what the OTHER participants said, \
 transcribed from the call; they are not your words. Messages with the role 'user' are the user's \
-own words, or a question the user typed to you. \
-If the last message is from another participant, write what the user should say in reply: a \
-direct answer they can say aloud, in the first person, in the language the participant used. \
+own words, or a request the user typed to you. \
+The transcription is automatic and imperfect. A line that makes no sense in the conversation, is in a \
+language nobody on the call is speaking, or reads like background noise turned into words is a \
+transcription error: ignore it, never answer it and never mention it. If nothing new makes sense, say in \
+a few words that there is nothing to reply to yet. \
+When you are asked to suggest a reply, or the last message is from another participant, write what the \
+user should say aloud: a direct answer in the first person, in the language the participant used. \
+If they asked more than one question or made more than one request, answer every one of them in the \
+order asked, each under its own short bold label; never answer only the last one. \
 If the last message is a question typed by the user, answer it, using the conversation as context. \
-Be brief: lead with the answer in one or two sentences, then at most three short supporting points. \
+Be brief: for each question, lead with the answer in one or two sentences, then at most three short \
+supporting points. \
 You may format with Markdown: bold, short lists and fenced code blocks. Write math in plain text, never LaTeX. ";
 
 const DIAGRAM_PARAGRAPH: &str = "When a drawing explains it better than words (a process, an architecture, a sequence of steps between \
@@ -250,6 +303,9 @@ fn image_message(image_data_url: &str, question: Option<&str>) -> serde_json::Va
 pub struct AnswerRequest {
     pub context: Vec<Turn>,
     pub question: Option<String>,
+    /// For a suggestion from the call (no `question`, no `image`): what it has to
+    /// answer, as `(mine, text)`, oldest first (`SessionLog::unanswered`).
+    pub unanswered: Vec<(bool, String)>,
     /// A screenshot as a data URL: the question is then on the screen, not in the call.
     pub image: Option<String>,
     /// CloakView Pro: the model may add a mermaid diagram. Free users get the
@@ -279,12 +335,12 @@ pub fn stream_answer(
     let (tx, rx) = tokio::sync::mpsc::channel(64);
 
     let handle = tokio::spawn(async move {
-        let AnswerRequest { context, question, image, pro, about_user, style } = request;
+        let AnswerRequest { context, question, unanswered, image, pro, about_user, style } = request;
         let for_screen = image.is_some();
         let input = match image.as_deref() {
             // The screen stands on its own: the call's transcript would only distract.
             Some(image) => vec![image_message(image, question.as_deref())],
-            None => build_input(&context, question.as_deref()),
+            None => build_input(&context, question.as_deref(), &unanswered),
         };
         let instructions = instructions(for_screen, pro, about_user.as_deref(), &style);
         let body = serde_json::json!({
@@ -359,7 +415,7 @@ mod build_input_tests {
         let context: Vec<Turn> = (0..20)
             .map(|i| turn(i % 2 == 0, "x".repeat(500), i as i64))
             .collect();
-        let input = build_input(&context, None);
+        let input = build_input(&context, None, &[]);
 
         assert!(!input.is_empty(), "budget starved out every turn");
         assert!(input.len() < 20, "all 20 turns fit: budget math is wrong");
@@ -375,7 +431,7 @@ mod build_input_tests {
     #[test]
     fn oversized_newest_turn_is_truncated_not_dropped() {
         let context = vec![turn(true, "x".repeat(200_000), 0)];
-        let input = build_input(&context, None);
+        let input = build_input(&context, None, &[]);
 
         assert_eq!(
             input.len(),
@@ -400,7 +456,7 @@ mod build_input_tests {
         let text: String = "á".repeat(n_chars);
         let context = vec![turn(true, text.clone(), 0)];
 
-        let input = build_input(&context, None);
+        let input = build_input(&context, None, &[]);
 
         assert_eq!(input.len(), 1, "turn should fit whole, not be dropped");
         assert_eq!(
@@ -421,11 +477,63 @@ mod build_input_tests {
 
     #[test]
     fn question_is_appended_as_user_turn() {
-        let input = build_input(&[], Some("q"));
+        let input = build_input(&[], Some("q"), &[]);
         assert_eq!(
             input,
             vec![serde_json::json!({ "role": "user", "content": "q" })]
         );
+    }
+
+    fn line(mine: bool, text: &str) -> (bool, String) {
+        (mine, text.to_string())
+    }
+
+    #[test]
+    fn a_suggestion_quotes_every_unanswered_question_in_order() {
+        let context = vec![
+            turn(false, "Tell me about yourself.".into(), 1),
+            turn(false, "And why this company?".into(), 2),
+        ];
+        let unanswered = [
+            line(false, "Tell me about yourself."),
+            line(true, "Sure."),
+            line(false, "And why this company?"),
+        ];
+        let input = build_input(&context, None, &unanswered);
+        assert_eq!(input.len(), 3, "the conversation, then the request");
+        let last = input.last().unwrap();
+        assert_eq!(last["role"], "user");
+        let request = last["content"].as_str().unwrap();
+        let first = request.find("Them: Tell me about yourself.").expect("first question quoted");
+        let mine = request.find("Me: Sure.").expect("the user's own line quoted");
+        let second = request.find("Them: And why this company?").expect("second question quoted");
+        assert!(first < mine && mine < second, "oldest first");
+        assert!(request.contains("not only the last one"));
+    }
+
+    #[test]
+    fn a_typed_question_is_not_replaced_by_the_unanswered_lines() {
+        let input = build_input(&[], Some("What's their stack?"), &[line(false, "Any questions for us?")]);
+        assert_eq!(input, vec![serde_json::json!({ "role": "user", "content": "What's their stack?" })]);
+    }
+
+    #[test]
+    fn with_nothing_new_from_the_other_side_the_conversation_ends_as_before() {
+        let context = vec![turn(false, "Any questions?".into(), 1)];
+        // Only the user's own words are new: there is nothing of theirs to quote.
+        let input = build_input(&context, None, &[line(true, "Let me think.")]);
+        assert_eq!(input, vec![serde_json::json!({ "role": "assistant", "content": "Any questions?" })]);
+    }
+
+    #[test]
+    fn a_long_backlog_keeps_the_newest_lines() {
+        let old = "x".repeat(super::UNANSWERED_CHARS);
+        let unanswered = [line(false, &old), line(false, "What is your notice period?")];
+        let request = super::reply_request(&unanswered).unwrap();
+        assert!(request.contains("Them: What is your notice period?"));
+        // The older line is cut from its start, never dropped past the budget.
+        assert!(request.contains("Them: …x"));
+        assert!(request.chars().count() < super::UNANSWERED_CHARS + 400);
     }
 }
 

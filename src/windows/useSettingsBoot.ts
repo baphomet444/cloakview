@@ -17,9 +17,9 @@ export function applyAppearance(theme: Theme, opacity: number): void {
  * for the rest of the app's life (the hub never destroys and recreates it), so this
  * also applies the theme and opacity live on every `settings-changed` broadcast --
  * otherwise a window already open when another window saves settings would stay on
- * whatever appearance it booted with until the app restarts. Language still only
- * takes effect the next time the window loads: swapping the locale catalog live is a
- * bigger change than this fix calls for, and no one has reported it stale.
+ * whatever appearance it booted with until the app restarts. The language follows the
+ * same broadcast: the locale state change re-renders the window, and `t()` reads the
+ * new catalog.
  */
 export function useSettingsBoot(): {
   settings: Settings | null;
@@ -55,6 +55,10 @@ export function useSettingsBoot(): {
     subscribeSettingsChanged((changed) => {
       if (cancelled) return;
       applyAppearance(themeFromSetting(changed.theme), changed.opacity);
+      // A window loaded once and only shown or hidden afterwards keeps its boot
+      // language unless the broadcast carries the new one.
+      setLocale(localeFromSetting(changed.language));
+      setLocaleState(getLocale());
       setSettings(changed);
     })
       .then((stop) => {

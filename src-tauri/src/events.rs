@@ -19,6 +19,11 @@ pub const ANSWER_DONE_EVENT: &str = "answer-done";
 /// Not in design.md §5: an answer the user did not type is starting (today: one read
 /// from the screen), so Ask can show it. Payload: what it answers (`"screen"`).
 pub const ANSWER_STARTED_EVENT: &str = "answer-started";
+/// Not in design.md §5: what a suggestion from the call answers — every question
+/// it covers, one per line, not only the latest one (`SessionLog::unanswered`), so
+/// Ask shows exactly what the reply is for. Sent as the suggestion starts.
+/// Payload: the lines, joined by `\n`.
+pub const ANSWER_PROMPT_EVENT: &str = "answer-prompt";
 pub const LISTEN_STATE_EVENT: &str = "listen-state";
 pub const ERROR_EVENT: &str = "error";
 /// The push-to-ask global shortcut asks the hub to open the Ask window (after Rust has
@@ -62,6 +67,7 @@ mod tests {
             ANSWER_DELTA_EVENT,
             ANSWER_DONE_EVENT,
             ANSWER_STARTED_EVENT,
+            ANSWER_PROMPT_EVENT,
             LISTEN_STATE_EVENT,
             ERROR_EVENT,
             PUSH_TO_ASK_EVENT,
@@ -76,6 +82,7 @@ mod tests {
             "answer-delta",
             "answer-done",
             "answer-started",
+            "answer-prompt",
             "listen-state",
             "error",
             "push-to-ask",

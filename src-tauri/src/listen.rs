@@ -299,7 +299,11 @@ fn diag_entry(event: &str, payload: &serde_json::Value) -> String {
 /// task that pumps audio into `realtime::client::run_session` (and its
 /// parsed events back out) until cancelled, a fatal audio error, or the
 /// realtime session itself returns.
-pub fn start(model: String, include_mic: bool, app: tauri::AppHandle) -> AppResult<SessionHandle> {
+pub fn start(
+    transcription: realtime::client::Transcription,
+    include_mic: bool,
+    app: tauri::AppHandle,
+) -> AppResult<SessionHandle> {
     let gate = crate::audio::EchoGate::default();
     let src: Box<dyn AudioSource> = Box::new(crate::audio::screencapturekit::SckAudioSource::new(gate.clone())?);
     let (api_key, mut src, status_rx) = prepare_session(src)?;
@@ -326,9 +330,16 @@ pub fn start(model: String, include_mic: bool, app: tauri::AppHandle) -> AppResu
                 }
             }
         }));
-        let (key, model, events) = (api_key.clone(), model.clone(), rt_tx.clone());
+        let (key, mic_transcription, events) = (api_key.clone(), transcription.clone(), rt_tx.clone());
         mic_tasks.push(tokio::spawn(async move {
-            let _ = realtime::client::run_session(key, model, mic_audio_rx, events, realtime::client::Source::Mine).await;
+            let _ = realtime::client::run_session(
+                key,
+                mic_transcription,
+                mic_audio_rx,
+                events,
+                realtime::client::Source::Mine,
+            )
+            .await;
         }));
         mic = Some(source);
     }
@@ -363,9 +374,9 @@ pub fn start(model: String, include_mic: bool, app: tauri::AppHandle) -> AppResu
         let app_state = app.state::<crate::state::AppState>();
         // Snapshot, once per session: later `save_settings` calls do not
         // reach a running session (documented in the module doc).
-        let (user_keywords, user_name, translate_to) = {
+        let (user_keywords, user_name, translate_to, answers_model) = {
             let s = app_state.settings.read().expect("settings lock");
-            (s.user_keywords.clone(), s.user_name.clone(), s.translate_to.clone())
+            (s.user_keywords.clone(), s.user_name.clone(), s.translate_to.clone(), s.answers_model.clone())
         };
         let detection = TurnDetection { keywords: &user_keywords, user_name: user_name.as_deref() };
         // Live translation (CloakView Pro): each transcribed line goes to one
@@ -373,7 +384,10 @@ pub fn start(model: String, include_mic: bool, app: tauri::AppHandle) -> AppResu
         let translation_dispatch: Option<Box<dyn Fn(String, i64) + Send + Sync>> =
             if app_state.is_pro() && !translate_to.is_empty() {
                 let key = api_key.clone();
-                let model = model.clone();
+                // A text model, as for answers: translation goes through the Responses
+                // API, which refuses the transcription model (`realtime_model`) this
+                // session listens with — every line used to fail there.
+                let model = answers_model.clone();
                 let target = translate_to.clone();
                 let app = translation_app.clone();
                 Some(Box::new(move |text: String, ts: i64| {
@@ -395,7 +409,8 @@ pub fn start(model: String, include_mic: bool, app: tauri::AppHandle) -> AppResu
                 None
             };
         let translation = translation_dispatch.as_deref().map(|dispatch| Translation { dispatch });
-        let realtime_task = realtime::client::run_session(api_key, model, audio_rx, rt_tx, realtime::client::Source::Remote);
+        let realtime_task =
+            realtime::client::run_session(api_key, transcription, audio_rx, rt_tx, realtime::client::Source::Remote);
         tokio::select! {
             _ = pump_until_cancelled(
                 cancel_for_task,

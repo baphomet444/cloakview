@@ -144,7 +144,10 @@ export function HubApp() {
     let cancelled = false;
     let unlisten: (() => void) | undefined;
     subscribeSettingsChanged((settings) => {
-      if (!cancelled) setOpacity(settings.opacity);
+      if (cancelled) return;
+      setOpacity(settings.opacity);
+      setLocale(localeFromSetting(settings.language));
+      setLocaleState(getLocale());
     })
       .then((stop) => {
         if (cancelled) stop();

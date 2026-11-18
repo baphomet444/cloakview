@@ -319,6 +319,8 @@ export interface EventPayloads {
   "answer-done": null;
   /** An answer the user did not type is starting. The payload says what it answers. */
   "answer-started": "screen";
+  /** What a suggestion from the call answers: every question it covers, one per line. */
+  "answer-prompt": string;
   "listen-state": ListenState;
   error: string;
   /** The push-to-ask global shortcut, sent to the hub only. No data. */
@@ -346,6 +348,7 @@ export const EVENTS = [
   "answer-delta",
   "answer-done",
   "answer-started",
+  "answer-prompt",
   "listen-state",
   "error",
   "push-to-ask",
@@ -379,6 +382,13 @@ export function subscribeAnswerDone(handler: () => void): Promise<UnlistenFn> {
 /** An answer nobody typed a question for is starting (today: one read from the screen). */
 export function subscribeAnswerStarted(handler: (source: "screen") => void): Promise<UnlistenFn> {
   return subscribe("answer-started", handler);
+}
+/**
+ * What the suggestion that is starting answers: every question the other side asked
+ * since the last settled suggestion, one per line (Rust `SessionLog::unanswered`).
+ */
+export function subscribeAnswerPrompt(handler: (prompt: string) => void): Promise<UnlistenFn> {
+  return subscribe("answer-prompt", handler);
 }
 export function subscribeListenState(handler: (state: ListenState) => void): Promise<UnlistenFn> {
   return subscribe("listen-state", handler);

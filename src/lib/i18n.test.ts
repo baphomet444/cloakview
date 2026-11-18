@@ -150,5 +150,9 @@ describe("i18n runtime", () => {
     expect(localeFromSetting("en")).toBe("en");
     expect(localeFromSetting("fr")).toBe("en");
     expect(localeFromSetting("")).toBe("en");
+    // The Rust default comes from macOS, which reports a full tag.
+    expect(localeFromSetting("es-419")).toBe("es");
+    expect(localeFromSetting("ES_es")).toBe("es");
+    expect(localeFromSetting("en-GB")).toBe("en");
   });
 });

@@ -220,6 +220,7 @@ const settings: Settings = {
   personalContext: "",
   answerStyle: "balanced",
   translateTo: "",
+  callLanguage: "",
 };
 
 describe("events", () => {
@@ -248,6 +249,7 @@ describe("events", () => {
     ["transcript-delta", ipc.subscribeTranscriptDelta, turn],
     ["answer-delta", ipc.subscribeAnswerDelta, "Hel"],
     ["answer-started", ipc.subscribeAnswerStarted as (handler: (payload: unknown) => void) => Promise<() => void>, "screen"],
+    ["answer-prompt", ipc.subscribeAnswerPrompt as (handler: (payload: unknown) => void) => Promise<() => void>, "Tell me about yourself.\nWhy us?"],
     ["listen-state", ipc.subscribeListenState, listening],
     ["translation", ipc.subscribeTranslation, { ts: 1, text: "hola" }],
     ["error", ipc.subscribeError, "rate_limit"],

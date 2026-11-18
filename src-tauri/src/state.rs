@@ -36,12 +36,18 @@ pub struct Settings {
     /// Live translation target for the transcript: "" (off), "en" or "es".
     /// CloakView Pro: ignored without a license.
     pub translate_to: String,
+    /// The language spoken on the call: "en" or "es", or "" (the default) to let
+    /// the transcription detect it. Setting it keeps background noise from being
+    /// transcribed as sentences in other languages. Read when listening starts.
+    pub call_language: String,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            language: "en".into(),
+            // A clean install opens in the Mac's language when the UI has a catalog
+            // for it; any saved settings override this.
+            language: crate::system_language::default_language(),
             theme: "dark".into(),
             opacity: 0.95,
             answers_model: "gpt-4o-mini".into(),
@@ -56,6 +62,7 @@ impl Default for Settings {
             personal_context: String::new(),
             answer_style: "balanced".into(),
             translate_to: String::new(),
+            call_language: String::new(),
         }
     }
 }
@@ -140,6 +147,7 @@ mod tests {
             personal_context: String::new(),
             answer_style: "balanced".into(),
             translate_to: String::new(),
+            call_language: "es".into(),
         };
         let json = serde_json::to_value(&s).unwrap();
 
@@ -162,7 +170,8 @@ mod tests {
                 "includeMic": true,
                 "personalContext": "",
                 "answerStyle": "balanced",
-                "translateTo": ""
+                "translateTo": "",
+                "callLanguage": "es"
             })
         );
         for key in json.as_object().unwrap().keys() {

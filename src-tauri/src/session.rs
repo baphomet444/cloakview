@@ -10,6 +10,10 @@ use chrono::{Local, TimeZone};
 
 /// How much of the prompt a suggestion quotes, in characters.
 const PROMPT_CHARS: usize = 200;
+/// A question that comes this soon after the last suggestion finished, with the
+/// user not having spoken since, is part of the same run of questions: the next
+/// suggestion answers the whole run again, in one reply (see `unanswered`).
+const SAME_RUN_MS: i64 = 20_000;
 
 /// One thing that happened during the interview. Serialized for the history
 /// window (`db/sessions` stores the list as JSON) with a `kind` tag, so the
@@ -28,6 +32,9 @@ pub enum Entry {
 pub struct SessionLog {
     started_ms: Option<i64>,
     entries: Vec<Entry>,
+    /// One per suggestion from the call that finished: the entries before `.0`
+    /// were covered by it, and `.1` is when it finished (see `unanswered`).
+    answered: Vec<(usize, i64)>,
 }
 
 /// A closed interview, ready to be saved.
@@ -78,6 +85,47 @@ impl SessionLog {
         })
     }
 
+    /// What the next suggestion from the call has to answer, oldest first, as
+    /// `(mine, text)`: everything said since the last suggestion that is settled,
+    /// not just the latest line.
+    ///
+    /// - A suggestion cut short (a newer question replaced it) never finished, so
+    ///   its lines stay unanswered and the next suggestion covers them too.
+    /// - A suggestion that finished less than `SAME_RUN_MS` before `now_ms`, with
+    ///   the user not having said anything since, is not settled either: the other
+    ///   side is firing several questions in a row, so the next suggestion answers
+    ///   the whole run in one reply instead of replacing the earlier answers with one
+    ///   that covers only the newest question.
+    ///
+    /// Also returns the mark to hand to `mark_answered` once that suggestion finishes.
+    pub fn unanswered(&self, now_ms: i64) -> (Vec<(bool, String)>, usize) {
+        let len = self.entries.len();
+        let user_spoke_after = |mark: usize| {
+            self.entries[mark.min(len)..].iter().any(|e| matches!(e, Entry::Heard { mine: true, .. }))
+        };
+        let from = self
+            .answered
+            .iter()
+            .filter(|(mark, finished)| now_ms - finished >= SAME_RUN_MS || user_spoke_after(*mark))
+            .map(|(mark, _)| (*mark).min(len))
+            .max()
+            .unwrap_or(0);
+        let lines = self.entries[from..]
+            .iter()
+            .filter_map(|e| match e {
+                Entry::Heard { text, mine, .. } => Some((*mine, text.clone())),
+                Entry::Suggestion { .. } => None,
+            })
+            .collect();
+        (lines, len)
+    }
+
+    /// A suggestion from the call finished at `now_ms`: what `unanswered` returned
+    /// with `mark` is answered.
+    pub fn mark_answered(&mut self, mark: usize, now_ms: i64) {
+        self.answered.push((mark.min(self.entries.len()), now_ms));
+    }
+
     /// Records a suggested answer. Nothing is recorded outside a session.
     pub fn suggestion(&mut self, ts: i64, prompt: &str, text: &str) {
         let text = text.trim();
@@ -94,6 +142,7 @@ impl SessionLog {
     /// empty and closed afterwards.
     pub fn finish(&mut self, now_ms: i64) -> Option<FinishedSession> {
         let started = self.started_ms.take()?;
+        self.answered.clear();
         let entries = std::mem::take(&mut self.entries);
         if entries.is_empty() {
             return None;
@@ -236,6 +285,96 @@ mod tests {
             ],
             auto_note_id: None,
         }
+    }
+
+    fn them(text: &str) -> (bool, String) {
+        (false, text.to_string())
+    }
+
+    /// Far enough apart that every finished suggestion is settled.
+    const LATER: i64 = SAME_RUN_MS * 10;
+
+    #[test]
+    fn a_suggestion_cut_short_leaves_its_questions_for_the_next() {
+        let mut log = SessionLog::default();
+        log.begin(0);
+        log.heard(1, "Tell me about yourself.", false);
+        let (lines, first) = log.unanswered(2);
+        assert_eq!(lines, vec![them("Tell me about yourself.")]);
+
+        // A second question arrives before that suggestion finished: it was cut
+        // short, so the next one answers both, in order, with the user's own line.
+        log.heard(3, "And why this company?", false);
+        log.heard(4, "Sure.", true);
+        let (lines, second) = log.unanswered(5);
+        assert_eq!(lines, vec![them("Tell me about yourself."), them("And why this company?"), (true, "Sure.".into())]);
+        assert!(second > first);
+    }
+
+    #[test]
+    fn once_settled_only_what_came_after_the_suggestion_is_new() {
+        let mut log = SessionLog::default();
+        log.begin(0);
+        log.heard(1, "Tell me about yourself.", false);
+        let (_, mark) = log.unanswered(2);
+        log.suggestion(3, "", "I build payment systems…");
+        log.mark_answered(mark, 3);
+        log.heard(LATER, "What's your biggest weakness?", false);
+        assert_eq!(log.unanswered(LATER).0, vec![them("What's your biggest weakness?")]);
+        // An older mark finishing late never moves it back.
+        log.mark_answered(0, LATER);
+        assert_eq!(log.unanswered(LATER + 1).0.len(), 1);
+    }
+
+    #[test]
+    fn questions_fired_in_a_row_are_answered_together() {
+        // Each suggestion finished before the next question came, but only seconds
+        // before: the latest suggestion answers the whole run, not only the newest.
+        let mut log = SessionLog::default();
+        log.begin(0);
+        log.heard(1_000, "Tell me about yourself.", false);
+        let (_, mark) = log.unanswered(1_000);
+        log.mark_answered(mark, 4_000);
+        log.heard(5_000, "Why this company?", false);
+        let (lines, mark) = log.unanswered(5_000);
+        assert_eq!(lines, vec![them("Tell me about yourself."), them("Why this company?")]);
+        log.mark_answered(mark, 8_000);
+        log.heard(9_000, "And your biggest weakness?", false);
+        let lines = log.unanswered(9_000).0;
+        assert_eq!(lines.len(), 3);
+        assert_eq!(lines.last(), Some(&them("And your biggest weakness?")));
+
+        // Well after the last suggestion, a new question stands on its own again.
+        log.mark_answered(log.unanswered(9_000).1, 12_000);
+        log.heard(12_000 + SAME_RUN_MS, "Any questions for us?", false);
+        assert_eq!(log.unanswered(12_000 + SAME_RUN_MS).0, vec![them("Any questions for us?")]);
+    }
+
+    #[test]
+    fn the_user_speaking_settles_the_earlier_questions() {
+        // With the microphone on: the user already answered aloud, so a quick
+        // follow-up is a new question, not part of the earlier run.
+        let mut log = SessionLog::default();
+        log.begin(0);
+        log.heard(1_000, "Tell me about yourself.", false);
+        let (_, mark) = log.unanswered(1_000);
+        log.mark_answered(mark, 3_000);
+        log.heard(4_000, "I'm a backend engineer.", true);
+        log.heard(6_000, "Why this company?", false);
+        assert_eq!(log.unanswered(6_000).0, vec![(true, "I'm a backend engineer.".into()), them("Why this company?")]);
+    }
+
+    #[test]
+    fn a_new_session_starts_with_nothing_answered() {
+        let mut log = SessionLog::default();
+        log.begin(0);
+        log.heard(1, "First question?", false);
+        let (_, mark) = log.unanswered(1);
+        log.mark_answered(mark, 2);
+        log.finish(3);
+        log.begin(LATER);
+        log.heard(LATER, "Second session question?", false);
+        assert_eq!(log.unanswered(LATER).0, vec![them("Second session question?")]);
     }
 
     #[test]

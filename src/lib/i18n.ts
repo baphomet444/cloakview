@@ -45,8 +45,11 @@ export function t(key: CatalogKey): string {
 
 /**
  * Boot wiring: after `getSettings()`, `setLocale(localeFromSetting(settings.language))`.
- * `settings.language` is a free-form string on the Rust side; only "es" selects Spanish.
+ * `settings.language` is a free-form string on the Rust side. It arrives as "es" or
+ * "en", but a regional tag ("es-419", "ES_es") is accepted too — the system default
+ * is read from macOS, and a future backend may pass the tag straight through.
  */
 export function localeFromSetting(language: string): Locale {
-  return language === "es" ? "es" : "en";
+  const code = language.split(/[-_]/)[0]?.toLowerCase() ?? "";
+  return code === "es" ? "es" : "en";
 }

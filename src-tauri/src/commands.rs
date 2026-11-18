@@ -5,7 +5,7 @@
 use crate::db::{conversations, notes, sessions, Db};
 use crate::error::{AppError, IpcError};
 use crate::events::{
-    ANSWER_DELTA_EVENT, ANSWER_DONE_EVENT, ANSWER_STARTED_EVENT, ERROR_EVENT,
+    ANSWER_DELTA_EVENT, ANSWER_DONE_EVENT, ANSWER_PROMPT_EVENT, ANSWER_STARTED_EVENT, ERROR_EVENT,
     SETTINGS_CHANGED_EVENT,
 };
 use crate::listen;
@@ -139,9 +139,13 @@ pub fn delete_conversation(state: State<AppState>, id: String) -> Result<(), Ipc
 
 #[tauri::command]
 pub async fn start_listen(app: AppHandle, state: State<'_, AppState>) -> Result<(), IpcError> {
-    let (model, include_mic) = {
+    let (transcription, include_mic) = {
         let s = state.settings.read().expect("settings lock");
-        (s.realtime_model.clone(), s.include_mic)
+        let transcription = crate::realtime::client::Transcription {
+            model: s.realtime_model.clone(),
+            language: s.call_language.clone(),
+        };
+        (transcription, s.include_mic)
     };
     let mut guard = state.listen_session.lock().await;
     if guard.is_some() {
@@ -157,7 +161,7 @@ pub async fn start_listen(app: AppHandle, state: State<'_, AppState>) -> Result<
         crate::diag::log("start_listen: microphone not allowed yet");
         return Err(IpcError::from(AppError::MicPermissionDenied));
     }
-    let session = listen::start(model, include_mic, app).map_err(|e| {
+    let session = listen::start(transcription, include_mic, app).map_err(|e| {
         crate::diag::log(&format!("start_listen failed: {e}"));
         IpcError::from(e)
     })?;
@@ -228,12 +232,31 @@ async fn start_answer(
         prev.abort(); // a new question supersedes whatever was still streaming.
     }
 
-    // What this suggestion answers: the typed question, or the last thing heard on the call.
+    // A suggestion from the call (nothing typed, no screenshot) answers the whole run
+    // of questions still waiting (`SessionLog::unanswered`), not only the latest line.
+    // `answered` marks them done once it finishes.
+    let (unanswered, answered) = if question.is_none() && image.is_none() {
+        let (lines, mark) = state.session_log.lock().expect("session log lock").unanswered(crate::db::now_ms());
+        (lines, Some(mark))
+    } else {
+        (Vec::new(), None)
+    };
+    // What this suggestion answers: the typed question, or what the other side said.
+    let mut from_call: Option<usize> = None;
     let prompt = if image.is_some() {
         "(read from the screen)".to_string()
     } else {
+        let heard: Vec<&str> =
+            unanswered.iter().filter(|(mine, _)| !mine).map(|(_, text)| text.as_str()).collect();
+        // For the diagnostics log: how many of the other side's lines it answers, never what they said.
+        from_call = answered.map(|_| heard.len());
+        if question.is_none() && !heard.is_empty() {
+            // Ask shows what the suggestion answers: the whole run of questions.
+            let _ = app.emit(ANSWER_PROMPT_EVENT, heard.join("\n"));
+        }
         question
             .clone()
+            .or_else(|| (!heard.is_empty()).then(|| heard.join(" ")))
             .or_else(|| state.session_log.lock().expect("session log lock").last_heard().map(str::to_string))
             .unwrap_or_default()
     };
@@ -243,6 +266,7 @@ async fn start_answer(
         crate::answers::client::AnswerRequest {
             context,
             question,
+            unanswered,
             image,
             pro: state.is_pro(),
             about_user,
@@ -258,7 +282,10 @@ async fn start_answer(
     // the frontend. `AnswersEvent::Error` shares `"error"` with the
     // realtime side — the spec lists one generic error event, not a
     // separate per-source one.
-    crate::diag::log("answer requested");
+    crate::diag::log(&match from_call {
+        Some(n) => format!("answer requested ({n} lines from the call)"),
+        None => "answer requested".to_string(),
+    });
     tokio::spawn(async move {
         // For the diagnostics log: how much was answered, never what.
         let mut chars = 0usize;
@@ -272,11 +299,16 @@ async fn start_answer(
                 }
                 crate::answers::AnswersEvent::Done => {
                     crate::diag::log(&format!("answer done ({chars} chars)"));
-                    app.state::<AppState>().session_log.lock().expect("session log lock").suggestion(
-                        crate::db::now_ms(),
-                        &prompt,
-                        &answer,
-                    );
+                    {
+                        let state = app.state::<AppState>();
+                        let mut log = state.session_log.lock().expect("session log lock");
+                        log.suggestion(crate::db::now_ms(), &prompt, &answer);
+                        // Only a suggestion that finished answers those lines; one
+                        // replaced half-way leaves them for the next.
+                        if let Some(mark) = answered {
+                            log.mark_answered(mark, crate::db::now_ms());
+                        }
+                    }
                     let _ = app.emit(ANSWER_DONE_EVENT, ());
                 }
                 crate::answers::AnswersEvent::Error { message } => {

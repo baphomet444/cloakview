@@ -38,13 +38,12 @@ struct Activation {
 }
 
 /// A Polar license key. Every field is optional: a refusal carries almost nothing.
+/// Polar also reports `limit_activations` and `usage`, but it enforces the limit
+/// itself (an activation past it is refused, see `refusal`), so they are not read.
 #[derive(Debug, Default, serde::Deserialize)]
 struct PolarKey {
     #[serde(default)]
     status: String,
-    limit_activations: Option<u32>,
-    #[serde(default)]
-    usage: u32,
     expires_at: Option<String>,
 }
 
@@ -236,10 +235,9 @@ mod tests {
             }"#,
         )
         .unwrap();
+        // The fields CloakView does not read (the limit, the usage) are tolerated.
         assert_eq!(act.id, "act-1");
         assert!(act.license_key.is_live().is_ok());
-        assert_eq!(act.license_key.limit_activations, Some(5));
-        assert_eq!(act.license_key.usage, 1);
     }
 
     #[test]

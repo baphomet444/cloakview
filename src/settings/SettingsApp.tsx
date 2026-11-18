@@ -62,6 +62,12 @@ const TRANSLATE_OPTIONS: readonly { value: string; labelKey: CatalogKey }[] = [
   { value: "es", labelKey: "settings.languageEs" },
 ];
 
+const CALL_LANGUAGES: readonly { value: string; labelKey: CatalogKey }[] = [
+  { value: "", labelKey: "settings.callLanguageAuto" },
+  { value: "en", labelKey: "settings.languageEn" },
+  { value: "es", labelKey: "settings.languageEs" },
+];
+
 const THEMES: readonly { value: Theme; labelKey: CatalogKey }[] = [
   { value: "dark", labelKey: "settings.themeDark" },
   { value: "light", labelKey: "settings.themeLight" },
@@ -337,6 +343,17 @@ export function SettingsApp() {
               onChange={(next) => void save({ includeMic: next === "on" })}
             />
             <p className="win-hint set-span">{t("settings.micHint")}</p>
+
+            <span className="win-label" id="set-call-language-label">
+              {t("settings.callLanguage")}
+            </span>
+            <Segmented
+              id="set-call-language"
+              options={CALL_LANGUAGES}
+              value={settings.callLanguage}
+              onChange={(next) => void save({ callLanguage: next })}
+            />
+            <p className="win-hint set-span">{t("settings.callLanguageHint")}</p>
 
             <span className="win-label" id="set-style-label">
               {t("settings.answerStyle")}

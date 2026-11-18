@@ -22,6 +22,14 @@ describe("askReducer", () => {
     expect(two).toMatchObject({ phase: "streaming", answer: "Hello" });
   });
 
+  it("prompt shows every question the suggestion in flight answers, and is ignored once it ended", () => {
+    const run = "Tell me about yourself.\nWhy this company?";
+    expect(askReducer(thinking, { type: "prompt", question: run })).toEqual({ ...thinking, question: run });
+    expect(askReducer(streaming, { type: "prompt", question: run })).toMatchObject({ question: run, answer: "Hel" });
+    const done: AskState = { ...streaming, phase: "done" };
+    expect(askReducer(done, { type: "prompt", question: run })).toBe(done);
+  });
+
   it("done ends the stream and keeps the answer", () => {
     expect(askReducer(streaming, { type: "done" })).toMatchObject({ phase: "done", answer: "Hel" });
   });

@@ -138,6 +138,8 @@ export type Settings = {
   answerStyle: string;
   /** Live translation target for the transcript: "" (off), "en" or "es" (CloakView Pro). */
   translateTo: string;
+  /** The language spoken on the call: "" (detect), "en" or "es". Read when listening starts. */
+  callLanguage: string;
 };
 
 /**
@@ -161,6 +163,8 @@ export type SettingsPatch = {
   answerStyle?: string;
   /** "" (off), "en" or "es". */
   translateTo?: string;
+  /** "" (detect), "en" or "es". */
+  callLanguage?: string;
 };
 
 /** Microphone permission. `src-tauri/src/platform.rs` (`MicStatus`): a plain camelCase string. */

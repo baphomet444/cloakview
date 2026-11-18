@@ -26,6 +26,16 @@ impl Source {
         }
     }
 
+    /// OpenAI's noise reduction, applied to the audio before it is transcribed.
+    /// The call arrives as the other side's close-talking voice; the microphone is
+    /// most often the Mac's own, across the desk.
+    fn noise_reduction(self) -> &'static str {
+        match self {
+            Source::Remote => "near_field",
+            Source::Mine => "far_field",
+        }
+    }
+
     /// The microphone's lines are the user's: they become `user` turns in the answer
     /// context, and are never a cue to suggest a reply.
     fn label(self, event: RealtimeEvent) -> RealtimeEvent {
@@ -59,7 +69,36 @@ fn transcription_model(setting: &str) -> &str {
     }
 }
 
-fn session_update(model: &str) -> serde_json::Value {
+/// What a session transcribes with: the model, and the language spoken on the call.
+#[derive(Debug, Clone, Default)]
+pub struct Transcription {
+    pub model: String,
+    /// `Settings::call_language`: "en" or "es", or "" to let the model detect it.
+    pub language: String,
+}
+
+/// The call language as an ISO-639-1 code, when it is one this app offers.
+/// Anything else (blank, unknown) means "detect", rather than a session the API refuses.
+fn language_code(setting: &str) -> Option<&'static str> {
+    match setting.trim() {
+        "en" => Some("en"),
+        "es" => Some("es"),
+        _ => None,
+    }
+}
+
+fn session_update(transcription: &Transcription, source: Source) -> serde_json::Value {
+    let model = transcription_model(&transcription.model);
+    let mut config = serde_json::json!({ "model": model });
+    // A known language keeps background noise from being "heard" as sentences in
+    // other languages. `gpt-live-transcribe` takes a list; the others one code.
+    if let Some(code) = language_code(&transcription.language) {
+        if model.contains("live-transcribe") {
+            config["languages"] = serde_json::json!([code]);
+        } else {
+            config["language"] = serde_json::json!(code);
+        }
+    }
     serde_json::json!({
         "type": "session.update",
         "session": {
@@ -67,7 +106,8 @@ fn session_update(model: &str) -> serde_json::Value {
             "audio": {
                 "input": {
                     "format": { "type": "audio/pcm", "rate": TARGET_SAMPLE_RATE },
-                    "transcription": { "model": transcription_model(model) },
+                    "noise_reduction": { "type": source.noise_reduction() },
+                    "transcription": config,
                     // These models have no server-side turn detection: `Vad` decides.
                     "turn_detection": null,
                 }
@@ -90,7 +130,7 @@ fn session_update(model: &str) -> serde_json::Value {
 /// rule `answers::client::stream_answer` (Task 10) already uses.
 pub async fn run_session(
     api_key: String,
-    model: String,
+    transcription: Transcription,
     mut audio_in: tokio::sync::mpsc::Receiver<AudioChunk>,
     events_out: tokio::sync::mpsc::Sender<RealtimeEvent>,
     source: Source,
@@ -115,7 +155,7 @@ pub async fn run_session(
                 let (mut write, mut read) = ws.split();
                 let _ = events_out.try_send(RealtimeEvent::SessionStarted);
 
-                if write.send(session_update(&model).to_string().into()).await.is_err() {
+                if write.send(session_update(&transcription, source).to_string().into()).await.is_err() {
                     tokio::time::sleep(backoff.next_delay()).await;
                     continue;
                 }
@@ -197,13 +237,42 @@ mod tests {
         assert_eq!(transcription_model(""), DEFAULT_TRANSCRIPTION_MODEL);
     }
 
+    fn transcription(model: &str, language: &str) -> Transcription {
+        Transcription { model: model.into(), language: language.into() }
+    }
+
     #[test]
     fn the_session_is_a_transcription_session_without_server_turn_detection() {
-        let v = session_update("gpt-4o-mini-realtime");
+        let v = session_update(&transcription("gpt-4o-mini-realtime", ""), Source::Remote);
         let input = &v["session"]["audio"]["input"];
         assert_eq!(v["session"]["type"], "transcription");
         assert_eq!(input["format"]["rate"], 24_000);
         assert_eq!(input["transcription"]["model"], DEFAULT_TRANSCRIPTION_MODEL);
         assert!(input["turn_detection"].is_null());
+    }
+
+    #[test]
+    fn noise_reduction_suits_each_source() {
+        let remote = session_update(&transcription("", ""), Source::Remote);
+        let mine = session_update(&transcription("", ""), Source::Mine);
+        assert_eq!(remote["session"]["audio"]["input"]["noise_reduction"], serde_json::json!({ "type": "near_field" }));
+        assert_eq!(mine["session"]["audio"]["input"]["noise_reduction"], serde_json::json!({ "type": "far_field" }));
+    }
+
+    #[test]
+    fn the_call_language_is_sent_only_when_known() {
+        let config = |model: &str, language: &str| {
+            session_update(&transcription(model, language), Source::Remote)["session"]["audio"]["input"]["transcription"]
+                .clone()
+        };
+        // Auto: the model detects the language, as before.
+        assert!(config("", "").get("language").is_none());
+        assert!(config("", "fr").get("language").is_none());
+        assert_eq!(config("", "es")["language"], "es");
+        assert_eq!(config("gpt-transcribe", " en ")["language"], "en");
+        // `gpt-live-transcribe` takes a list instead, and never both.
+        let live = config("gpt-live-transcribe", "en");
+        assert_eq!(live["languages"], serde_json::json!(["en"]));
+        assert!(live.get("language").is_none());
     }
 }

@@ -24,6 +24,7 @@ const settings: Settings = {
   personalContext: "",
   answerStyle: "balanced",
   translateTo: "",
+  callLanguage: "",
 };
 
 describe("themeFromSetting", () => {

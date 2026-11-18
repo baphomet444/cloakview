@@ -6,6 +6,7 @@ import {
   stopAnswer,
   subscribeAnswerDelta,
   subscribeAnswerDone,
+  subscribeAnswerPrompt,
   subscribeAnswerStarted,
   subscribeError,
   subscribeTranscriptDelta,
@@ -37,7 +38,8 @@ export function AskApp() {
   // Where the question on screen came from: typed here, heard on the call, or read from the screen.
   const [source, setSource] = useState<"typed" | "heard" | "screen">("typed");
   // The last thing said on the call: `turn-detected` carries no text, and always
-  // follows the `transcript-delta` of the line that caused it.
+  // follows the `transcript-delta` of the line that caused it. Shown until Rust says
+  // what the suggestion really answers (`answer-prompt`: often several questions).
   const lastHeard = useRef("");
 
   // The three answer events. Each `subscribe*` resolves to its unlisten function
@@ -53,14 +55,20 @@ export function AskApp() {
         // The user's own words (microphone) are not what a suggestion answers.
         if (!turn.isUserTurn) lastHeard.current = turn.text;
       }).then(keep),
-      // Something on the call asks for a reply: suggest one without being asked.
-      // The transcript is the context, so no question is sent; a suggestion still
-      // streaming is replaced (Rust aborts the previous request).
       // Rust took a screenshot and is answering what is on it.
       subscribeAnswerStarted(() => {
         setSource("screen");
         dispatch({ type: "send", question: t("ask.screenQuestion") });
       }).then(keep),
+      // A suggestion from the call is starting: every question it answers, as Rust
+      // worked it out (the run of questions since the last settled suggestion).
+      subscribeAnswerPrompt((prompt) => {
+        setSource("heard");
+        dispatch({ type: "prompt", question: prompt });
+      }).then(keep),
+      // Something on the call asks for a reply: suggest one without being asked.
+      // The transcript is the context, so no question is sent. A suggestion still
+      // streaming is replaced (Rust aborts it), and the new one covers its questions too.
       subscribeTurnDetected(() => {
         setSource("heard");
         dispatch({ type: "send", question: lastHeard.current });

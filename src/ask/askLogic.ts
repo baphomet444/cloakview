@@ -19,6 +19,8 @@ export type AskState = {
 
 export type AskAction =
   | { type: "send"; question: string }
+  /** What the suggestion in flight answers, as Rust worked it out (`answer-prompt`). */
+  | { type: "prompt"; question: string }
   | { type: "delta"; text: string }
   | { type: "done" }
   | { type: "stop" }
@@ -40,6 +42,8 @@ export function askReducer(state: AskState, action: AskAction): AskState {
   }
   if (!isBusy(state)) return state;
   switch (action.type) {
+    case "prompt":
+      return { ...state, question: action.question };
     case "delta":
       return { ...state, phase: "streaming", answer: state.answer + action.text };
     case "done":

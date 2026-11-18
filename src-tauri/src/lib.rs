@@ -16,6 +16,7 @@ mod secrets;
 mod session;
 mod settings;
 mod state;
+mod system_language;
 pub mod transcript;
 mod windows_ext;
 

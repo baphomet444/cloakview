@@ -67,6 +67,8 @@ pub struct SettingsPatch {
     pub answer_style: Option<String>,
     /// "" (off), "en" or "es". Free-form in Rust; anything unknown behaves like off.
     pub translate_to: Option<String>,
+    /// "" (detect), "en" or "es". Free-form in Rust; anything unknown behaves like detect.
+    pub call_language: Option<String>,
 }
 
 /// Applies the fields present in `patch` to `s`: `opacity` is clamped to
@@ -108,6 +110,9 @@ pub fn apply_patch(s: &mut Settings, patch: SettingsPatch) {
     }
     if let Some(v) = patch.translate_to {
         s.translate_to = v;
+    }
+    if let Some(v) = patch.call_language {
+        s.call_language = v;
     }
 }
 
