@@ -18,6 +18,7 @@ mod session;
 mod settings;
 mod state;
 mod system_language;
+mod typing;
 pub mod transcript;
 mod windows_ext;
 
