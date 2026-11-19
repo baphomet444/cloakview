@@ -8,10 +8,9 @@ pub mod mac;
 use crate::error::{AppError, AppResult};
 use crate::events::ERROR_EVENT;
 use crate::state::AppState;
-use logic::{Decision, Focus, Outcome, TYPE_DELAY_MS};
+use logic::{Decision, Focus, Outcome, Rhythm};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
@@ -145,7 +144,7 @@ async fn run_inner(app: &AppHandle, abort: &Arc<AtomicBool>) -> AppResult<()> {
     }
     let a = abort.clone();
     let outcome = tokio::task::spawn_blocking(move || {
-        logic::insert(&mac::MacKeyboard, &ready, expected_pid, &a, Duration::from_millis(TYPE_DELAY_MS))
+        logic::insert(&mac::MacKeyboard, &ready, expected_pid, &a, &mut Rhythm::from_clock())
     })
     .await;
     if esc.is_ok() {

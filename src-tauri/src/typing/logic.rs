@@ -8,7 +8,68 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 /// Delay after every typed piece. One constant on purpose: a steady speed, no jitter.
-pub const TYPE_DELAY_MS: u64 = 30;
+/// How a person types: uneven gaps between keys, longer pauses after a word, a
+/// sentence or a line, and now and then a pause to think. Self-contained
+/// (xorshift) so no extra dependency is needed for a bit of jitter.
+pub struct Rhythm {
+    state: u64,
+    enabled: bool,
+}
+
+impl Rhythm {
+    pub fn seeded(seed: u64) -> Self {
+        Self { state: seed | 1, enabled: true }
+    }
+
+    pub fn from_clock() -> Self {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos() as u64)
+            .unwrap_or(0x9E37_79B9);
+        Self::seeded(nanos)
+    }
+
+    /// No waiting at all (tests).
+    #[cfg(test)]
+    pub fn instant() -> Self {
+        Self { state: 1, enabled: false }
+    }
+
+    fn next(&mut self) -> u64 {
+        let mut x = self.state;
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        self.state = x;
+        x
+    }
+
+    /// A value in `lo..=hi`.
+    fn between(&mut self, lo: u64, hi: u64) -> u64 {
+        lo + self.next() % (hi - lo + 1)
+    }
+
+    /// How long to wait after typing `c`.
+    pub fn delay_for(&mut self, c: char) -> Duration {
+        if !self.enabled {
+            return Duration::ZERO;
+        }
+        // Average of two draws bunches the gaps around ~100 ms, like real typing.
+        let mut ms = (self.between(55, 150) + self.between(55, 150)) / 2;
+        ms += match c {
+            '.' | '!' | '?' => self.between(180, 420),
+            ',' | ';' | ':' => self.between(100, 220),
+            '\n' => self.between(500, 1000),
+            ' ' => self.between(0, 70),
+            _ => 0,
+        };
+        // About one key in forty: a pause to think.
+        if self.next().is_multiple_of(40) {
+            ms += self.between(400, 1100);
+        }
+        Duration::from_millis(ms)
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
@@ -140,7 +201,7 @@ pub fn insert(
     ready: &TypeReady,
     expected_pid: Option<i32>,
     abort: &AtomicBool,
-    delay: Duration,
+    rhythm: &mut Rhythm,
 ) -> AppResult<Outcome> {
     if ready.text.trim().is_empty() {
         return Err(AppError::Audio("nothing to type".into()));
@@ -162,12 +223,18 @@ pub fn insert(
                 if abort.load(Ordering::SeqCst) || !still_here(kb) {
                     return Ok(Outcome::Aborted);
                 }
-                match piece {
-                    Piece::Char(c) => kb.type_char(c)?,
-                    Piece::Newline => kb.shift_return()?,
-                }
-                if !delay.is_zero() {
-                    std::thread::sleep(delay);
+                let wait = match piece {
+                    Piece::Char(c) => {
+                        kb.type_char(c)?;
+                        rhythm.delay_for(c)
+                    }
+                    Piece::Newline => {
+                        kb.shift_return()?;
+                        rhythm.delay_for('\n')
+                    }
+                };
+                if !wait.is_zero() {
+                    std::thread::sleep(wait);
                 }
             }
             Ok(Outcome::Done)
@@ -265,7 +332,7 @@ mod tests {
             let kb = FakeKeyboard::new();
             let r = parse_type_ready(raw);
             let abort = AtomicBool::new(false);
-            assert!(insert(&kb, &r, None, &abort, Duration::ZERO).is_err(), "{raw:?}");
+            assert!(insert(&kb, &r, None, &abort, &mut Rhythm::instant()).is_err(), "{raw:?}");
             assert!(kb.calls().is_empty(), "{raw:?} sent keys");
         }
     }
@@ -287,7 +354,7 @@ mod tests {
     fn newlines_are_shift_return_and_never_return() {
         let kb = FakeKeyboard::new();
         let abort = AtomicBool::new(false);
-        let out = insert(&kb, &ready(Mode::Text, "a\nb"), None, &abort, Duration::ZERO).unwrap();
+        let out = insert(&kb, &ready(Mode::Text, "a\nb"), None, &abort, &mut Rhythm::instant()).unwrap();
         assert_eq!(out, Outcome::Done);
         assert_eq!(kb.calls(), vec!["a", "SHIFT_RETURN", "b"]);
     }
@@ -296,7 +363,7 @@ mod tests {
     fn abort_set_before_start_types_nothing() {
         let kb = FakeKeyboard::new();
         let abort = AtomicBool::new(true);
-        let out = insert(&kb, &ready(Mode::Text, "abc"), None, &abort, Duration::ZERO).unwrap();
+        let out = insert(&kb, &ready(Mode::Text, "abc"), None, &abort, &mut Rhythm::instant()).unwrap();
         assert_eq!(out, Outcome::Aborted);
         assert!(kb.calls().is_empty());
     }
@@ -306,7 +373,7 @@ mod tests {
         let abort = AtomicBool::new(false);
         let mut kb = FakeKeyboard::new();
         kb.hook = Some((2, Box::new(|_| abort.store(true, Ordering::SeqCst))));
-        let out = insert(&kb, &ready(Mode::Text, "abcdef"), None, &abort, Duration::ZERO).unwrap();
+        let out = insert(&kb, &ready(Mode::Text, "abcdef"), None, &abort, &mut Rhythm::instant()).unwrap();
         assert_eq!(out, Outcome::Aborted);
         assert_eq!(kb.calls().len(), 2);
     }
@@ -316,7 +383,7 @@ mod tests {
         let abort = AtomicBool::new(false);
         let mut kb = FakeKeyboard::new();
         kb.hook = Some((1, Box::new(|k| *k.pid.lock().unwrap() = Some(8))));
-        let out = insert(&kb, &ready(Mode::Text, "abcdef"), Some(7), &abort, Duration::ZERO).unwrap();
+        let out = insert(&kb, &ready(Mode::Text, "abcdef"), Some(7), &abort, &mut Rhythm::instant()).unwrap();
         assert_eq!(out, Outcome::Aborted);
         assert_eq!(kb.calls().len(), 1);
     }
@@ -325,7 +392,7 @@ mod tests {
     fn code_mode_pastes_once() {
         let kb = FakeKeyboard::new();
         let abort = AtomicBool::new(false);
-        let out = insert(&kb, &ready(Mode::Code, "x\ny"), None, &abort, Duration::ZERO).unwrap();
+        let out = insert(&kb, &ready(Mode::Code, "x\ny"), None, &abort, &mut Rhythm::instant()).unwrap();
         assert_eq!(out, Outcome::Done);
         assert_eq!(kb.calls(), vec!["PASTE:x\ny"]);
     }
@@ -359,5 +426,39 @@ mod tests {
         let unknown = describe(&Focus::Inconclusive { app: Some("Google Chrome".into()), pid: Some(3) });
         assert!(unknown.contains("unknown") && unknown.contains("Google Chrome"), "{unknown}");
         assert!(describe(&Focus::Inconclusive { app: None, pid: None }).contains("unknown"));
+    }
+
+    #[test]
+    fn rhythm_varies_and_is_repeatable_per_seed() {
+        let mut a = Rhythm::seeded(42);
+        let mut b = Rhythm::seeded(42);
+        let da: Vec<_> = "hello there".chars().map(|c| a.delay_for(c)).collect();
+        let db: Vec<_> = "hello there".chars().map(|c| b.delay_for(c)).collect();
+        assert_eq!(da, db);
+        assert!(da.iter().any(|d| *d != da[0]), "a machine types at one fixed speed");
+    }
+
+    #[test]
+    fn rhythm_letters_stay_in_a_human_range() {
+        let mut r = Rhythm::seeded(7);
+        for _ in 0..500 {
+            let d = r.delay_for('e');
+            assert!(d >= Duration::from_millis(45) && d <= Duration::from_millis(1500), "{d:?}");
+        }
+    }
+
+    #[test]
+    fn rhythm_pauses_longer_at_sentence_ends_and_line_breaks() {
+        let mut r = Rhythm::seeded(3);
+        let min_stop = (0..200).map(|_| r.delay_for('.')).min().unwrap();
+        let min_nl = (0..200).map(|_| r.delay_for('\n')).min().unwrap();
+        assert!(min_stop > Duration::from_millis(140), "{min_stop:?}");
+        assert!(min_nl > min_stop, "{min_nl:?} vs {min_stop:?}");
+    }
+
+    #[test]
+    fn rhythm_instant_never_waits() {
+        let mut r = Rhythm::instant();
+        assert!("a. b\n".chars().all(|c| r.delay_for(c).is_zero()));
     }
 }
