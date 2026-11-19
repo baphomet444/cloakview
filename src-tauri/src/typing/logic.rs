@@ -92,6 +92,31 @@ pub fn decide(focus: &Focus) -> Decision {
     }
 }
 
+/// One paragraph telling the model what the cursor is in.
+pub fn describe(focus: &Focus) -> String {
+    match focus {
+        Focus::Editable { app, role, value, .. } => {
+            let kind = match role.as_str() {
+                "AXTextArea" => "text area",
+                "AXTextField" => "text field",
+                "AXComboBox" => "combo box",
+                other => other,
+            };
+            let mut d = format!("Focused field: {kind} in \"{app}\".");
+            if !value.trim().is_empty() {
+                d.push_str(&format!(" It already contains: \"{value}\"."));
+            }
+            d
+        }
+        Focus::Inconclusive { app: Some(app), .. } => {
+            format!("Focused field: unknown, in \"{app}\" (decide from the screenshot).")
+        }
+        Focus::Inconclusive { app: None, .. } => "Focused field: unknown (decide from the screenshot).".into(),
+        // `decide` refuses these before any request is made; kept total for safety.
+        Focus::Secure | Focus::NotEditable => "Focused field: not a text field.".into(),
+    }
+}
+
 /// The few OS actions insertion needs.
 pub trait Keyboard {
     fn type_char(&self, c: char) -> AppResult<()>;
@@ -317,5 +342,22 @@ mod tests {
         assert!(matches!(decide(&Focus::NotEditable), Decision::Refuse(_)));
         assert!(matches!(decide(&editable), Decision::Proceed));
         assert!(matches!(decide(&Focus::Inconclusive { app: None, pid: None }), Decision::Proceed));
+    }
+
+    #[test]
+    fn describe_mentions_app_role_and_existing_text_but_not_for_inconclusive() {
+        let editable = Focus::Editable {
+            app: "Slack".into(),
+            pid: 7,
+            role: "AXTextArea".into(),
+            value: "hello wor".into(),
+        };
+        let d = describe(&editable);
+        assert!(d.contains("Slack") && d.contains("text area") && d.contains("hello wor"), "{d}");
+        let empty = Focus::Editable { app: "Notes".into(), pid: 1, role: "AXTextField".into(), value: String::new() };
+        assert!(!describe(&empty).contains("already contains"));
+        let unknown = describe(&Focus::Inconclusive { app: Some("Google Chrome".into()), pid: Some(3) });
+        assert!(unknown.contains("unknown") && unknown.contains("Google Chrome"), "{unknown}");
+        assert!(describe(&Focus::Inconclusive { app: None, pid: None }).contains("unknown"));
     }
 }
