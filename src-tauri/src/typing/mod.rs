@@ -20,8 +20,19 @@ static RUNNING: Mutex<Option<Arc<AtomicBool>>> = Mutex::new(None);
 
 const CANCEL_KEY: &str = "Escape";
 
-const ACCESSIBILITY_HELP: &str = "CloakView needs the Accessibility permission to type for you. Allow it in \
-System Settings → Privacy & Security → Accessibility, then press the shortcut again.";
+const ACCESSIBILITY_PANE_URL: &str =
+    "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility";
+
+const ACCESSIBILITY_HELP: &str = "CloakView needs the Accessibility permission to type for you. I opened the \
+Accessibility page: switch CloakView on, quit and reopen CloakView, then press the shortcut again.";
+
+/// The system dialog for this permission does not always appear for an app that
+/// never takes focus, so take the user to the right page ourselves.
+fn open_accessibility_settings() {
+    if let Err(e) = std::process::Command::new("/usr/bin/open").arg(ACCESSIBILITY_PANE_URL).spawn() {
+        crate::diag::log(&format!("type at cursor: could not open System Settings: {e}"));
+    }
+}
 
 /// What the user is told: the plain message, without the error-kind prefix.
 fn user_message(e: &AppError) -> String {
@@ -94,6 +105,7 @@ async fn run_inner(app: &AppHandle, abort: &Arc<AtomicBool>) -> AppResult<()> {
         (provider, about)
     };
     if !mac::accessibility_trusted(true) {
+        open_accessibility_settings();
         return Err(AppError::Audio(ACCESSIBILITY_HELP.into()));
     }
     let focus = join(tokio::task::spawn_blocking(mac::probe_focus).await)?;
@@ -169,6 +181,15 @@ mod tests {
     fn notification_args_cut_a_very_long_message() {
         let args = notification_args(&"x".repeat(1000));
         assert_eq!(args.last().unwrap().chars().count(), NOTIFY_MAX_CHARS);
+    }
+
+    #[test]
+    fn the_accessibility_link_opens_the_right_privacy_page() {
+        assert_eq!(
+            ACCESSIBILITY_PANE_URL,
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+        );
+        assert!(ACCESSIBILITY_HELP.contains("opened"), "the message must say the page was opened for the user");
     }
 
     #[test]
