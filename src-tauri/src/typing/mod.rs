@@ -31,6 +31,34 @@ fn user_message(e: &AppError) -> String {
     }
 }
 
+/// A macOS notification can only say so much; longer messages are cut.
+const NOTIFY_MAX_CHARS: usize = 200;
+
+/// `osascript` arguments that show `message` as a notification. The message is
+/// the script's argument (`item 1 of argv`), never part of the script text, so
+/// nothing in it can be run as AppleScript.
+fn notification_args(message: &str) -> Vec<String> {
+    let message: String = message.chars().take(NOTIFY_MAX_CHARS).collect();
+    vec![
+        "-e".into(),
+        "on run argv".into(),
+        "-e".into(),
+        "display notification (item 1 of argv) with title \"CloakView\"".into(),
+        "-e".into(),
+        "end run".into(),
+        "--".into(),
+        message,
+    ]
+}
+
+/// A failed press has no window of its own to report in, so say it out loud.
+fn notify(message: &str) {
+    let spawned = std::process::Command::new("/usr/bin/osascript").args(notification_args(message)).spawn();
+    if let Err(e) = spawned {
+        crate::diag::log(&format!("type at cursor: could not show a notification: {e}"));
+    }
+}
+
 /// Starts a run, or cancels the one in progress (pressing the shortcut again).
 /// Failures reach the user through `ERROR_EVENT` and the diagnostics log.
 pub async fn run(app: AppHandle) {
@@ -50,6 +78,7 @@ pub async fn run(app: AppHandle) {
     if let Err(e) = result {
         let message = user_message(&e);
         crate::diag::log(&format!("type at cursor failed: {message}"));
+        notify(&message);
         let _ = app.emit(ERROR_EVENT, message);
     }
 }
@@ -124,6 +153,23 @@ fn join<T>(r: Result<T, tokio::task::JoinError>) -> AppResult<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn notification_args_pass_the_message_as_data_not_script_text() {
+        let evil = "\" & do shell script \"touch /tmp/x\" & \"";
+        let args = notification_args(evil);
+        let script: Vec<&String> = args.iter().filter(|a| a.contains("display notification")).collect();
+        assert_eq!(script.len(), 1);
+        assert!(!script[0].contains("touch"), "the message leaked into the script");
+        assert_eq!(args.last().unwrap(), evil);
+        assert!(args.iter().any(|a| a.contains("CloakView")), "title is missing");
+    }
+
+    #[test]
+    fn notification_args_cut_a_very_long_message() {
+        let args = notification_args(&"x".repeat(1000));
+        assert_eq!(args.last().unwrap().chars().count(), NOTIFY_MAX_CHARS);
+    }
 
     #[test]
     fn user_message_drops_the_error_prefix_for_audio_errors_only() {
