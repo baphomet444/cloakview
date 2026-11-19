@@ -87,6 +87,7 @@ export type Shortcuts = {
   pushToAsk: string;
   toggleListen: string;
   readScreen: string;
+  typeAtCursor: string;
 };
 
 /** `src-tauri/src/license/mod.rs` (`License`): a `status` tag; an active license carries its activation and the store that sold it. */

@@ -198,7 +198,8 @@ mod tests {
                     "quickHide": "ctrl+alt+h",
                     "pushToAsk": "cmdOrControl+shift+space",
                     "toggleListen": "ctrl+alt+l",
-                    "readScreen": "cmdOrControl+shift+s"
+                    "readScreen": "cmdOrControl+shift+s",
+                    "typeAtCursor": "ctrl+alt+t"
                 },
                 "includeMic": true,
                 "personalContext": "",

@@ -225,7 +225,7 @@ const settings: Settings = {
   replyDelayMs: 1000,
   userKeywords: [],
   userName: null,
-  shortcuts: { quickHide: "", pushToAsk: "", toggleListen: "", readScreen: "" },
+  shortcuts: { quickHide: "", pushToAsk: "", toggleListen: "", readScreen: "", typeAtCursor: "" },
   includeMic: false,
   personalContext: "",
   answerStyle: "balanced",

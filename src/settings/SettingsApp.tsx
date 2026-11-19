@@ -38,6 +38,7 @@ const SHORTCUT_FIELDS: readonly { key: keyof Shortcuts; labelKey: CatalogKey }[]
   { key: "pushToAsk", labelKey: "settings.shortcutPushToAsk" },
   { key: "toggleListen", labelKey: "settings.shortcutToggleListen" },
   { key: "readScreen", labelKey: "settings.shortcutReadScreen" },
+  { key: "typeAtCursor", labelKey: "settings.shortcutTypeAtCursor" },
 ];
 
 const LANGUAGES: readonly { value: Locale; labelKey: CatalogKey }[] = [

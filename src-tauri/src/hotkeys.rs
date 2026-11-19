@@ -32,6 +32,9 @@ pub struct Shortcuts {
     /// Reads the screen and answers what is on it (through the hub, the same path as
     /// its Screen button).
     pub read_screen: String,
+    /// Reads the screen, inspects the focused field and types the answer there
+    /// (`typing::run`). Pressed again, it cancels.
+    pub type_at_cursor: String,
 }
 
 /// Quick-hide and toggle-listen use Control+Option. Not ⌘⇧H/⌘⇧L: a global shortcut
@@ -46,6 +49,7 @@ impl Default for Shortcuts {
             push_to_ask: "cmdOrControl+shift+space".into(),
             toggle_listen: "ctrl+alt+l".into(),
             read_screen: "cmdOrControl+shift+s".into(),
+            type_at_cursor: "ctrl+alt+t".into(),
         }
     }
 }
@@ -56,6 +60,7 @@ pub enum Action {
     PushToAsk,
     ToggleListen,
     ReadScreen,
+    TypeAtCursor,
 }
 
 /// Every earlier default of quick-hide and toggle-listen: ⌘⇧ (up to 0.2.0), then ⌥⇧.
@@ -83,12 +88,13 @@ impl Shortcuts {
     }
 
     /// Every action with its accelerator, in a fixed order.
-    pub fn bindings(&self) -> [(Action, &str); 4] {
+    pub fn bindings(&self) -> [(Action, &str); 5] {
         [
             (Action::QuickHide, self.quick_hide.as_str()),
             (Action::PushToAsk, self.push_to_ask.as_str()),
             (Action::ToggleListen, self.toggle_listen.as_str()),
             (Action::ReadScreen, self.read_screen.as_str()),
+            (Action::TypeAtCursor, self.type_at_cursor.as_str()),
         ]
     }
 }
@@ -167,6 +173,12 @@ fn dispatch(app: AppHandle, action: Action) {
             Action::ReadScreen => app
                 .emit_to("hub", READ_SCREEN_EVENT, ())
                 .map_err(|e| AppError::Audio(e.to_string())),
+            // Not through the hub: typing must never bring a window forward, and
+            // `typing::run` reports its own failures.
+            Action::TypeAtCursor => {
+                crate::typing::run(app.clone()).await;
+                Ok(())
+            }
         };
         if let Err(e) = result {
             eprintln!("[hotkeys] {action:?} failed: {e}");
@@ -235,6 +247,19 @@ mod tests {
         assert_eq!(s.push_to_ask, "cmdOrControl+shift+space");
         assert_eq!(s.toggle_listen, "ctrl+alt+l");
         assert_eq!(s.read_screen, "cmdOrControl+shift+s");
+        assert_eq!(s.type_at_cursor, "ctrl+alt+t");
+    }
+
+    /// A `settings.json` written before type-at-cursor existed has no such key:
+    /// it must load, with the default, and keep the other four as saved.
+    #[test]
+    fn a_settings_file_without_the_new_key_gets_the_default() {
+        let s: Shortcuts = serde_json::from_str(
+            r#"{"quickHide":"alt+h","pushToAsk":"x","toggleListen":"y","readScreen":"z"}"#,
+        )
+        .unwrap();
+        assert_eq!(s.type_at_cursor, "ctrl+alt+t");
+        assert_eq!((s.quick_hide.as_str(), s.read_screen.as_str()), ("alt+h", "z"));
     }
 
     #[test]
@@ -254,7 +279,8 @@ mod tests {
                 "quickHide": "ctrl+alt+h",
                 "pushToAsk": "cmdOrControl+shift+space",
                 "toggleListen": "ctrl+alt+l",
-                "readScreen": "cmdOrControl+shift+s"
+                "readScreen": "cmdOrControl+shift+s",
+                "typeAtCursor": "ctrl+alt+t"
             })
         );
         assert_eq!(serde_json::from_value::<Shortcuts>(json).unwrap(), s);
@@ -336,7 +362,13 @@ mod tests {
         let actions: Vec<Action> = Shortcuts::default().bindings().iter().map(|(a, _)| *a).collect();
         assert_eq!(
             actions,
-            vec![Action::QuickHide, Action::PushToAsk, Action::ToggleListen, Action::ReadScreen]
+            vec![
+                Action::QuickHide,
+                Action::PushToAsk,
+                Action::ToggleListen,
+                Action::ReadScreen,
+                Action::TypeAtCursor
+            ]
         );
     }
 }

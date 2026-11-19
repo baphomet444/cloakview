@@ -75,6 +75,7 @@ export const en = {
   "settings.shortcutPushToAsk": "Open Ask",
   "settings.shortcutToggleListen": "Start or stop listening",
   "settings.shortcutReadScreen": "Read the screen and answer what is on it",
+  "settings.shortcutTypeAtCursor": "Read the screen and type the answer at the cursor",
   "settings.shortcutsHint": "Accelerators such as ctrl+alt+h. Leave one blank to turn it off. Control+Option is also the VoiceOver key: if you use VoiceOver, change “Show or hide the overlay” and “Start or stop listening”.",
   "settings.save": "Save",
   "settings.saved": "Saved",

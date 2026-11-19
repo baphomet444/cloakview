@@ -21,7 +21,7 @@ const settings: Settings = {
   replyDelayMs: 1000,
   userKeywords: [],
   userName: null,
-  shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "cmdOrControl+shift+space", toggleListen: "", readScreen: "" },
+  shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "cmdOrControl+shift+space", toggleListen: "", readScreen: "", typeAtCursor: "ctrl+alt+t" },
   includeMic: false,
   personalContext: "",
   answerStyle: "balanced",
@@ -70,18 +70,24 @@ describe("the shortcuts and context draft", () => {
     expect(isDraftDirty({ ...draft, personalContext: "Rust engineer." }, settings)).toBe(true);
   });
 
-  it("is always valid (a blank shortcut turns that action off)", () => {
-    expect(draftIsValid(draftFromSettings(settings))).toBe(true);
-    expect(draftIsValid({ ...draftFromSettings(settings), shortcuts: { quickHide: "", pushToAsk: "", toggleListen: "", readScreen: "" } })).toBe(true);
+  it("is dirty when only the type-at-cursor shortcut changed", () => {
+    const draft = draftFromSettings(settings);
+    expect(isDraftDirty(draft, settings)).toBe(false);
+    expect(isDraftDirty({ ...draft, shortcuts: { ...draft.shortcuts, typeAtCursor: "ctrl+alt+y" } }, settings)).toBe(true);
   });
 
-  it("saves trimmed values and always all four shortcuts (the patch replaces the set)", () => {
+  it("is always valid (a blank shortcut turns that action off)", () => {
+    expect(draftIsValid(draftFromSettings(settings))).toBe(true);
+    expect(draftIsValid({ ...draftFromSettings(settings), shortcuts: { quickHide: "", pushToAsk: "", toggleListen: "", readScreen: "", typeAtCursor: "" } })).toBe(true);
+  });
+
+  it("saves trimmed values and always all five shortcuts (the patch replaces the set)", () => {
     const patch = draftPatch({
-      shortcuts: { quickHide: " cmdOrControl+shift+h ", pushToAsk: "", toggleListen: "alt+l ", readScreen: " alt+s " },
+      shortcuts: { quickHide: " cmdOrControl+shift+h ", pushToAsk: "", toggleListen: "alt+l ", readScreen: " alt+s ", typeAtCursor: " alt+t " },
       personalContext: "  Senior Rust engineer.  ",
     });
     expect(patch).toEqual({
-      shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "", toggleListen: "alt+l", readScreen: "alt+s" },
+      shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "", toggleListen: "alt+l", readScreen: "alt+s", typeAtCursor: "alt+t" },
       personalContext: "Senior Rust engineer.",
     });
   });

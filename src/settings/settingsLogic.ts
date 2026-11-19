@@ -34,7 +34,7 @@ export function draftFromSettings(settings: Settings): SettingsDraft {
   };
 }
 
-/** Always all four shortcuts: `SettingsPatch.shortcuts` replaces the saved set. */
+/** Always all five shortcuts: `SettingsPatch.shortcuts` replaces the saved set. */
 export function draftPatch(draft: SettingsDraft): SettingsPatch {
   return {
     shortcuts: {
@@ -42,6 +42,7 @@ export function draftPatch(draft: SettingsDraft): SettingsPatch {
       pushToAsk: draft.shortcuts.pushToAsk.trim(),
       toggleListen: draft.shortcuts.toggleListen.trim(),
       readScreen: draft.shortcuts.readScreen.trim(),
+      typeAtCursor: draft.shortcuts.typeAtCursor.trim(),
     },
     personalContext: draft.personalContext.trim(),
   };
@@ -65,6 +66,7 @@ export function isDraftDirty(draft: SettingsDraft, saved: Settings): boolean {
     patch.shortcuts?.quickHide !== saved.shortcuts.quickHide ||
     patch.shortcuts?.pushToAsk !== saved.shortcuts.pushToAsk ||
     patch.shortcuts?.toggleListen !== saved.shortcuts.toggleListen ||
-    patch.shortcuts?.readScreen !== saved.shortcuts.readScreen
+    patch.shortcuts?.readScreen !== saved.shortcuts.readScreen ||
+    patch.shortcuts?.typeAtCursor !== saved.shortcuts.typeAtCursor
   );
 }
