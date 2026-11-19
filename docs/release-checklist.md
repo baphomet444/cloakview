@@ -89,3 +89,21 @@ other row is invalid.
 
 Apply `docs/provider-copy-drafts.md` (after review) with en/es parity, and
 only publish invisibility claims for the rows that passed in step 4.
+
+## 6. Type at cursor (⌃⌥T), manual (the OS glue cannot run in CI)
+
+Pro license active, Accessibility allowed for the notarized build. Each row: press ⌃⌥T with the cursor in the field.
+
+- [ ] Accessibility **denied**: a clear message names System Settings → Privacy & Security → Accessibility; no crash, nothing typed.
+- [ ] Chat box showing a question: the answer is typed in a natural voice and the message is **not** sent.
+- [ ] Multi-line document: line breaks appear, nothing is submitted, no trailing blank line.
+- [ ] VS Code and Xcode on a coding task: code is pasted intact (no doubled brackets or indentation) and the **clipboard is restored** (copy something first, check it after).
+- [ ] Password field focused: refused, nothing typed.
+- [ ] A button or label focused (no text field): refused, nothing typed.
+- [ ] Esc while typing: stops at once; afterwards Esc works normally in other apps.
+- [ ] ⌃⌥T again while typing, and while the model is still answering: stops, nothing more is typed.
+- [ ] Switch apps mid-typing: stops, nothing goes into the other app.
+- [ ] Emoji and accented text (e.g. "café 👩‍💻") arrive intact.
+- [ ] Chrome and Safari text fields: it types (or, if the page exposes no focus info, it still types from the screenshot).
+- [ ] Free tier: the Pro prompt appears, nothing typed.
+- [ ] Spoken suggestions (call and Ask) read like speech: no bullets, no bold labels, no "Certainly".
