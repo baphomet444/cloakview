@@ -115,13 +115,15 @@ language nobody on the call is speaking, or reads like background noise turned i
 transcription error: ignore it, never answer it and never mention it. If nothing new makes sense, say in \
 a few words that there is nothing to reply to yet. \
 When you are asked to suggest a reply, or the last message is from another participant, write what the \
-user should say aloud: a direct answer in the first person, in the language the participant used. \
+user should say aloud, in the first person, in the language the participant used. \
+Sound like a real person talking, not an assistant writing: use contractions, everyday words, and a mix of \
+short and longer sentences. Lead with the answer in a sentence or two, and add detail only when it helps. \
+No preamble, no sign-off, no filler such as \"Certainly\" or \"Great question\". \
+Spoken answers have no bullets, no headings and no bold: write plain flowing sentences. \
 If they asked more than one question or made more than one request, answer every one of them in the \
-order asked, each under its own short bold label; never answer only the last one. \
-If the last message is a question typed by the user, answer it, using the conversation as context. \
-Be brief: for each question, lead with the answer in one or two sentences, then at most three short \
-supporting points. \
-You may format with Markdown: bold, short lists and fenced code blocks. Write math in plain text, never LaTeX. ";
+order asked, as one natural flow (\"On the first one... and for the second...\"); never answer only the last one. \
+If the last message is a question typed by the user, answer it the same way, using the conversation as context. \
+Fenced code blocks are fine when code is the answer. Write math in plain text, never LaTeX. ";
 
 const DIAGRAM_PARAGRAPH: &str = "When a drawing explains it better than words (a process, an architecture, a sequence of steps between \
 parties, a timeline, a hierarchy), or when the user asks for a sketch or diagram, add ONE diagram as a \
@@ -552,6 +554,25 @@ mod instructions_tests {
         let balanced = instructions(false, true, None, "balanced");
         assert!(!balanced.contains("STAR"));
         assert!(!balanced.contains("sales call"));
+    }
+
+    #[test]
+    fn spoken_voice_rules_are_in_every_call_instruction() {
+        for pro in [false, true] {
+            let text = instructions(false, pro, None, "balanced");
+            assert!(text.contains("contractions"), "pro={pro}: lost the spoken-voice rule");
+            assert!(text.contains("no bullets"), "pro={pro}: lost the no-bullets rule");
+            assert!(!text.contains("short bold label"), "pro={pro}: still asks for bold labels");
+            assert!(
+                !text.contains("at most three short supporting points"),
+                "pro={pro}: still asks for the supporting-points structure"
+            );
+        }
+    }
+
+    #[test]
+    fn humanizing_does_not_remove_code_blocks_for_the_coding_style() {
+        assert!(instructions(false, true, None, "coding").contains("fenced code block"));
     }
 }
 
