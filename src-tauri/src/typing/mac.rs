@@ -115,13 +115,11 @@ pub fn probe_focus() -> Focus {
         return Focus::Secure;
     }
     let editable_role = matches!(role.as_str(), "AXTextField" | "AXTextArea" | "AXComboBox");
-    if editable_role || is_settable(focused.0, "AXValue") {
-        let value: String = AxValue::copy(focused.0, "AXValue")
-            .and_then(|v| v.as_string())
-            .unwrap_or_default()
-            .chars()
-            .take(MAX_VALUE_CHARS)
-            .collect();
+    // Any other element counts only if it holds settable *text*: a slider or a
+    // checkbox also has a settable AXValue, but a number, not a string.
+    let text = AxValue::copy(focused.0, "AXValue").and_then(|v| v.as_string());
+    if editable_role || (text.is_some() && is_settable(focused.0, "AXValue")) {
+        let value: String = text.unwrap_or_default().chars().take(MAX_VALUE_CHARS).collect();
         return Focus::Editable {
             app: app.clone().unwrap_or_else(|| "unknown app".into()),
             pid: pid.unwrap_or_default(),

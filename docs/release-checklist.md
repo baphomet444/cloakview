@@ -99,7 +99,7 @@ Pro license active, Accessibility allowed for the notarized build. Each row: pre
 - [ ] Multi-line document: line breaks appear, nothing is submitted, no trailing blank line.
 - [ ] VS Code and Xcode on a coding task: code is pasted intact (no doubled brackets or indentation) and the **clipboard is restored** (copy something first, check it after).
 - [ ] Password field focused: refused, nothing typed.
-- [ ] A button or label focused (no text field): refused, nothing typed.
+- [ ] A button, label, slider or checkbox focused (no text field): refused, nothing typed.
 - [ ] Esc while typing: stops at once; afterwards Esc works normally in other apps.
 - [ ] ⌃⌥T again while typing, and while the model is still answering: stops, nothing more is typed.
 - [ ] Switch apps mid-typing: stops, nothing goes into the other app.
