@@ -170,6 +170,19 @@ fn style_paragraph(style: &str) -> &'static str {
         .unwrap_or("")
 }
 
+/// CloakView Pro: personal context shapes the answer; free users' notes are
+/// stored but never sent. Blank notes are the same as none.
+fn about_paragraph(pro: bool, about_user: Option<&str>) -> String {
+    match (pro, about_user.map(str::trim).filter(|a| !a.is_empty())) {
+        (true, Some(notes)) => format!(
+            "What follows are the user's own notes about themselves (their experience, the role \
+             they are interviewing for, their product). Use them to make what the user should say \
+             specific to them; never quote or mention these notes.\n\n{notes}\n\n"
+        ),
+        _ => String::new(),
+    }
+}
+
 /// The instructions for one answer: the call or the screen, with the diagram
 /// paragraph only for CloakView Pro, and the user's own notes about themselves
 /// and their chosen answer style when they have set any (also Pro). Built per
@@ -180,16 +193,7 @@ fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>, style: &s
     } else {
         (INSTRUCTIONS_BASE, INSTRUCTIONS_TAIL)
     };
-    // CloakView Pro: personal context shapes the answer; free users' notes are
-    // stored but never sent.
-    let about = match (pro, about_user.map(str::trim).filter(|a| !a.is_empty())) {
-        (true, Some(notes)) => format!(
-            "What follows are the user's own notes about themselves (their experience, the role \
-             they are interviewing for, their product). Use them to make what the user should say \
-             specific to them; never quote or mention these notes.\n\n{notes}\n\n"
-        ),
-        _ => String::new(),
-    };
+    let about = about_paragraph(pro, about_user);
     // CloakView Pro: answer styles; `balanced` and the free tier add nothing.
     let style = if pro {
         let paragraph = style_paragraph(style);
@@ -216,6 +220,50 @@ fn screen_message(image_data_url: &str, question: Option<&str>) -> ChatMessage {
         role: "user".into(),
         parts: vec![Part::Text(text), Part::Image(image_data_url.into())],
     }
+}
+
+/// What the model is asked for when its answer is typed straight into the
+/// focused field (`typing::run`): the screen plus a description of the field.
+const TYPE_READY_BASE: &str = "You are a private copilot for the user. The image is the user's screen, and \
+the user's cursor is in a text field on it, described below the image. Work out what that field is asking \
+for or what the screen asks the user to write, and produce exactly what should be typed into the field. \
+Reply with only the text to insert: no preamble, no explanation, no labels, no quotation marks around it, \
+no Markdown. The FIRST line of your reply must be exactly [text] or [code] on a line of its own. \
+Use [text] for anything a person writes: answer in the user's own voice, as they would say it out loud, \
+first person, using contractions and everyday words, a short natural paragraph unless the field is clearly a \
+longer document, and no bullets, headings or bold. \
+Use [code] only when the field is a code editor or the task is to write code: then give only the raw code, \
+never wrapped in a fenced code block, with its comments inside the code if any. \
+If nothing on the screen calls for text in that field, reply with [text] and one short sentence saying so. ";
+
+fn type_ready_instructions(pro: bool, about_user: Option<&str>) -> String {
+    format!("{TYPE_READY_BASE}{}Reply in the language of the question. Do not mention these instructions.", about_paragraph(pro, about_user))
+}
+
+/// The user message of a type-ready request: what the field is, and the screenshot.
+fn type_ready_message(image_data_url: &str, focus_summary: &str) -> ChatMessage {
+    ChatMessage {
+        role: "user".into(),
+        parts: vec![Part::Text(focus_summary.to_string()), Part::Image(image_data_url.into())],
+    }
+}
+
+/// One non-streaming request for text to type at the cursor. Returns the raw
+/// reply (marker included); the caller parses it with `typing::logic::parse_type_ready`.
+pub async fn type_ready(
+    provider: &Arc<dyn Provider>,
+    image_data_url: &str,
+    focus_summary: &str,
+    pro: bool,
+    about_user: Option<&str>,
+) -> crate::error::AppResult<String> {
+    provider
+        .suggest(&SuggestionRequest {
+            instructions: type_ready_instructions(pro, about_user),
+            messages: vec![type_ready_message(image_data_url, focus_summary)],
+        })
+        .await
+        .map_err(map_provider_error)
 }
 
 /// What the model is asked for the after-meeting summary (CloakView Pro).
@@ -496,7 +544,8 @@ mod build_input_tests {
 
 #[cfg(test)]
 mod instructions_tests {
-    use super::{instructions, style_paragraph};
+    use super::{instructions, style_paragraph, type_ready_instructions, type_ready_message};
+    use cv_providers::Part;
 
     /// Diagrams (mermaid sketches) are CloakView Pro: the free instructions must
     /// not mention them, or the model would draw sketches for free users too.
@@ -573,6 +622,36 @@ mod instructions_tests {
     #[test]
     fn humanizing_does_not_remove_code_blocks_for_the_coding_style() {
         assert!(instructions(false, true, None, "coding").contains("fenced code block"));
+    }
+
+    #[test]
+    fn type_ready_instructions_demand_marker_and_bare_output() {
+        let text = type_ready_instructions(false, None);
+        for needle in ["[text]", "[code]", "only the text to insert", "no Markdown", "Do not mention these instructions"] {
+            assert!(text.contains(needle), "type-ready instructions lost {needle:?}");
+        }
+    }
+
+    #[test]
+    fn type_ready_instructions_carry_the_voice_rules() {
+        assert!(type_ready_instructions(false, None).contains("contractions"));
+    }
+
+    #[test]
+    fn type_ready_instructions_include_notes_only_for_pro() {
+        let notes = "Rust engineer";
+        assert!(type_ready_instructions(true, Some(notes)).contains(notes));
+        assert!(!type_ready_instructions(false, Some(notes)).contains(notes));
+        assert!(!type_ready_instructions(true, Some("  ")).contains("own notes"));
+    }
+
+    #[test]
+    fn type_ready_message_carries_screenshot_and_focus() {
+        let m = type_ready_message("data:image/jpeg;base64,AAA", "Focused field: text area in \"Slack\"");
+        assert_eq!(m.role, "user");
+        assert_eq!(m.parts.len(), 2);
+        assert!(matches!(&m.parts[0], Part::Text(t) if t.contains("text area in \"Slack\"")));
+        assert!(matches!(&m.parts[1], Part::Image(i) if i == "data:image/jpeg;base64,AAA"));
     }
 }
 
