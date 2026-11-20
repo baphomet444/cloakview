@@ -680,8 +680,7 @@ pub fn get_license_status(state: State<AppState>) -> crate::license::License {
     state.license.read().expect("license lock").clone()
 }
 
-/// Activates the key for this Mac with the store that sold it (Polar, or Lemon
-/// Squeezy for a key bought before the switch) and unlocks Pro. Rejects with
+/// Activates a Polar key for this Mac and unlocks Pro. Rejects with
 /// `License` (message: a `license::Rejection` code) when the store refuses the key,
 /// or the key is for another product, or no store can be reached.
 #[tauri::command]
