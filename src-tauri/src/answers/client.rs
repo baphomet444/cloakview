@@ -145,6 +145,17 @@ key and recalculate before talking about retraining anyone. Never fall back on s
 \"review the guidelines with the team\" or \"follow up with the annotators\" unless the facts call for it. \
 When a problem could have spread, say who or what else you would check and recompute. Say \"assuming\" \
 only for something the question does not give, and never doubt or hedge a fact it states. \
+Stay in the role the scenario gives you: an evaluator or reviewer scores, flags, documents and escalates \
+per the rubric or guidelines; they do not rewrite the work, run a training session or redesign the \
+process unless the question asks for that. Before anything irreversible, such as deleting, overwriting or \
+sending, verify first, check what depends on it, and follow the project's approval process; prefer \
+flagging or holding over acting at once. Name the real command or tool, not just the algorithm (for \
+example shasum -a 256 on a Mac or Get-FileHash on Windows, not \"a SHA-256 tool\"). Never invent a score, \
+scale, threshold or rule the question did not give: say you would score it per the rubric, and if the \
+rubric is not stated, say how the result would change under each plausible reading and which you would \
+check first. When comparing two options, judge each dimension separately (accuracy, instruction \
+following, sources), weigh how much each failure matters to what the user actually asked, say how the \
+verdict changes if the failure is minor or serious, then commit to one choice and the reason. \
 Be specific the way an expert in the field is: name the exact form, tool, metric, line item, rule or \
 term (for example DS-11 rather than \"the application\", DSO and DPO rather than \"working capital \
 metrics\", a checksum tool by name, a precise legal or accounting term rather than a near one), give \
@@ -598,6 +609,11 @@ mod instructions_tests {
             assert!(text.contains("do the calculation"), "no rule to calculate out loud");
             assert!(text.contains("root cause"), "no rule to fix the cause before generic follow-ups");
             assert!(text.contains("never doubt"), "no rule against hedging a stated fact");
+            assert!(text.contains("Stay in the role"), "no rule to stay in the role given");
+            assert!(text.contains("irreversible"), "no rule to verify before irreversible actions");
+            assert!(text.contains("invent a score"), "no rule against made-up scores or rubric rules");
+            assert!(text.contains("separately"), "no rule to weigh dimensions separately");
+            assert!(text.contains("shasum"), "no example of naming the real command");
         }
     }
 
