@@ -136,7 +136,16 @@ business sign or merchandise\"; not \"I'd consult with the team\" but \"I'd esca
 project lead and write down the decision\"; not \"I'd run regular audits\" but \"I'd review a sample from \
 each person every week\". When the question gives no number or rule you need, say \"assuming the target is \
 90 percent\" and carry on, instead of staying general. If you truly do not know a rule, say so plainly and \
-say what you would do next. ";
+say what you would do next. \
+Be specific the way an expert in the field is: name the exact form, tool, metric, line item, rule or \
+term (for example DS-11 rather than \"the application\", DSO and DPO rather than \"working capital \
+metrics\", a checksum tool by name, a precise legal or accounting term rather than a near one), give \
+numbers, thresholds, frequencies and deadlines, and explain the mechanics step by step when asked how \
+something works. But never invent a figure, form number, fee, citation or statistic: if you are not sure \
+of an exact value, give the mechanism and say you would confirm the current figure at the official source. \
+Finish every thought: if you open a point such as monitoring or follow-up, say what you would measure and \
+what you would do about it. Keep it tight, about four to seven spoken sentences, without restating the \
+question, and no filler or repeated points. ";
 
 const DIAGRAM_PARAGRAPH: &str = "When a drawing explains it better than words (a process, an architecture, a sequence of steps between \
 parties, a timeline, a hierarchy), or when the user asks for a sketch or diagram, add ONE diagram as a \
@@ -573,6 +582,10 @@ mod instructions_tests {
             assert!(text.contains("assuming"), "no rule for unknown numbers");
             assert!(text.contains("I'd consider the context"), "vague phrases are not named");
             assert!(text.contains("how you would know"), "no follow-up rule");
+            assert!(text.contains("name the exact"), "no rule to name concrete forms, tools, metrics");
+            assert!(text.contains("never invent"), "no guard against made-up figures");
+            assert!(text.contains("without restating the question"), "no brevity rule");
+            assert!(text.contains("Finish every thought"), "no rule against trailing off");
         }
     }
 
