@@ -253,7 +253,7 @@ export function saveSessionTxt(): Promise<string | null> {
 export function getLicenseStatus(): Promise<License> {
   return call("get_license_status");
 }
-/** Activates the key for this Mac with Lemon Squeezy. Rejects with `License` (message: a rejection code) when it is refused or Lemon Squeezy is unreachable. */
+/** Activates the key for this Mac with Polar. Rejects with `License` (message: a rejection code) when it is refused or Polar is unreachable. */
 export function activateLicense(key: string): Promise<License> {
   return call("activate_license", { key });
 }

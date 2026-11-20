@@ -3,9 +3,8 @@
 //! Polar issues the key itself through the **license keys** benefit on the
 //! CloakView Pro product (no key issuance code lives here), and its customer-portal
 //! endpoints need no authentication, which is what makes them usable from a public
-//! desktop binary. Activation reserves a device slot on the key, exactly like the
-//! Lemon Squeezy instance did, so the five-Mac cap and the "release Mac" control
-//! keep working.
+//! desktop binary. Activation reserves a device slot on the key, so the
+//! "release Mac" control works.
 //!
 //! API: <https://polar.sh/docs/api-reference> (version 2026-10).
 
@@ -80,7 +79,7 @@ impl PolarKey {
 }
 
 /// Whether this build was given an organization id. An unconfigured build cannot
-/// sell, so it skips Polar entirely and keeps the old store working.
+/// sell, so activation reports that the service is unreachable.
 pub fn configured() -> bool {
     !ORGANIZATION_ID.is_empty()
 }
@@ -136,8 +135,7 @@ fn refusal(status: u16, body: &str) -> Rejection {
 /// Activates `key` for this Mac and returns the activation id, which the caller
 /// keeps as the handle for the launch-time recheck and for releasing the slot.
 ///
-/// A key Polar does not know is `Invalid` rather than an error: it may be a Lemon
-/// Squeezy key bought before the switch, and the caller asks Lemon Squeezy next.
+/// A key Polar does not know is rejected as `Invalid`.
 pub async fn activate(key: &str, label: &str) -> Result<String, Rejection> {
     let org = organization()?;
     let (status, body) = post(

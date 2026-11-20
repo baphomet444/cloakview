@@ -138,7 +138,7 @@ Draft — replace the placeholder with:
 > transcript lines and your question — and the screenshot, for screen reads —
 > go to OpenAI's API with the same key. (4) CloakView runs no servers,
 > collects no telemetry and creates no account; the only third parties
-> involved are OpenAI (always, with your key) and Lemon Squeezy (only if you
+> involved are OpenAI (always, with your key) and Polar (only if you
 > buy Pro). Delete the app and its data folder and nothing of yours remains
 > anywhere else.
 

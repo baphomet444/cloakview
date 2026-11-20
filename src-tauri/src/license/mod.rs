@@ -1,41 +1,23 @@
-//! The CloakView Pro license: what unlocks the Pro features, kept on this Mac.
-//!
-//! A key unlocks Pro only once the store that sold it has activated it for this Mac
-//! and confirmed it belongs to the CloakView Pro product. Polar sells it today;
-//! keys bought while Lemon Squeezy was the store keep working against Lemon Squeezy,
-//! so a change of store never revokes a purchase. Each store has its own module
-//! (`polar`, `lemonsqueezy`) speaking its own HTTP API; this module owns the local
-//! record and the order the stores are asked in.
-//!
-//! The activation's id is kept with the key so the launch-time recheck and
-//! `Deactivate` (which frees the Mac's activation slot) refer to this Mac's
-//! activation. The record lives in `license.json` next to `settings.json`. Both
-//! license APIs are public: no API key is shipped in the app.
+//! CloakView Pro licenses are activated and rechecked through Polar.
+//! The local record stores the activation id for validation and deactivation.
 
-mod lemonsqueezy;
 mod polar;
 
 use crate::error::{AppError, AppResult};
 use std::path::{Path, PathBuf};
 
-/// Which store sold the key. Stored with the license so the launch-time recheck and
-/// the release ask the store the activation was made with.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+/// The only accepted license provider. Unknown or missing providers fail closed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Provider {
-    /// The store CloakView Pro is sold through now.
     Polar,
-    /// The store it was sold through before Polar. Kept for keys bought then; a new
-    /// purchase never comes from here.
-    #[default]
-    LemonSqueezy,
 }
 
 /// The local record of a CloakView Pro license. Serialized with a `status` tag, so
 /// the frontend's `License` type is a plain discriminated union. A record in any
 /// older shape (the unvalidated `pendingValidation` key, or `active` without an
 /// activation id) no longer parses and loads as `Inactive`. A record without a
-/// `provider` was written before the switch, so it is a Lemon Squeezy one.
+/// `provider` or an unknown provider loads as `Inactive`.
 #[derive(Debug, Clone, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase", tag = "status")]
 pub enum License {
@@ -45,10 +27,8 @@ pub enum License {
     #[serde(rename_all = "camelCase")]
     Active {
         key: String,
-        /// The store's id for this Mac's activation: Polar's activation id, or the
-        /// Lemon Squeezy instance id.
+        /// Polar's id for this Mac's activation.
         instance_id: String,
-        #[serde(default)]
         provider: Provider,
     },
 }
@@ -77,7 +57,6 @@ pub enum Rejection {
     Empty,
     Invalid,
     LimitReached,
-    WrongProduct,
     Disabled,
     Expired,
     /// The store could not be reached, or answered with a server error.
@@ -90,7 +69,6 @@ impl Rejection {
             Rejection::Empty => "empty",
             Rejection::Invalid => "invalid",
             Rejection::LimitReached => "limit",
-            Rejection::WrongProduct => "wrongProduct",
             Rejection::Disabled => "disabled",
             Rejection::Expired => "expired",
             Rejection::Unreachable => "unreachable",
@@ -104,46 +82,30 @@ impl From<Rejection> for AppError {
     }
 }
 
-/// Activates `key` for this Mac and returns the license to store.
-///
-/// Polar is asked first, because that is where a new purchase comes from. A key it
-/// does not know is not a verdict on the key — it may have been bought in the old
-/// store — so Lemon Squeezy gets asked second. Any other refusal (limit reached,
-/// disabled, unreachable) is final: it is a statement about a key Polar does know.
+/// Activates a Polar key for this Mac and returns the license to store.
 pub async fn activate(key: &str, instance_name: &str) -> Result<License, Rejection> {
     let key = key.trim();
     if key.is_empty() {
         return Err(Rejection::Empty);
     }
-    if polar::configured() {
-        match polar::activate(key, instance_name).await {
-            Ok(instance_id) => {
-                return Ok(License::Active { key: key.into(), instance_id, provider: Provider::Polar })
-            }
-            Err(Rejection::Invalid | Rejection::WrongProduct) => {}
-            Err(other) => return Err(other),
-        }
+    if !polar::configured() {
+        return Err(Rejection::Unreachable);
     }
-    let instance_id = lemonsqueezy::activate(key, instance_name).await?;
-    Ok(License::Active { key: key.into(), instance_id, provider: Provider::LemonSqueezy })
+    let instance_id = polar::activate(key, instance_name).await?;
+    Ok(License::Active { key: key.into(), instance_id, provider: Provider::Polar })
 }
 
-/// Asks the store that sold the key whether this Mac's activation still stands.
-/// `Err` only when it could not be asked.
+/// Rechecks this Mac's Polar activation.
 pub async fn validate(key: &str, instance_id: &str, provider: Provider) -> Result<bool, Rejection> {
     match provider {
         Provider::Polar => polar::validate(key, instance_id).await,
-        Provider::LemonSqueezy => lemonsqueezy::validate(key, instance_id).await,
     }
 }
 
-/// Releases this Mac's activation at the store that sold the key. Any answer from
-/// the store (including "no such activation") means there is nothing left to
-/// release; only `Unreachable` leaves the slot possibly still taken.
+/// Releases this Mac's Polar activation.
 pub async fn deactivate(key: &str, instance_id: &str, provider: Provider) -> Result<(), Rejection> {
     match provider {
         Provider::Polar => polar::deactivate(key, instance_id).await,
-        Provider::LemonSqueezy => lemonsqueezy::deactivate(key, instance_id).await,
     }
 }
 
@@ -191,10 +153,6 @@ mod tests {
         License::Active { key: "ABCD-1234".into(), instance_id: "act-1".into(), provider: Provider::Polar }
     }
 
-    fn legacy() -> License {
-        License::Active { key: "ABCD-1234".into(), instance_id: "inst-1".into(), provider: Provider::LemonSqueezy }
-    }
-
     #[test]
     fn only_an_activated_license_is_pro() {
         assert!(!License::Inactive.is_pro());
@@ -215,27 +173,24 @@ mod tests {
                 "provider": "polar"
             })
         );
-        assert_eq!(
-            serde_json::to_value(legacy()).unwrap(),
-            serde_json::json!({
-                "status": "active",
-                "key": "ABCD-1234",
-                "instanceId": "inst-1",
-                "provider": "lemonSqueezy"
-            })
-        );
     }
 
     #[test]
-    fn a_record_written_before_the_switch_reads_as_lemon_squeezy() {
+    fn old_and_unknown_provider_records_load_as_inactive() {
         let dir = std::env::temp_dir().join("cloakview-license-provider-test");
         let path = license_path(&dir);
         std::fs::create_dir_all(&dir).unwrap();
-        std::fs::write(&path, r#"{ "status": "active", "key": "OLD-KEY", "instanceId": "inst-9" }"#).unwrap();
-        assert_eq!(
-            load_from(&path),
-            License::Active { key: "OLD-KEY".into(), instance_id: "inst-9".into(), provider: Provider::LemonSqueezy }
-        );
+        let mut record = serde_json::json!({
+            "status": "active", "key": "OLD-KEY", "instanceId": "inst-9"
+        });
+        std::fs::write(&path, record.to_string()).unwrap();
+        assert_eq!(load_from(&path), License::Inactive);
+        record["provider"] = serde_json::json!(concat!("le", "mon", "Squee", "zy"));
+        std::fs::write(&path, record.to_string()).unwrap();
+        assert_eq!(load_from(&path), License::Inactive);
+        record["provider"] = serde_json::json!("unrecognized");
+        std::fs::write(&path, record.to_string()).unwrap();
+        assert_eq!(load_from(&path), License::Inactive);
     }
 
     #[test]
@@ -267,7 +222,6 @@ mod tests {
             Rejection::Empty,
             Rejection::Invalid,
             Rejection::LimitReached,
-            Rejection::WrongProduct,
             Rejection::Disabled,
             Rejection::Expired,
             Rejection::Unreachable,
@@ -277,7 +231,7 @@ mod tests {
         .collect();
         assert_eq!(
             codes,
-            ["empty", "invalid", "limit", "wrongProduct", "disabled", "expired", "unreachable"]
+            ["empty", "invalid", "limit", "disabled", "expired", "unreachable"]
         );
     }
 }
