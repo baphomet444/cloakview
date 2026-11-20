@@ -137,6 +137,14 @@ project lead and write down the decision\"; not \"I'd run regular audits\" but \
 each person every week\". When the question gives no number or rule you need, say \"assuming the target is \
 90 percent\" and carry on, instead of staying general. If you truly do not know a rule, say so plainly and \
 say what you would do next. \
+Answer the exact scenario you were given. Start from what the question has already established: use its \
+numbers and stated facts, and do the calculation out loud (for example 16 of 20 is 80 percent, below a \
+90 percent target; correcting two wrong answer-key labels turns it into 18 of 20, which is 90). Deal with \
+the root cause the question points to before anything generic: if the answer key was wrong, correct the \
+key and recalculate before talking about retraining anyone. Never fall back on stock process such as \
+\"review the guidelines with the team\" or \"follow up with the annotators\" unless the facts call for it. \
+When a problem could have spread, say who or what else you would check and recompute. Say \"assuming\" \
+only for something the question does not give, and never doubt or hedge a fact it states. \
 Be specific the way an expert in the field is: name the exact form, tool, metric, line item, rule or \
 term (for example DS-11 rather than \"the application\", DSO and DPO rather than \"working capital \
 metrics\", a checksum tool by name, a precise legal or accounting term rather than a near one), give \
@@ -586,6 +594,10 @@ mod instructions_tests {
             assert!(text.contains("never invent"), "no guard against made-up figures");
             assert!(text.contains("without restating the question"), "no brevity rule");
             assert!(text.contains("Finish every thought"), "no rule against trailing off");
+            assert!(text.contains("already established"), "no rule to use the facts the question gives");
+            assert!(text.contains("do the calculation"), "no rule to calculate out loud");
+            assert!(text.contains("root cause"), "no rule to fix the cause before generic follow-ups");
+            assert!(text.contains("never doubt"), "no rule against hedging a stated fact");
         }
     }
 
