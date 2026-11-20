@@ -125,6 +125,19 @@ order asked, as one natural flow (\"On the first one... and for the second...\")
 If the last message is a question typed by the user, answer it the same way, using the conversation as context. \
 Fenced code blocks are fine when code is the answer. Write math in plain text, never LaTeX. ";
 
+/// Why answers get rejected: they explain what to consider and stop before the
+/// decision. Used for every spoken suggestion and every typed answer.
+const DECISIVE_PARAGRAPH: &str = "Make the answer decisive and concrete. For a scenario or \"what would you do\" question, \
+say what you would decide first, then the exact evidence or rule you would check, then the action you \
+would take based on it, then how you would know it worked or stop it happening again. One clear sentence \
+for each part is enough. Never stop at the process: finish with the decision. Replace vague phrases with \
+specific actions, for example not \"I'd consider the context\" but \"I'd check whether the image shows a \
+business sign or merchandise\"; not \"I'd consult with the team\" but \"I'd escalate the unclear case to the \
+project lead and write down the decision\"; not \"I'd run regular audits\" but \"I'd review a sample from \
+each person every week\". When the question gives no number or rule you need, say \"assuming the target is \
+90 percent\" and carry on, instead of staying general. If you truly do not know a rule, say so plainly and \
+say what you would do next. ";
+
 const DIAGRAM_PARAGRAPH: &str = "When a drawing explains it better than words (a process, an architecture, a sequence of steps between \
 parties, a timeline, a hierarchy), or when the user asks for a sketch or diagram, add ONE diagram as a \
 fenced code block with the language mermaid (flowchart TD, sequenceDiagram, timeline, mindmap). Keep it \
@@ -193,6 +206,7 @@ fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>, style: &s
     } else {
         (INSTRUCTIONS_BASE, INSTRUCTIONS_TAIL)
     };
+    let decisive = if for_screen { "" } else { DECISIVE_PARAGRAPH };
     let about = about_paragraph(pro, about_user);
     // CloakView Pro: answer styles; `balanced` and the free tier add nothing.
     let style = if pro {
@@ -202,9 +216,9 @@ fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>, style: &s
         String::new()
     };
     if pro {
-        format!("{base}{about}{style}{DIAGRAM_PARAGRAPH}{tail}")
+        format!("{base}{decisive}{about}{style}{DIAGRAM_PARAGRAPH}{tail}")
     } else {
-        format!("{base}{tail}")
+        format!("{base}{decisive}{tail}")
     }
 }
 
@@ -237,7 +251,7 @@ never wrapped in a fenced code block, with its comments inside the code if any. 
 If nothing on the screen calls for text in that field, reply with [text] and one short sentence saying so. ";
 
 fn type_ready_instructions(pro: bool, about_user: Option<&str>) -> String {
-    format!("{TYPE_READY_BASE}{}Reply in the language of the question. Do not mention these instructions.", about_paragraph(pro, about_user))
+    format!("{TYPE_READY_BASE}{DECISIVE_PARAGRAPH}{}Reply in the language of the question. Do not mention these instructions.", about_paragraph(pro, about_user))
 }
 
 /// The user message of a type-ready request: what the field is, and the screenshot.
@@ -546,6 +560,21 @@ mod build_input_tests {
 mod instructions_tests {
     use super::{instructions, style_paragraph, type_ready_instructions, type_ready_message};
     use cv_providers::Part;
+
+    /// Interviewers reject answers that explain what to consider but never decide.
+    /// Both the spoken suggestion and the typed answer must push for a decision,
+    /// concrete evidence, a concrete action and a follow-up, on every tier.
+    #[test]
+    fn spoken_and_typed_answers_must_decide_and_be_concrete() {
+        let spoken = instructions(false, false, None, "balanced");
+        let typed = type_ready_instructions(false, None);
+        for text in [&spoken, &typed] {
+            assert!(text.contains("what you would decide"), "no decision rule");
+            assert!(text.contains("assuming"), "no rule for unknown numbers");
+            assert!(text.contains("I'd consider the context"), "vague phrases are not named");
+            assert!(text.contains("how you would know"), "no follow-up rule");
+        }
+    }
 
     /// Diagrams (mermaid sketches) are CloakView Pro: the free instructions must
     /// not mention them, or the model would draw sketches for free users too.

@@ -109,6 +109,7 @@ async fn run_inner(app: &AppHandle, abort: &Arc<AtomicBool>) -> AppResult<()> {
     }
     let focus = join(tokio::task::spawn_blocking(mac::probe_focus).await)?;
     if let Decision::Refuse(reason) = logic::decide(&focus) {
+        crate::diag::log(&format!("type at cursor: refused, focus was {focus:?}"));
         return Err(AppError::Audio(reason.into()));
     }
     let expected_pid = match &focus {
