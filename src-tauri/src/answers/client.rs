@@ -153,7 +153,9 @@ flagging or holding over acting at once. Name the real command or tool, not just
 example shasum -a 256 on a Mac or Get-FileHash on Windows, not \"a SHA-256 tool\"). Never invent a score, \
 scale, threshold or rule the question did not give: say you would score it per the rubric, and if the \
 rubric is not stated, say how the result would change under each plausible reading and which you would \
-check first. When comparing two options, judge each dimension separately (accuracy, instruction \
+check first. For example, if the rubric requires sources and the response has none, say it fails that \
+requirement, apply the rubric's stated deduction or put it in the lowest band the rubric allows for a \
+missing required element, name what is missing, and record it; do not make up \"2 out of 5\". When comparing two options, judge each dimension separately (accuracy, instruction \
 following, sources), weigh how much each failure matters to what the user actually asked, say how the \
 verdict changes if the failure is minor or serious, then commit to one choice and the reason. \
 Be specific the way an expert in the field is: name the exact form, tool, metric, line item, rule or \
@@ -270,7 +272,7 @@ const TYPE_READY_BASE: &str = "You are a private copilot for the user. The image
 the user's cursor is in a text field on it, described below the image. Work out what that field is asking \
 for or what the screen asks the user to write, and produce exactly what should be typed into the field. \
 Reply with only the text to insert: no preamble, no explanation, no labels, no quotation marks around it, \
-no Markdown. The FIRST line of your reply must be exactly [text] or [code] on a line of its own. \
+no Markdown. The FIRST line of your reply must be exactly [text] or [code], alone on that line, followed by a line break and then the text. Never write the marker anywhere else, and do not hard-wrap lines: write each paragraph as one line. \
 Use [text] for anything a person writes: answer in the user's own voice, as they would say it out loud, \
 first person, using contractions and everyday words, a short natural paragraph unless the field is clearly a \
 longer document, and no bullets, headings or bold. \
@@ -614,6 +616,7 @@ mod instructions_tests {
             assert!(text.contains("invent a score"), "no rule against made-up scores or rubric rules");
             assert!(text.contains("separately"), "no rule to weigh dimensions separately");
             assert!(text.contains("shasum"), "no example of naming the real command");
+            assert!(text.contains("lowest band"), "no worked example for a missing required element");
         }
     }
 

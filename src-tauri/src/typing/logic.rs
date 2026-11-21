@@ -95,16 +95,55 @@ pub fn parse_type_ready(raw: &str) -> TypeReady {
     let (mode, body) = match first.trim().to_ascii_lowercase().as_str() {
         "[code]" => (Mode::Code, rest),
         "[text]" => (Mode::Text, rest),
-        _ => (Mode::Text, body),
+        _ => match split_inline_marker(body) {
+            Some((mode, after)) => (mode, after),
+            None => (Mode::Text, body),
+        },
     };
     let mut text = body.trim().to_string();
     if mode == Mode::Code {
         text = strip_fence(&text);
+    } else {
+        text = unwrap_soft_breaks(&text);
     }
     while text.contains("\n\n\n") {
         text = text.replace("\n\n\n", "\n\n");
     }
     TypeReady { mode, text: text.trim().to_string() }
+}
+
+/// `[text] Answer…` / `[code] …`: the marker and the text on one line. The marker
+/// is never typed.
+fn split_inline_marker(body: &str) -> Option<(Mode, &str)> {
+    let lower = body.get(..6)?.to_ascii_lowercase();
+    match lower.as_str() {
+        "[text]" => Some((Mode::Text, &body[6..])),
+        "[code]" => Some((Mode::Code, &body[6..])),
+        _ => None,
+    }
+}
+
+/// A single line break inside a sentence (the model wrapped its line) becomes a
+/// space; paragraph breaks and breaks after punctuation (greetings, sign-offs)
+/// stay.
+fn unwrap_soft_breaks(text: &str) -> String {
+    let chars: Vec<char> = text.chars().collect();
+    let mut out = String::with_capacity(text.len());
+    for (i, &c) in chars.iter().enumerate() {
+        let single = c == '\n'
+            && chars.get(i.wrapping_sub(1)).is_some_and(|p| p.is_alphanumeric())
+            && chars.get(i + 1).is_some_and(|n| *n != '\n');
+        if single {
+            if !out.ends_with(' ') {
+                out.push(' ');
+            }
+        } else if c == ' ' && out.ends_with(' ') && chars.get(i.wrapping_sub(1)) == Some(&'\n') {
+            continue; // the space after a joined break
+        } else {
+            out.push(c);
+        }
+    }
+    out
 }
 
 /// ```lang … ``` around code, dropped; anything else is returned as is.
@@ -324,6 +363,34 @@ mod tests {
     fn line_endings_and_blank_runs_are_normalized() {
         let t = parse_type_ready("[text]\r\nA\r\n\r\n\r\n\r\nB\n\n");
         assert_eq!(t.text, "A\n\nB");
+    }
+
+    #[test]
+    fn a_marker_on_the_same_line_as_the_text_is_not_typed() {
+        let t = parse_type_ready("[text] Since the response lacks sources, I would flag it.");
+        assert_eq!(t.mode, Mode::Text);
+        assert_eq!(t.text, "Since the response lacks sources, I would flag it.");
+        let c = parse_type_ready("[CODE] let x = 1;");
+        assert_eq!(c.mode, Mode::Code);
+        assert_eq!(c.text, "let x = 1;");
+    }
+
+    #[test]
+    fn a_hard_wrapped_sentence_is_typed_as_one_line() {
+        let t = parse_type_ready("[text]\nProviding sourced information\n is crucial for verifying claims.\n\nSecond paragraph.");
+        assert_eq!(t.text, "Providing sourced information is crucial for verifying claims.\n\nSecond paragraph.");
+    }
+
+    #[test]
+    fn intended_line_breaks_after_punctuation_are_kept() {
+        let t = parse_type_ready("[text]\nHi Sam,\nThanks for the update.\nBest,\nLazaro");
+        assert_eq!(t.text, "Hi Sam,\nThanks for the update.\nBest,\nLazaro");
+    }
+
+    #[test]
+    fn code_keeps_every_line_break() {
+        let c = parse_type_ready("[code]\nlet a = 1\nlet b = 2");
+        assert_eq!(c.text, "let a = 1\nlet b = 2");
     }
 
     #[test]
