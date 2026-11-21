@@ -30,6 +30,7 @@ function clearEnv() {
   delete process.env.NEWSLETTER_ENDPOINT;
   delete process.env.NEWSLETTER_API_KEY;
   delete process.env.NEWSLETTER_EMAIL_FIELD;
+  delete process.env.NEWSLETTER_AUTH_SCHEME;
 }
 
 test("sin NEWSLETTER_ENDPOINT responde 503 y no rompe nada", async () => {
@@ -95,6 +96,23 @@ test("NEWSLETTER_EMAIL_FIELD cambia el nombre del campo (Buttondown)", async () 
     const sent = JSON.parse(String(spy.calls[0].init.body)) as Record<string, string>;
     assert.equal(sent.email_address, "one@example.com");
     assert.equal(sent.email, undefined);
+  } finally {
+    spy.restore();
+    clearEnv();
+  }
+});
+
+test("NEWSLETTER_AUTH_SCHEME cambia el esquema (Buttondown usa Token)", async () => {
+  clearEnv();
+  process.env.NEWSLETTER_ENDPOINT = "https://api.buttondown.test/v1/subscribers";
+  process.env.NEWSLETTER_API_KEY = "bd-key";
+  process.env.NEWSLETTER_AUTH_SCHEME = "Token";
+  const spy = stubFetch(Response.json({ ok: true }, { status: 201 }));
+  try {
+    const response = await POST(request({ email: "three@example.com" }, "203.0.113.40"));
+    assert.equal(response.status, 200);
+    const headers = spy.calls[0].init.headers as Record<string, string>;
+    assert.equal(headers.Authorization, "Token bd-key");
   } finally {
     spy.restore();
     clearEnv();

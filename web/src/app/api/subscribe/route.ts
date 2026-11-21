@@ -14,6 +14,7 @@
 const DESTINATION_ENV = "NEWSLETTER_ENDPOINT";
 const KEY_ENV = "NEWSLETTER_API_KEY";
 const FIELD_ENV = "NEWSLETTER_EMAIL_FIELD";
+const SCHEME_ENV = "NEWSLETTER_AUTH_SCHEME";
 
 /** Deliberadamente laxo: la validación de verdad la hace el proveedor al enviar el correo de confirmación. */
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -82,7 +83,11 @@ export async function POST(request: Request): Promise<Response> {
     Accept: "application/json",
   };
   const key = process.env[KEY_ENV]?.trim();
-  if (key) headers.Authorization = `Bearer ${key}`;
+  if (key) {
+    // Buttondown exige `Token`, no `Bearer`; el esquema se configura por env.
+    const scheme = process.env[SCHEME_ENV]?.trim() || "Bearer";
+    headers.Authorization = `${scheme} ${key}`;
+  }
 
   let upstream: Response;
   try {
