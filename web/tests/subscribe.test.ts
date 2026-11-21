@@ -31,6 +31,7 @@ function clearEnv() {
   delete process.env.NEWSLETTER_API_KEY;
   delete process.env.NEWSLETTER_EMAIL_FIELD;
   delete process.env.NEWSLETTER_AUTH_SCHEME;
+  delete process.env.NEWSLETTER_METADATA_FIELD;
 }
 
 test("sin NEWSLETTER_ENDPOINT responde 503 y no rompe nada", async () => {
@@ -113,6 +114,25 @@ test("NEWSLETTER_AUTH_SCHEME cambia el esquema (Buttondown usa Token)", async ()
     assert.equal(response.status, 200);
     const headers = spy.calls[0].init.headers as Record<string, string>;
     assert.equal(headers.Authorization, "Token bd-key");
+  } finally {
+    spy.restore();
+    clearEnv();
+  }
+});
+
+test("NEWSLETTER_METADATA_FIELD anida locale y source (Buttondown rechaza extras)", async () => {
+  clearEnv();
+  process.env.NEWSLETTER_ENDPOINT = "https://api.buttondown.test/v1/subscribers";
+  process.env.NEWSLETTER_EMAIL_FIELD = "email_address";
+  process.env.NEWSLETTER_METADATA_FIELD = "metadata";
+  const spy = stubFetch(Response.json({ ok: true }, { status: 201 }));
+  try {
+    const response = await POST(request({ email: "four@example.com", locale: "en" }, "203.0.113.50"));
+    assert.equal(response.status, 200);
+    const sent = JSON.parse(String(spy.calls[0].init.body)) as Record<string, unknown>;
+    assert.equal(sent.email_address, "four@example.com");
+    assert.equal(sent.locale, undefined);
+    assert.deepEqual(sent.metadata, { locale: "en", source: "getcloakview.com" });
   } finally {
     spy.restore();
     clearEnv();

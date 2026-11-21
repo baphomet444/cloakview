@@ -15,6 +15,7 @@ const DESTINATION_ENV = "NEWSLETTER_ENDPOINT";
 const KEY_ENV = "NEWSLETTER_API_KEY";
 const FIELD_ENV = "NEWSLETTER_EMAIL_FIELD";
 const SCHEME_ENV = "NEWSLETTER_AUTH_SCHEME";
+const META_ENV = "NEWSLETTER_METADATA_FIELD";
 
 /** Deliberadamente laxo: la validación de verdad la hace el proveedor al enviar el correo de confirmación. */
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -72,11 +73,11 @@ export async function POST(request: Request): Promise<Response> {
   // El nombre del campo cambia por proveedor (Buttondown usa `email_address`); el
   // resto del payload es el mismo para todos.
   const field = process.env[FIELD_ENV]?.trim() || "email";
-  const payload: Record<string, unknown> = {
-    [field]: email,
-    locale,
-    source: "getcloakview.com",
-  };
+  const extras = { locale, source: "getcloakview.com" };
+  // Buttondown rechaza campos extra en el nivel superior (422): con esta variable
+  // `locale` y `source` viajan dentro de `metadata`, que sí acepta.
+  const meta = process.env[META_ENV]?.trim();
+  const payload: Record<string, unknown> = meta ? { [field]: email, [meta]: extras } : { [field]: email, ...extras };
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
