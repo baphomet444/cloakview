@@ -645,6 +645,19 @@
       }
     }
   },
+  "newsletter": {
+    "title": "Get one email when Pro ships",
+    "body": "CloakView itself is free and needs no account. Leave your email only if you want to hear when CloakView Pro — the one-time $99 upgrade — goes on sale, and when a new version is out.",
+    "placeholder": "you@example.com",
+    "button": "Notify me",
+    "sending": "Sending…",
+    "done": "You're on the list",
+    "success": "Thanks — check your inbox to confirm the address.",
+    "invalid": "That address doesn't look like an email.",
+    "error": "Couldn't save it right now. Please try again in a minute.",
+    "unavailable": "The list isn't open yet. Try again soon.",
+    "note": "One email when Pro ships, plus the occasional release note. No spam, and one click unsubscribes."
+  },
   "assistant": {
     "open": "Ask CloakView",
     "close": "Close assistant",

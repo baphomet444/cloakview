@@ -8,6 +8,7 @@ import { FeaturesGrid } from "@/components/features-grid";
 import { CostsSection } from "@/components/costs-section";
 import { Faq } from "@/components/faq";
 import { DownloadCta } from "@/components/download-cta";
+import { NewsletterForm } from "@/components/newsletter-form";
 
 export async function generateMetadata({
   params,
@@ -46,6 +47,7 @@ export default async function HomePage({
       <CostsSection dict={dict.home.costs} />
       <Faq dict={dict.home.faq} />
       <DownloadCta dict={dict.home.download} />
+      <NewsletterForm dict={dict.newsletter} locale={locale} source="home" />
     </>
   );
 }

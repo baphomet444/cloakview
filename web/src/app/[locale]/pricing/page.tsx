@@ -6,6 +6,7 @@ import { PricingHero } from "@/components/pricing/pricing-hero";
 import { CostEstimator } from "@/components/pricing/cost-estimator";
 import { RoadmapNote } from "@/components/pricing/roadmap-note";
 import { DownloadButton } from "@/components/download-button";
+import { NewsletterForm } from "@/components/newsletter-form";
 
 export async function generateMetadata({
   params,
@@ -62,6 +63,7 @@ export default async function PricingPage({
           <p className="mt-6 text-sm text-muted">{dict.pricing.cta.note}</p>
         </div>
       </section>
+      <NewsletterForm dict={dict.newsletter} locale={locale} source="pricing" />
     </>
   );
 }
