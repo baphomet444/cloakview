@@ -1,4 +1,4 @@
-import { siteConfig, type Locale } from "@/site.config";
+import { siteConfig, SOCIAL_SAME_AS, type Locale } from "@/site.config";
 
 /**
  * JSON-LD `SoftwareApplication` for the layout. Every claim matches what the site says
@@ -26,8 +26,8 @@ export function generateSoftwareApplicationSchema(locale: Locale) {
       ? "macOS 14.2 o posterior, Mac con Apple Silicon"
       : "macOS 14.2 or later, Mac with Apple Silicon",
     image: `${siteConfig.url}/brand/logo.png`,
-    author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url, sameAs: [siteConfig.INSTAGRAM_URL, siteConfig.GITHUB_REPO] },
-    sameAs: [siteConfig.INSTAGRAM_URL, siteConfig.GITHUB_REPO],
+    author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url, sameAs: SOCIAL_SAME_AS },
+    sameAs: SOCIAL_SAME_AS,
     // The free app, plus CloakView Pro only once it can actually be bought: the Pro
     // offer appears with `PRO_CHECKOUT_URL`, the same switch as the buy button.
     offers: [
@@ -105,7 +105,7 @@ export function generateOrganizationSchema(locale: Locale) {
           "getcloakview.com",
         ],
         email: siteConfig.SUPPORT_EMAIL,
-        sameAs: [siteConfig.INSTAGRAM_URL, siteConfig.GITHUB_REPO],
+        sameAs: SOCIAL_SAME_AS,
       },
       {
         "@type": "WebSite",

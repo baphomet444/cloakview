@@ -28,6 +28,11 @@ export const siteConfig = {
   GITHUB_REPO: "https://github.com/baphomet444/cloakview",
   // Perfil limpio, sin los parámetros del QR con el que se compartió.
   INSTAGRAM_URL: "https://www.instagram.com/cloak_view",
+  // Cuentas creadas para el lanzamiento (nov-2026). Los handles son los públicos:
+  // PH @cloakview, X @CloakViewPro, LinkedIn /in/cloakview-pro.
+  PRODUCT_HUNT_URL: "https://www.producthunt.com/@cloakview",
+  X_URL: "https://x.com/CloakViewPro",
+  LINKEDIN_URL: "https://www.linkedin.com/in/cloakview-pro-a2b072451/",
   SUPPORT_EMAIL: "support@getcloakview.com",
   LEGAL_ENTITY: "TRUST PILOT LLC",
   // Sustituir solo por hashes SHA-256 publicados para los artefactos reales.
@@ -59,6 +64,7 @@ export type SocialName =
   | "github"
   | "instagram"
   | "x"
+  | "producthunt"
   | "youtube"
   | "linkedin"
   | "discord"
@@ -72,9 +78,19 @@ export const SOCIAL_LINKS: readonly {
   url: string;
   label: string;
 }[] = [
-  { name: "github", url: siteConfig.GITHUB_REPO, label: "GitHub" },
+  { name: "producthunt", url: siteConfig.PRODUCT_HUNT_URL, label: "Product Hunt" },
+  { name: "x", url: siteConfig.X_URL, label: "X" },
+  { name: "linkedin", url: siteConfig.LINKEDIN_URL, label: "LinkedIn" },
   { name: "instagram", url: siteConfig.INSTAGRAM_URL, label: "Instagram" },
+  { name: "github", url: siteConfig.GITHUB_REPO, label: "GitHub" },
 ];
+
+/**
+ * URLs para `sameAs` del JSON-LD. Sale de SOCIAL_LINKS para que el pie y los
+ * datos estructurados no puedan desincronizarse: sumar una red es un solo edit.
+ */
+export const SOCIAL_SAME_AS: readonly string[] = SOCIAL_LINKS.map((s) => s.url);
+
 
 /** True mientras el repo de GitHub no se haya creado todavía. */
 export function isGithubPending(): boolean {
