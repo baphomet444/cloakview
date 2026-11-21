@@ -62,7 +62,7 @@ export default async function ComparePage({ params }: { params: Params }) {
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: faqPageJsonLd([{ title: doc.h1, items: doc.faq }]) }}
+        dangerouslySetInnerHTML={{ __html: faqPageJsonLd([{ title: doc.h1, items: [...doc.faq, ...doc.alternative.faq] }]) }}
       />
       <CompareView locale={locale} slug={slug} />
     </>

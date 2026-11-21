@@ -23,6 +23,17 @@ export function CompareIndex({ locale }: { locale: Locale }) {
         {copy.note}
       </p>
 
+      <section aria-labelledby="quick-answer" className="mt-12">
+        <h2 id="quick-answer" className="font-display text-2xl font-semibold tracking-tight text-foreground">
+          {copy.quickHeading}
+        </h2>
+        <div className="mt-4 space-y-4 text-lg leading-relaxed text-muted">
+          {copy.quickAnswer.map((paragraph) => (
+            <p key={paragraph.slice(0, 32)}>{paragraph}</p>
+          ))}
+        </div>
+      </section>
+
       <ul className="mt-10 space-y-4">
         {compareSlugs.map((slug) => {
           const doc = compareDocs[locale][slug];
@@ -46,6 +57,20 @@ export function CompareIndex({ locale }: { locale: Locale }) {
       <p className="mt-10 text-sm text-muted">
         {copy.checkedLabel}: {CHECKED_AT[locale]}
       </p>
+
+      <section aria-labelledby="compare-faq" className="mt-12">
+        <h2 id="compare-faq" className="font-display text-2xl font-semibold tracking-tight text-foreground">
+          {labels.faqHeading}
+        </h2>
+        <div className="mt-5 space-y-3">
+          {copy.faq.map((item) => (
+            <details key={item.q} className="rounded-xl border border-border bg-surface px-5 py-4">
+              <summary className="cursor-pointer font-medium text-foreground">{item.q}</summary>
+              <p className="mt-3 text-muted">{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

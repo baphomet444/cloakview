@@ -13,6 +13,16 @@ export const comparePath = (locale: Locale, slug?: CompareSlug) =>
 export type CompareRow = { label: string; we: string; they: string };
 export type ComparePoint = { title: string; body: string };
 
+/**
+ * Bloque que responde a la búsqueda "alternativa a <rival>", que es distinta de
+ * "CloakView vs <rival>": quien busca una alternativa todavía no nos conoce.
+ */
+export type CompareAlternative = {
+  heading: string;
+  paragraphs: string[];
+  faq: { q: string; a: string }[];
+};
+
 export type CompareDoc = {
   /** The other product's name, as it writes it. */
   name: string;
@@ -29,6 +39,7 @@ export type CompareDoc = {
   theyWin: ComparePoint[];
   weWin: ComparePoint[];
   verdict: string;
+  alternative: CompareAlternative;
   faq: { q: string; a: string }[];
 };
 
@@ -39,6 +50,10 @@ export type CompareIndex = {
   intro: string;
   note: string;
   checkedLabel: string;
+  /** Respuesta directa a "alternativa a Cluely / Smog / Final Round". */
+  quickHeading: string;
+  quickAnswer: string[];
+  faq: { q: string; a: string }[];
 };
 
 export const CHECKED_AT: Record<Locale, string> = {
@@ -50,22 +65,76 @@ export const compareIndex: Record<Locale, CompareIndex> = {
   en: {
     title: "Compare CloakView with other AI copilots",
     description:
-      "How CloakView compares with Cluely, Smog AI and Final Round AI on price, screen-share stealth, whose models answer and where transcripts end up.",
+      "Cluely, Smog AI and Final Round AI alternatives compared: price, screen-share stealth, whose models answer and where transcripts end up.",
     h1: "How CloakView compares",
     intro:
       "Three comparisons, same structure each time: what the tool costs, whether the overlay is actually hidden in the tier you would buy, whose models answer, and where the transcript ends up. Every claim about a rival comes from that vendor's own pricing or product pages.",
     note: "CloakView is a Mac-only app with no subscription, no account and no backend: you bring an OpenAI key and pay OpenAI for what you use. Where a rival does something better, the page says so.",
     checkedLabel: "Prices checked",
+    quickHeading: "Looking for a Cluely, Smog AI or Final Round AI alternative?",
+    quickAnswer: [
+      "If what you want from a Cluely alternative is the overlay hidden while you share a window, a price that does not renew every month, and transcripts that never leave your Mac, CloakView is built for exactly that: a free Mac app, $99 once for Pro, your own OpenAI key, no account and no server.",
+      "It is not the right answer for everyone. Cluely is the better buy if you want a hosted product and a phone app; Smog AI is the better buy if you need a Windows beta or a lifetime licence with the models included; Final Round AI is the better buy if you want mock interviews and scored feedback. The three comparisons below say where each rival wins, with prices taken from their own pricing pages.",
+    ],
+    faq: [
+      {
+        q: "What is the best Cluely alternative on a Mac?",
+        a: "If you want the overlay hidden while you share a window, no subscription and transcripts that stay on your disk, CloakView is the closest match: a free Mac app, $99 once for Pro and your own OpenAI key. Cluely is the better choice if you need a phone app or a hosted product with nothing to configure.",
+      },
+      {
+        q: "Is there a free Cluely alternative?",
+        a: "CloakView is free to download, needs no account and hides the overlay from a shared window in that free tier; you only pay OpenAI for the usage you generate. Cluely also has a free Starter tier, but it meters AI responses and leaves undetectability to its most expensive plan.",
+      },
+      {
+        q: "Which Cluely alternative runs on Windows?",
+        a: "Not CloakView: it requires macOS 14.2 or later on Apple Silicon. Smog AI ships a Windows 10/11 x64 beta, which is the option to look at if your work machine is a PC.",
+      },
+      {
+        q: "Do these alternatives need my own API key?",
+        a: "CloakView does, in every tier: you paste an OpenAI key and pay OpenAI at their published rates. Smog AI offers a bring-your-own-key licence on its lifetime plan. Cluely bundles its models into the subscription.",
+      },
+      {
+        q: "Which alternative keeps my transcripts on my own machine?",
+        a: "CloakView has no backend, no account and no telemetry, so audio and transcripts stay in files on your Mac. Smog AI keeps notes locally as well; Cluely processes them on its own service under its privacy policy.",
+      },
+    ],
   },
   es: {
     title: "Compara CloakView con otros copilotos",
     description:
-      "Cómo se compara CloakView con Cluely, Smog AI y Final Round AI en precio, invisibilidad, modelos y dónde acaban tus transcripciones.",
+      "Alternativas a Cluely, Smog AI y Final Round AI comparadas: precio, invisibilidad al compartir, qué modelos responden y dónde acaban tus transcripciones.",
     h1: "Cómo se compara CloakView",
     intro:
       "Tres comparativas con la misma estructura: cuánto cuesta la herramienta, si la ventana está realmente oculta en el plan que comprarías, qué modelos responden y dónde acaba la transcripción. Todo lo que decimos de cada rival sale de sus propias páginas de precios o de producto.",
     note: "CloakView es una app solo para Mac, sin suscripción, sin cuenta y sin backend: traes tu clave de OpenAI y le pagas a OpenAI por lo que uses. Cuando un rival hace algo mejor, la página lo dice.",
     checkedLabel: "Precios revisados en",
+    quickHeading: "¿Buscás una alternativa a Cluely, Smog AI o Final Round AI?",
+    quickAnswer: [
+      "Si lo que buscás en una alternativa a Cluely es la ventana oculta mientras compartís, un precio que no vuelva cada mes y transcripciones que no salgan de tu Mac, CloakView está hecho exactamente para eso: una app de Mac gratuita, 99 USD una sola vez por Pro, tu propia clave de OpenAI, sin cuenta y sin servidor.",
+      "No es la respuesta para todos. Cluely es mejor compra si querés un producto alojado y una app móvil; Smog AI es mejor compra si necesitás una beta de Windows o una licencia de por vida con los modelos incluidos; Final Round AI es mejor compra si querés entrevistas simuladas y puntuaciones. Las tres comparativas de abajo dicen dónde gana cada rival, con precios tomados de sus propias páginas.",
+    ],
+    faq: [
+      {
+        q: "¿Cuál es la mejor alternativa a Cluely para Mac?",
+        a: "Si querés la ventana oculta mientras compartís, sin suscripción y con las transcripciones en tu disco, CloakView es la opción más cercana: app de Mac gratuita, 99 USD una vez por Pro y tu propia clave de OpenAI. Cluely es mejor opción si necesitás app móvil o un producto alojado sin nada que configurar.",
+      },
+      {
+        q: "¿Existe una alternativa gratuita a Cluely?",
+        a: "CloakView se descarga gratis, no pide cuenta y oculta la ventana al compartir ya en ese plan gratuito; solo le pagás a OpenAI el consumo que generes. Cluely también tiene un plan Starter gratuito, pero mide las respuestas de IA y deja la invisibilidad para su plan más caro.",
+      },
+      {
+        q: "¿Qué alternativa a Cluely funciona en Windows?",
+        a: "CloakView no: requiere macOS 14.2 o posterior en Apple Silicon. Smog AI tiene una beta para Windows 10/11 x64, que es la opción a mirar si tu máquina de trabajo es una PC.",
+      },
+      {
+        q: "¿Estas alternativas necesitan mi propia clave de API?",
+        a: "CloakView sí, en todos los planes: pegás una clave de OpenAI y le pagás a OpenAI a sus tarifas públicas. Smog AI ofrece traer tu propia clave en su plan de por vida. Cluely incluye sus modelos en la suscripción.",
+      },
+      {
+        q: "¿Qué alternativa guarda las transcripciones en mi máquina?",
+        a: "CloakView no tiene backend, ni cuenta, ni telemetría: el audio y las transcripciones quedan en archivos de tu Mac. Smog AI también guarda las notas en local; Cluely las procesa en su propio servicio según su política de privacidad.",
+      },
+    ],
   },
 };
 
@@ -233,6 +302,23 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
       ],
       verdict:
         "If you want a hosted product with a phone app and zero setup, Cluely is a reasonable buy — just check which tier actually hides the overlay before an interview. If what you want is an invisible copilot on your Mac that you pay for once and whose transcripts never leave the machine, CloakView is cheaper and more private, and the stealth is not an upgrade.",
+      alternative: {
+        heading: "Looking for a Cluely alternative?",
+        paragraphs: [
+          "Most people who search for a Cluely alternative want one of three things: the overlay actually hidden while they share a window, a price that does not come back every month, or transcripts that stay on their own machine. CloakView is built around those three, and it is explicit about what it gives up — it is macOS-only, it needs your own OpenAI key, and there is no phone app.",
+          "Two honest caveats. Hiding a window from a screen share depends on the meeting app and on how the call is captured: share a window rather than the whole display, and test it once in your own setup before the call that matters. And if you would rather not manage an API key at all, paying Cluely for a hosted product is a reasonable choice — the comparison above says where it wins.",
+        ],
+        faq: [
+          {
+            q: "What is the best free Cluely alternative for Mac?",
+            a: "CloakView: the app is free, needs no account and keeps the overlay hidden from a shared window in that free tier. You only pay OpenAI for the usage you generate. Cluely's Starter tier is free as well, but it meters AI responses and leaves undetectability to its top plan.",
+          },
+          {
+            q: "Can I use a Cluely alternative without a subscription?",
+            a: "With CloakView, yes. Pro is a one-time $99 payment and the only recurring cost is your own OpenAI usage, billed by OpenAI. Smog AI also sells a $199 lifetime licence that lets you bring your own key.",
+          },
+        ],
+      },
       faq: [
         {
           q: "Is CloakView a Cluely clone?",
@@ -356,6 +442,23 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
       ],
       verdict:
         "These two are genuinely close, so buy on the detail that matters to you. Smog wins if you need Windows, want the models included in one lifetime payment, or export a lot. CloakView wins if you want the cheapest one-time price, no quota and no account, and you are happy to own the OpenAI key yourself.",
+      alternative: {
+        heading: "Looking for a Smog AI alternative?",
+        paragraphs: [
+          "Smog AI is the closest product to CloakView: a native Mac overlay that disappears from a screen share and keeps transcripts on the machine. People look for an alternative for two reasons — the price shape and the ceiling. Smog's paid plans are a subscription or a $199 lifetime licence, and its free tier is metered by a token quota.",
+          "CloakView answers both directly: Pro is $99 once, and there is no quota at all; the only limit is the spending limit you set inside your own OpenAI account. What Smog still does and CloakView does not: a Windows 10/11 beta, and export to PDF, Markdown and email.",
+        ],
+        faq: [
+          {
+            q: "Is there a Smog AI alternative without a token quota?",
+            a: "CloakView has no metered tier and no fair-use throttle; the only ceiling is the spending limit you set in your own OpenAI account. Smog's free tier is metered by tokens, with unlimited use on its paid plans.",
+          },
+          {
+            q: "Is there a cheaper alternative to Smog AI's lifetime licence?",
+            a: "CloakView Pro is $99 once, against $199 for Smog's lifetime plan, and in both cases you keep your own OpenAI key and pay OpenAI for usage. Smog's lifetime licence includes its models on the Pro subscription instead; the two price shapes are compared above.",
+          },
+        ],
+      },
       faq: [
         {
           q: "Is Smog cheaper than CloakView?",
@@ -474,6 +577,23 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
       ],
       verdict:
         "If you want to practise, be scored and work through a structured job-search programme, Final Round AI is the fuller product and the subscription buys you real features. If you want the live copilot only — invisible, on your Mac, paid for once — CloakView costs a fraction of a year of Final Round and keeps your transcripts local.",
+      alternative: {
+        heading: "Looking for a Final Round AI alternative?",
+        paragraphs: [
+          "People look for a Final Round AI alternative for one of two reasons: the subscription, which starts at $25/month billed annually and is $90 for a single month (non-refundable), or the fact that they only want the live copilot and not a whole interview-prep programme.",
+          "CloakView is only the copilot: an overlay that transcribes the call, answers, and stays out of the window you share, for a free app plus a one-time $99 Pro. What it does not do is practise with you — no mock interviews, no performance scores, no 91-language claim. If you want those, Final Round is the product that has them, and the comparison above says so plainly.",
+        ],
+        faq: [
+          {
+            q: "What is a cheaper alternative to Final Round AI?",
+            a: "CloakView: the app is free and Pro is a one-time $99, where Final Round starts at $25/month billed annually ($300/year) and has no permanent free plan — only a 10-minute trial session.",
+          },
+          {
+            q: "Is there a Final Round AI alternative without a subscription?",
+            a: "Yes. CloakView charges once for Pro and never renews; the only recurring cost is the OpenAI usage you generate. It does not include interview practice, scoring or résumé work, which is what Final Round's subscription pays for.",
+          },
+        ],
+      },
       faq: [
         {
           q: "Is Final Round AI free?",
@@ -599,6 +719,23 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
       ],
       verdict:
         "Si quieres un producto alojado, con app móvil y cero configuración, Cluely es una compra razonable; eso sí, comprueba qué plan oculta de verdad la ventana antes de una entrevista. Si lo que quieres es un copiloto invisible en tu Mac, pagado una vez y cuyas transcripciones no salen de la máquina, CloakView es más barato y más privado, y la invisibilidad no es una mejora de plan.",
+      alternative: {
+        heading: "¿Buscás una alternativa a Cluely?",
+        paragraphs: [
+          "Casi todo el que busca una alternativa a Cluely quiere una de tres cosas: que la ventana quede realmente oculta mientras comparte, un precio que no vuelva cada mes, o transcripciones que no salgan de su máquina. CloakView está construido alrededor de esas tres, y dice sin vueltas qué resigna: es solo para macOS, necesita tu propia clave de OpenAI y no hay app móvil.",
+          "Dos advertencias honestas. Ocultar una ventana al compartir depende de la app de la reunión y de cómo se captura la llamada: compartí una ventana y no toda la pantalla, y probalo una vez en tu propia configuración antes de la llamada que importa. Y si preferís no gestionar ninguna clave de API, pagarle a Cluely por un producto alojado es una decisión razonable; la comparativa de arriba dice dónde gana.",
+        ],
+        faq: [
+          {
+            q: "¿Cuál es la mejor alternativa gratuita a Cluely para Mac?",
+            a: "CloakView: la app es gratis, no pide cuenta y mantiene la ventana oculta al compartir ya en ese plan gratuito. Solo le pagás a OpenAI el consumo que generes. El plan Starter de Cluely también es gratis, pero mide las respuestas de IA y deja la invisibilidad para su plan más caro.",
+          },
+          {
+            q: "¿Se puede usar una alternativa a Cluely sin suscripción?",
+            a: "Con CloakView sí. Pro es un pago único de 99 USD y el único coste recurrente es tu propio consumo de OpenAI, facturado por OpenAI. Smog AI también vende una licencia de por vida de 199 USD que permite traer tu propia clave.",
+          },
+        ],
+      },
       faq: [
         {
           q: "¿CloakView es un clon de Cluely?",
@@ -722,6 +859,23 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
       ],
       verdict:
         "Estos dos están de verdad cerca, así que compra por el detalle que te importe. Smog gana si necesitas Windows, quieres los modelos incluidos en un pago único o exportas mucho. CloakView gana si quieres el precio único más bajo, sin cuota y sin cuenta, y no te importa ser tú quien lleva la clave de OpenAI.",
+      alternative: {
+        heading: "¿Buscás una alternativa a Smog AI?",
+        paragraphs: [
+          "Smog AI es el producto más parecido a CloakView: una ventana nativa de Mac que desaparece de la pantalla compartida y guarda las transcripciones en la máquina. Se busca una alternativa por dos motivos: la forma del precio y el techo. Los planes de pago de Smog son una suscripción o una licencia de por vida de 199 USD, y su plan gratuito tiene una cuota de tokens.",
+          "CloakView responde a las dos cosas de frente: Pro son 99 USD una vez y no hay cuota de ningún tipo; el único límite es el de gasto que fijes en tu propia cuenta de OpenAI. Lo que Smog sigue haciendo y CloakView no: una beta de Windows 10/11 y exportación a PDF, Markdown y correo.",
+        ],
+        faq: [
+          {
+            q: "¿Existe una alternativa a Smog AI sin cuota de tokens?",
+            a: "CloakView no tiene plan medido ni freno por uso razonable; el único techo es el límite de gasto que configures en tu cuenta de OpenAI. El plan gratuito de Smog está medido en tokens, con uso ilimitado en sus planes de pago.",
+          },
+          {
+            q: "¿Hay una alternativa más barata que la licencia de por vida de Smog?",
+            a: "CloakView Pro son 99 USD una vez frente a los 199 USD del plan de por vida de Smog, y en los dos casos te quedas con tu clave de OpenAI y le pagás a OpenAI el consumo. La licencia de Smog incluye sus modelos; arriba están comparadas las dos formas de precio.",
+          },
+        ],
+      },
       faq: [
         {
           q: "¿Smog es más barato que CloakView?",
@@ -840,6 +994,23 @@ export const compareDocs: Record<Locale, Record<CompareSlug, CompareDoc>> = {
       ],
       verdict:
         "Si quieres practicar, recibir puntuaciones y seguir un programa estructurado de búsqueda de empleo, Final Round AI es el producto más completo y la suscripción te compra funciones reales. Si solo quieres el copiloto en vivo —invisible, en tu Mac y pagado una vez— CloakView cuesta una fracción de un año de Final Round y mantiene tus transcripciones en local.",
+      alternative: {
+        heading: "¿Buscás una alternativa a Final Round AI?",
+        paragraphs: [
+          "Se busca una alternativa a Final Round AI por dos motivos: la suscripción, que empieza en 25 USD/mes con facturación anual y son 90 USD por un solo mes (no reembolsable), o porque solo se quiere el copiloto en vivo y no todo un programa de preparación de entrevistas.",
+          "CloakView es solo el copiloto: una ventana que transcribe la llamada, responde y se queda fuera de la pantalla que compartís, con una app gratuita y Pro por 99 USD una vez. Lo que no hace es practicar con vos: sin entrevistas simuladas, sin puntuaciones, sin la promesa de 91 idiomas. Si querés eso, Final Round es el producto que lo tiene, y la comparativa de arriba lo dice.",
+        ],
+        faq: [
+          {
+            q: "¿Cuál es una alternativa más barata a Final Round AI?",
+            a: "CloakView: la app es gratis y Pro es un pago único de 99 USD, mientras que Final Round empieza en 25 USD/mes con facturación anual (300 USD al año) y no tiene plan gratuito permanente, solo una prueba de 10 minutos.",
+          },
+          {
+            q: "¿Hay una alternativa a Final Round AI sin suscripción?",
+            a: "Sí. CloakView cobra Pro una sola vez y no renueva; el único coste recurrente es el consumo de OpenAI que generes. No incluye práctica de entrevistas, puntuaciones ni trabajo de currículum, que es lo que paga la suscripción de Final Round.",
+          },
+        ],
+      },
       faq: [
         {
           q: "¿Final Round AI es gratis?",

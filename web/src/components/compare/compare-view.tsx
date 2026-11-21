@@ -149,6 +149,22 @@ export function CompareView({ locale, slug }: { locale: Locale; slug: CompareSlu
         </ul>
       </Section>
 
+      <Section id="alternative" title={doc.alternative.heading}>
+        <div className="mt-4 space-y-4 text-lg leading-relaxed text-muted">
+          {doc.alternative.paragraphs.map((paragraph) => (
+            <p key={paragraph.slice(0, 32)}>{paragraph}</p>
+          ))}
+        </div>
+        <div className="mt-6 space-y-3">
+          {doc.alternative.faq.map((item) => (
+            <details key={item.q} className="rounded-xl border border-border bg-surface px-5 py-4">
+              <summary className="cursor-pointer font-medium text-foreground">{item.q}</summary>
+              <p className="mt-3 text-muted">{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </Section>
+
       <Section id="verdict" title={labels.verdictHeading}>
         <p className="mt-4 text-lg leading-relaxed text-muted">{doc.verdict}</p>
       </Section>

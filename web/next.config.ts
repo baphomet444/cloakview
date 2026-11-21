@@ -22,6 +22,15 @@ const nextConfig: NextConfig = {
         destination: "https://getcloakview.com/:path*",
         permanent: true,
       },
+      // El alias de producción de Vercel queda indexable si se sirve con 200:
+      // Google lo trata como un segundo host con el mismo contenido. Un 301 al
+      // dominio real lo consolida en una sola URL.
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "cloakview.vercel.app" }],
+        destination: "https://getcloakview.com/:path*",
+        permanent: true,
+      },
     ];
   },
   // Files in /public ship unhashed, so Next serves them with max-age=0. They only

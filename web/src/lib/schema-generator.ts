@@ -93,6 +93,17 @@ export function generateOrganizationSchema(locale: Locale) {
         name: siteConfig.name,
         url: siteConfig.url,
         logo: `${siteConfig.url}/brand/logo.png`,
+        description: siteConfig.description[locale],
+        slogan: siteConfig.tagline[locale],
+        // Cómo se escribe y se busca la marca además del nombre exacto: el término
+        // "cloakview" a secas lo ocupan homónimos (ClickView, Clearview), así que
+        // el panel de marca necesita las variantes con las que la gente la busca.
+        alternateName: [
+          "CloakView meeting copilot",
+          "CloakView AI",
+          "Cloak View",
+          "getcloakview.com",
+        ],
         email: siteConfig.SUPPORT_EMAIL,
         sameAs: [siteConfig.INSTAGRAM_URL, siteConfig.GITHUB_REPO],
       },

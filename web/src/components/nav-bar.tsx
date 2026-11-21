@@ -13,6 +13,7 @@ export function NavBar({ dict, locale }: { dict: Dictionary; locale: Locale }) {
   const links = [
     { href: "/", label: dict.nav.home },
     { href: "/pricing", label: dict.nav.pricing },
+    { href: "/vs", label: dict.nav.compare },
     { href: "/guide", label: dict.nav.docs },
   ];
 
