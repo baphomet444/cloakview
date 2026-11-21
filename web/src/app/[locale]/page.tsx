@@ -47,7 +47,9 @@ export default async function HomePage({
       <CostsSection dict={dict.home.costs} />
       <Faq dict={dict.home.faq} />
       <DownloadCta dict={dict.home.download} />
-      <NewsletterForm dict={dict.newsletter} locale={locale} source="home" />
+      {process.env.NEWSLETTER_ENDPOINT ? (
+        <NewsletterForm dict={dict.newsletter} locale={locale} source="home" />
+      ) : null}
     </>
   );
 }

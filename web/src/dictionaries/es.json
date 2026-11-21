@@ -262,7 +262,7 @@
       "title": "Qué trae el DMG",
       "intro": "Un archivo de 9,2 MB publicado en GitHub Releases, firmado y notarizado por Apple.",
       "items": [
-        "CloakView 0.2.1 para Apple Silicon (arm64). No hay versión Intel en la v1.",
+        "CloakView 0.3.2 para Apple Silicon (arm64). No hay versión Intel en la v1.",
         "Un archivo de checksums junto al DMG para comparar el SHA-256 antes de abrir nada.",
         "Sin instalador ni proceso auxiliar: abrís el DMG, arrastrás la app a Aplicaciones y lo expulsás."
       ]

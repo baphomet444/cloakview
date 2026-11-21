@@ -63,7 +63,9 @@ export default async function PricingPage({
           <p className="mt-6 text-sm text-muted">{dict.pricing.cta.note}</p>
         </div>
       </section>
-      <NewsletterForm dict={dict.newsletter} locale={locale} source="pricing" />
+      {process.env.NEWSLETTER_ENDPOINT ? (
+        <NewsletterForm dict={dict.newsletter} locale={locale} source="pricing" />
+      ) : null}
     </>
   );
 }
