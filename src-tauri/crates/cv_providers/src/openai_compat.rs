@@ -106,21 +106,21 @@ impl OpenAiCompat {
         json!(messages)
     }
 
-    /// One streaming suggestion request, whichever dialect this profile
-    /// speaks. The returned receiver is fed parsed `SuggestionEvent`s from a
-    /// spawned task; the task stops on `Done`/`Failed` or when the receiver
-    /// is dropped.
-    async fn stream_events(&self, request: &SuggestionRequest) -> Result<mpsc::Receiver<SuggestionEvent>, ProviderError> {
-        let (url, body): (String, Value) = match self.profile.flavor {
-            ApiFlavor::Responses => (
-                format!("{}/responses", self.profile.base_url),
-                json!({
+    /// The URL and JSON body of one streaming suggestion request.
+    fn request_body(&self, request: &SuggestionRequest) -> (String, Value) {
+        match self.profile.flavor {
+            ApiFlavor::Responses => {
+                let mut body = json!({
                     "model": self.profile.llm_model,
                     "instructions": request.instructions,
                     "input": Self::responses_input(&request.messages),
                     "stream": true,
-                }),
-            ),
+                });
+                if let Some(effort) = self.profile.reasoning_effort {
+                    body["reasoning"] = json!({ "effort": effort });
+                }
+                (format!("{}/responses", self.profile.base_url), body)
+            }
             ApiFlavor::Chat => (
                 format!("{}/chat/completions", self.profile.base_url),
                 json!({
@@ -129,7 +129,15 @@ impl OpenAiCompat {
                     "stream": true,
                 }),
             ),
-        };
+        }
+    }
+
+    /// One streaming suggestion request, whichever dialect this profile
+    /// speaks. The returned receiver is fed parsed `SuggestionEvent`s from a
+    /// spawned task; the task stops on `Done`/`Failed` or when the receiver
+    /// is dropped.
+    async fn stream_events(&self, request: &SuggestionRequest) -> Result<mpsc::Receiver<SuggestionEvent>, ProviderError> {
+        let (url, body) = self.request_body(request);
 
         let resp = self
             .http
@@ -241,6 +249,30 @@ mod tests {
         let seg = AudioSegment { pcm16_mono_16k: vec![0; 160], source: AudioSource::Microphone };
         let err = prov.transcribe(&seg, None).await.unwrap_err();
         assert!(matches!(err, ProviderError::NoSttSupport(_)));
+    }
+
+    #[test]
+    fn openai_asks_a_reasoning_model_with_low_effort() {
+        let p = builtin_profiles().into_iter().find(|p| p.id == "openai").unwrap();
+        assert_eq!(p.llm_model, "gpt-6-luna");
+        let prov = OpenAiCompat::new(p, "k".into());
+        let request = SuggestionRequest { instructions: "i".into(), messages: vec![ChatMessage::text("user", "q")] };
+        let (url, body) = prov.request_body(&request);
+        assert!(url.ends_with("/responses"));
+        assert_eq!(body["model"], json!("gpt-6-luna"));
+        assert_eq!(body["reasoning"], json!({ "effort": "low" }));
+        assert_eq!(body["stream"], json!(true));
+    }
+
+    #[test]
+    fn other_providers_send_no_reasoning_field() {
+        for id in ["groq", "together"] {
+            let p = builtin_profiles().into_iter().find(|p| p.id == id).unwrap();
+            let prov = OpenAiCompat::new(p, "k".into());
+            let request = SuggestionRequest { instructions: "i".into(), messages: vec![ChatMessage::text("user", "q")] };
+            let (_, body) = prov.request_body(&request);
+            assert!(body.get("reasoning").is_none(), "{id} must not get a reasoning field");
+        }
     }
 
     #[test]

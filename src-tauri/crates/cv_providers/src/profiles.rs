@@ -27,6 +27,10 @@ pub struct ProviderProfile {
     pub stt_mode: SttMode,
     pub stt_model: Option<String>, // None => provider cannot transcribe
     pub llm_model: String,
+    /// How hard a reasoning model thinks before answering (`reasoning.effort`
+    /// of the Responses API). `None` sends no field, which is what non-reasoning
+    /// models and the Chat dialect need.
+    pub reasoning_effort: Option<&'static str>,
     /// Which STT models the provider offers for the streaming listen path.
     /// Empty for providers that cannot stream (Batch) or have no STT at all.
     /// The first entry is the default.
@@ -52,7 +56,8 @@ pub fn builtin_profiles() -> Vec<ProviderProfile> {
             // 0.2.1 build already uses. The batch name is what transcribe()
             // and the connection test use.
             stt_model: Some("gpt-4o-mini-transcribe".into()),
-            llm_model: "gpt-4o-mini".into(),
+            llm_model: "gpt-6-luna".into(),
+            reasoning_effort: Some("low"),
             stt_model_options: &[
                 "gpt-4o-mini-transcribe",
                 "gpt-4o-transcribe",
@@ -69,6 +74,7 @@ pub fn builtin_profiles() -> Vec<ProviderProfile> {
             // llama-3.3-70b-versatile was retired 2026-08-16; gpt-oss-120b is
             // in the current production table.
             llm_model: "openai/gpt-oss-120b".into(),
+            reasoning_effort: None,
             stt_model_options: &[],
             models_doc_url: "https://console.groq.com/docs/models".into(),
         },
@@ -82,6 +88,7 @@ pub fn builtin_profiles() -> Vec<ProviderProfile> {
             // Llama-3.3-70B left the serverless catalog; gpt-oss-120b is in
             // the current chat table.
             llm_model: "openai/gpt-oss-120b".into(),
+            reasoning_effort: None,
             stt_model_options: &[],
             models_doc_url: "https://docs.together.ai/docs/serverless-models".into(),
         },
