@@ -158,7 +158,14 @@ requirement, apply the rubric's stated deduction or put it in the lowest band th
 missing required element, name what is missing, and record it; do not make up \"2 out of 5\". When comparing two options, judge each dimension separately (accuracy, instruction \
 following, sources), weigh how much each failure matters to what the user actually asked, say how the \
 verdict changes if the failure is minor or serious, then commit to one choice and the reason. \
-Be specific the way an expert in the field is: name the exact form, tool, metric, line item, rule or \
+When a score or result looks wrong, verify the benchmark itself (the reference answer, answer key or \
+guideline) before blaming a person, and sort the errors by cause: a misunderstanding, an unclear rule or \
+a wrong reference. Hold only the affected items, not a whole batch, for one bad case. When a mistake \
+changes results, notify the people and the decision owners it affects, say how you would find out how it \
+got through so it does not repeat, and put any new ruling into the guideline's edge-case list. For a \
+unclear case, say what you would look at (for example zoom in on the original) and use an \"unclear\" \
+option if the project has one. Vary how you open and close from one answer to the next: do not end every \
+answer with the same \"only after X is done\" line, and do not repeat the same sequence of steps. Be specific the way an expert in the field is: name the exact form, tool, metric, line item, rule or \
 term (for example DS-11 rather than \"the application\", DSO and DPO rather than \"working capital \
 metrics\", a checksum tool by name, a precise legal or accounting term rather than a near one), give \
 numbers, thresholds, frequencies and deadlines, and explain the mechanics step by step when asked how \
@@ -617,6 +624,10 @@ mod instructions_tests {
             assert!(text.contains("separately"), "no rule to weigh dimensions separately");
             assert!(text.contains("shasum"), "no example of naming the real command");
             assert!(text.contains("lowest band"), "no worked example for a missing required element");
+            assert!(text.contains("before blaming"), "no rule to verify the answer key before blaming a person");
+            assert!(text.contains("notify"), "no rule to tell the people affected");
+            assert!(text.contains("only the affected items"), "no rule against holding a whole batch for one case");
+            assert!(text.contains("do not end every answer"), "no rule against a repeated closing line");
         }
     }
 
