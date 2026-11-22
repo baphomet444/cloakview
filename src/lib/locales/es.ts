@@ -46,7 +46,7 @@ export const es: Catalog = {
   "settings.listeningNote": "La escucha en vivo necesita un proveedor en streaming. Este transcribe por lotes: las respuestas funcionan, la escucha en vivo todavía no.",
   "settings.modelsLine": "Transcripción: {stt} · Respuestas: {llm}",
   "settings.answerModel": "Modelo de respuestas",
-  "settings.answerModelHint": "Se usa para responder, leer la pantalla, escribir, traducir y resumir. Luna es más barato. Terra redacta y lee mejor la pantalla, por unas 10 veces el precio. La traducción cambia la próxima vez que empieces a escuchar.",
+  "settings.answerModelHint": "Se usa para responder, leer la pantalla, escribir, traducir y resumir. GPT-6 Luna es más barato. GPT-6.1 Terra redacta y lee mejor la pantalla, por unas 10 veces el precio. La traducción cambia la próxima vez que empieces a escuchar.",
   "settings.realtimeModel": "Modelo de transcripción",
   "settings.realtimeModelHint": "Qué modelo de OpenAI Realtime transcribe la llamada. gpt-4o-mini-transcribe es más rápido y barato; gpt-4o-transcribe es más preciso.",
   "settings.replyDelay": "Retraso de respuesta",

@@ -9,8 +9,8 @@ export function themeFromSetting(theme: string): Theme {
 }
 
 const ANSWER_MODEL_NAMES: Readonly<Record<string, string>> = {
-  "gpt-6-luna": "Luna",
-  "gpt-6.1-terra": "Terra",
+  "gpt-6-luna": "GPT-6 Luna",
+  "gpt-6.1-terra": "GPT-6.1 Terra",
 };
 
 export function answerModelLabel(model: string): string {

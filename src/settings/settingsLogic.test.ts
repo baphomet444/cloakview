@@ -32,9 +32,9 @@ const settings: Settings = {
 };
 
 describe("answerModelLabel", () => {
-  it("shows the short names, and the id of a model it has no name for", () => {
-    expect(answerModelLabel("gpt-6-luna")).toBe("Luna");
-    expect(answerModelLabel("gpt-6.1-terra")).toBe("Terra");
+  it("shows the official name with its version, and the id of a model it has no name for", () => {
+    expect(answerModelLabel("gpt-6-luna")).toBe("GPT-6 Luna");
+    expect(answerModelLabel("gpt-6.1-terra")).toBe("GPT-6.1 Terra");
     expect(answerModelLabel("something-else")).toBe("something-else");
   });
 });
