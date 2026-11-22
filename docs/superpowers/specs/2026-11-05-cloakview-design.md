@@ -191,8 +191,7 @@ para mostrarlos en su línea de error).
   API con la key del usuario), traducción realtime, whisper.cpp offline,
   auto-notas con resumen al cerrar sesión, export PDF/Markdown/Email,
   themes avanzados. Licencia: key Ed25519 firmada (validación offline contra
-  clave pública embebida), venta vía merchant of record (Lemon Squeezy o
-  Polar — cobran, manejan impuestos y emiten keys). Sin servidor de
+  clave pública embebida), venta vía merchant of record (Polar — cobra, maneja impuestos y emite keys). Sin servidor de
   activación propio. Check `is_pro()` en Rust leyendo estado de licencia.
 - **v2 (futuro, fuera de este spec):** relay opcional de tokens (suscripción,
   requiere backend), Windows, features de equipo/B2B, i18n completo.

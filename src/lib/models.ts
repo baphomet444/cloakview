@@ -92,7 +92,7 @@ export type Shortcuts = {
 /** `src-tauri/src/license/mod.rs` (`License`): a `status` tag; an active license carries its activation and the store that sold it. */
 export type License =
   | { status: "inactive" }
-  | { status: "active"; key: string; instanceId: string; provider: "polar" | "lemonSqueezy" };
+  | { status: "active"; key: string; instanceId: string; provider: "polar" };
 
 /** `src-tauri/src/session.rs` (`Entry`): one thing that happened during an interview. */
 export type SessionEntry =
