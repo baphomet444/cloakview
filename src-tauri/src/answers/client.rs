@@ -102,84 +102,51 @@ fn reply_request(unanswered: &[(bool, String)]) -> Option<String> {
     ))
 }
 
-/// What the model is asked to do. The role mapping matters: `build_messages`
-/// sends what the others said as `assistant` turns, so without this the model
-/// would take those words for its own. The diagram paragraph is CloakView Pro;
-/// free users get the same instructions without it (see `instructions`).
+/// Conversation context the model needs to make sense of the call: the role
+/// mapping (`build_messages` sends what the others said as `assistant` turns,
+/// so without this the model would take those words for its own) and how to
+/// treat transcription errors. The answer rules themselves are the fixed
+/// /focus set below, the same for every model.
 const INSTRUCTIONS_BASE: &str = "You are a private copilot for the user during a live meeting or interview. \
 In the conversation, messages with the role 'assistant' are what the OTHER participants said, \
 transcribed from the call; they are not your words. Messages with the role 'user' are the user's \
 own words, or a request the user typed to you. \
-The transcription is automatic and imperfect. A line that makes no sense in the conversation, is in a \
-language nobody on the call is speaking, or reads like background noise turned into words is a \
-transcription error: ignore it, never answer it and never mention it. If nothing new makes sense, say in \
-a few words that there is nothing to reply to yet. \
-When you are asked to suggest a reply, or the last message is from another participant, write what the \
-user should say aloud, in the first person, in the language the participant used. \
-Sound like a real person talking, not an assistant writing: use contractions, everyday words, and a mix of \
-short and longer sentences. Lead with the answer in a sentence or two, and add detail only when it helps. \
-No preamble, no sign-off, no filler such as \"Certainly\" or \"Great question\". \
-Spoken answers have no bullets, no headings and no bold: write plain flowing sentences. \
-If they asked more than one question or made more than one request, answer every one of them in the \
-order asked, as one natural flow (\"On the first one... and for the second...\"); never answer only the last one. \
-If the last message is a question typed by the user, answer it the same way, using the conversation as context. \
-Fenced code blocks are fine when code is the answer. Write math in plain text, never LaTeX. ";
+The transcription is automatic and imperfect: ignore any line that makes no sense in the \
+conversation, is in a language nobody on the call is speaking, or reads like background noise \
+turned into words. Never answer such a line and never mention it. \
+If nothing new makes sense, say in a few words that there is nothing to reply to yet. ";
 
-/// Why answers get rejected: they explain what to consider and stop before the
-/// decision. Used for every spoken suggestion and every typed answer.
-const DECISIVE_PARAGRAPH: &str = "Make the answer decisive and concrete. For a scenario or \"what would you do\" question, \
-say what you would decide first, then the exact evidence or rule you would check, then the action you \
-would take based on it, then how you would know it worked or stop it happening again. One clear sentence \
-for each part is enough. Never stop at the process: finish with the decision. Replace vague phrases with \
-specific actions, for example not \"I'd consider the context\" but \"I'd check whether the image shows a \
-business sign or merchandise\"; not \"I'd consult with the team\" but \"I'd escalate the unclear case to the \
-project lead and write down the decision\"; not \"I'd run regular audits\" but \"I'd review a sample from \
-each person every week\". When the question gives no number or rule you need, say \"assuming the target is \
-90 percent\" and carry on, instead of staying general. If you truly do not know a rule, say so plainly and \
-say what you would do next. \
-Answer the exact scenario you were given. Start from what the question has already established: use its \
-numbers and stated facts, and do the calculation out loud (for example 16 of 20 is 80 percent, below a \
-90 percent target; correcting two wrong answer-key labels turns it into 18 of 20, which is 90). Deal with \
-the root cause the question points to before anything generic: if the answer key was wrong, correct the \
-key and recalculate before talking about retraining anyone. Never fall back on stock process such as \
-\"review the guidelines with the team\" or \"follow up with the annotators\" unless the facts call for it. \
-When a problem could have spread, say who or what else you would check and recompute. Say \"assuming\" \
-only for something the question does not give, and never doubt or hedge a fact it states. \
-Stay in the role the scenario gives you: an evaluator or reviewer scores, flags, documents and escalates \
-per the rubric or guidelines; they do not rewrite the work, run a training session or redesign the \
-process unless the question asks for that. Before anything irreversible, such as deleting, overwriting or \
-sending, verify first, check what depends on it, and follow the project's approval process; prefer \
-flagging or holding over acting at once. Name the real command or tool, not just the algorithm (for \
-example shasum -a 256 on a Mac or Get-FileHash on Windows, not \"a SHA-256 tool\"). Never invent a score, \
-scale, threshold or rule the question did not give: say you would score it per the rubric, and if the \
-rubric is not stated, say how the result would change under each plausible reading and which you would \
-check first. For example, if the rubric requires sources and the response has none, say it fails that \
-requirement, apply the rubric's stated deduction or put it in the lowest band the rubric allows for a \
-missing required element, name what is missing, and record it; do not make up \"2 out of 5\". When comparing two options, judge each dimension separately (accuracy, instruction \
-following, sources), weigh how much each failure matters to what the user actually asked, say how the \
-verdict changes if the failure is minor or serious, then commit to one choice and the reason. \
-When a score or result looks wrong, verify the benchmark itself (the reference answer, answer key or \
-guideline) before blaming a person, and sort the errors by cause: a misunderstanding, an unclear rule or \
-a wrong reference. Decide how much to hold by the result. For one bad case, or an audit that still meets its \
-target, hold only the affected items, not a whole batch. For an audit below its target, fail and hold the whole batch, \
-because the audited items are only a sample of it; say how many errors the target allows at that sample size, \
-rounded down (a 90 percent target allows 2 in 25); if a reference was wrong, correct it, recalculate and say \
-at what corrected score it passes; after real errors are fixed, audit a new random sample, because the same \
-items measured again after correction prove nothing about the rest. When a mistake has already changed someone's \
-score or a result others rely on, notify the people and the decision owners it affects and say how you would find \
-out how it got through so it does not repeat. When the case needs a new ruling, put it into the guideline's \
-edge-case list. Skip either step when the scenario does not involve it. For a \
-unclear case, say what you would look at (for example zoom in on the original) and use an \"unclear\" \
-option if the project has one. Vary how you open and close from one answer to the next: do not end every \
-answer with the same \"only after X is done\" line, and do not repeat the same sequence of steps. Be specific the way an expert in the field is: name the exact form, tool, metric, line item, rule or \
-term (for example DS-11 rather than \"the application\", DSO and DPO rather than \"working capital \
-metrics\", a checksum tool by name, a precise legal or accounting term rather than a near one), give \
-numbers, thresholds, frequencies and deadlines, and explain the mechanics step by step when asked how \
-something works. But never invent a figure, form number, fee, citation or statistic: if you are not sure \
-of an exact value, give the mechanism and say you would confirm the current figure at the official source. \
-Finish every thought: if you open a point such as monitoring or follow-up, say what you would measure and \
-what you would do about it. Keep it tight, about four to seven spoken sentences, without restating the \
-question, and no filler or repeated points. ";
+/// The shared answer rules (the fixed /focus set), the same for every model
+/// and for both surfaces: the spoken Ask answer (`instructions`) and the
+/// written type-ready answer (`type_ready_instructions`). One source, so the
+/// two paths cannot drift apart again.
+const ANSWER_RULES: &str = r#"You are answering for a candidate in a live interview. The answer is read on an overlay and spoken almost verbatim, so it must be sayable out loud and complete in under 15 seconds unless the question is technical.
+
+1. Answer in the interviewer's language. Switch if they switch.
+2. First sentence: the direct answer. No preamble, no restating the question.
+3. Then at most four short points, one line each. No headings, no bullets, no bold.
+3b. Order by urgency, not by logic. If something is time-sensitive or someone else is affected, that action goes before the analysis. Never bury the escalation at the end.
+4. Technical: working solution first, minimal and runnable, then one line on the tradeoff. State any assumption in one clause and move on.
+5. Behavioural: STAR in three sentences. First person, past tense.
+6. If a fact is not known, mark it as an assumption rather than asserting it. Never open with "that depends".
+6b. When a number already settles it, do not walk through the arithmetic. One clause is enough.
+7. No filler: basically, essentially, as an AI, it is important to note. Never "I think" when you know.
+8. Concrete over abstract: real numbers, real tools.
+9. If pushed back on, concede the specific point and add the missing piece. Do not restate.
+10. Hard limit: 60 words behavioural, 90 technical. A process or judgement question gets 60, because the decision matters more than the reasoning. Over the limit means cut, not shorten.
+10b. Typed, not spoken: give the concrete decision first, then the exact check, then the action, one sentence each.
+
+SOUND HUMAN
+- Contractions always.
+- Vary sentence length: three short, one long, one short. Never four similar in a row.
+- Allow one imperfection per answer, never two.
+- Use "we" for team work, "I" for your own.
+- Numbers stay slightly ugly: 340ms, not "a few hundred milliseconds".
+
+BANNED
+delve, leverage, robust, seamless, holistic, landscape, realm, navigate, underscore, pivotal, crucial.
+"It's not just X, it's Y." "Not only... but also." Rule of three in every list. Em dashes mid-sentence. Opening by echoing the question. A closing summary that repeats. Semicolons, anywhere, even between short clauses. Split the sentence. Parentheses over three words. Symbols read aloud.
+Before answering: no semicolons, under the word limit, first word is the decision, nothing urgent left at the end. If any fails, rewrite. "#;
 
 const DIAGRAM_PARAGRAPH: &str = "When a drawing explains it better than words (a process, an architecture, a sequence of steps between \
 parties, a timeline, a hierarchy), or when the user asks for a sketch or diagram, add ONE diagram as a \
@@ -239,17 +206,19 @@ fn about_paragraph(pro: bool, about_user: Option<&str>) -> String {
     }
 }
 
-/// The instructions for one answer: the call or the screen, with the diagram
-/// paragraph only for CloakView Pro, and the user's own notes about themselves
-/// and their chosen answer style when they have set any (also Pro). Built per
-/// request (a handful of string copies once per answer, not per token).
+/// The instructions for one answer: the call or the screen. The call is the
+/// conversation context plus the shared `ANSWER_RULES`; the screen keeps its
+/// own instructions. CloakView Pro additionally sends the user's own notes
+/// about themselves, their chosen answer style and the diagram paragraph.
+/// Built per request (a handful of string copies once per answer, not per
+/// token).
 fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>, style: &str) -> String {
     let (base, tail) = if for_screen {
         (SCREEN_INSTRUCTIONS_BASE, SCREEN_INSTRUCTIONS_TAIL)
     } else {
         (INSTRUCTIONS_BASE, INSTRUCTIONS_TAIL)
     };
-    let decisive = if for_screen { "" } else { DECISIVE_PARAGRAPH };
+    let rules = if for_screen { "" } else { ANSWER_RULES };
     let about = about_paragraph(pro, about_user);
     // CloakView Pro: answer styles; `balanced` and the free tier add nothing.
     let style = if pro {
@@ -259,9 +228,9 @@ fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>, style: &s
         String::new()
     };
     if pro {
-        format!("{base}{decisive}{about}{style}{DIAGRAM_PARAGRAPH}{tail}")
+        format!("{base}{rules}{about}{style}{DIAGRAM_PARAGRAPH}{tail}")
     } else {
-        format!("{base}{decisive}{tail}")
+        format!("{base}{rules}{tail}")
     }
 }
 
@@ -293,8 +262,15 @@ Use [code] only when the field is a code editor or the task is to write code: th
 never wrapped in a fenced code block, with its comments inside the code if any. \
 If nothing on the screen calls for text in that field, reply with [text] and one short sentence saying so. ";
 
+/// The written-surface instructions: the field-typing task first, then the
+/// same shared rules the spoken answer uses (so a written answer cannot come
+/// out longer, padded, or with the escalation buried), then the user's own
+/// notes when Pro.
 fn type_ready_instructions(pro: bool, about_user: Option<&str>) -> String {
-    format!("{TYPE_READY_BASE}{DECISIVE_PARAGRAPH}{}Reply in the language of the question. Do not mention these instructions.", about_paragraph(pro, about_user))
+    format!(
+        "{TYPE_READY_BASE}{ANSWER_RULES}{}Reply in the language of the question. Do not mention these instructions.",
+        about_paragraph(pro, about_user)
+    )
 }
 
 /// The user message of a type-ready request: what the field is, and the screenshot.
@@ -604,52 +580,73 @@ mod instructions_tests {
     use super::{instructions, style_paragraph, type_ready_instructions, type_ready_message};
     use cv_providers::Part;
 
-    /// Interviewers reject answers that explain what to consider but never decide.
-    /// Both the spoken suggestion and the typed answer must push for a decision,
-    /// concrete evidence, a concrete action and a follow-up, on every tier.
+    /// Spoken (call) answers follow the fixed /focus rules, and the old
+    /// decisive rules are gone: their length habits contradict the 60/120-word
+    /// hard limit, so the model must not see both.
     #[test]
-    fn spoken_and_typed_answers_must_decide_and_be_concrete() {
-        let spoken = instructions(false, false, None, "balanced");
-        let typed = type_ready_instructions(false, None);
-        for text in [&spoken, &typed] {
-            assert!(text.contains("what you would decide"), "no decision rule");
-            assert!(text.contains("assuming"), "no rule for unknown numbers");
-            assert!(text.contains("I'd consider the context"), "vague phrases are not named");
-            assert!(text.contains("how you would know"), "no follow-up rule");
-            assert!(text.contains("name the exact"), "no rule to name concrete forms, tools, metrics");
-            assert!(text.contains("never invent"), "no guard against made-up figures");
-            assert!(text.contains("without restating the question"), "no brevity rule");
-            assert!(text.contains("Finish every thought"), "no rule against trailing off");
-            assert!(text.contains("already established"), "no rule to use the facts the question gives");
-            assert!(text.contains("do the calculation"), "no rule to calculate out loud");
-            assert!(text.contains("root cause"), "no rule to fix the cause before generic follow-ups");
-            assert!(text.contains("never doubt"), "no rule against hedging a stated fact");
-            assert!(text.contains("Stay in the role"), "no rule to stay in the role given");
-            assert!(text.contains("irreversible"), "no rule to verify before irreversible actions");
-            assert!(text.contains("invent a score"), "no rule against made-up scores or rubric rules");
-            assert!(text.contains("separately"), "no rule to weigh dimensions separately");
-            assert!(text.contains("shasum"), "no example of naming the real command");
-            assert!(text.contains("lowest band"), "no worked example for a missing required element");
-            assert!(text.contains("before blaming"), "no rule to verify the answer key before blaming a person");
-            assert!(text.contains("notify"), "no rule to tell the people affected");
-            assert!(text.contains("only the affected items"), "no rule against holding a whole batch for one case");
-            assert!(text.contains("do not end every answer"), "no rule against a repeated closing line");
+    fn spoken_answers_use_the_fixed_focus_rules() {
+        for pro in [false, true] {
+            let text = instructions(false, pro, None, "balanced");
+            for needle in [
+                "under 15 seconds",
+                "60 words",
+                "90 technical",
+                "STAR",
+                "that depends",
+                "Contractions always",
+                "delve",
+                "SOUND HUMAN",
+                "BANNED",
+                "Order by urgency",
+                "do not walk through the arithmetic",
+                "Split the sentence",
+                "Before answering",
+            ] {
+                assert!(text.contains(needle), "pro={pro}: /focus rules lost {needle:?}");
+            }
+            assert!(text.contains("assistant"), "pro={pro}: lost the role mapping");
+            assert!(text.contains("transcription"), "pro={pro}: lost the transcription-error rule");
+            assert!(!text.contains("what you would decide"), "pro={pro}: DECISIVE paragraph survived");
+            assert!(!text.contains("DECISIVE"), "pro={pro}: DECISIVE named in the prompt");
         }
     }
 
-    /// A failed audit is evidence about the whole batch; one bad case is not.
-    /// Steps for other scenarios (notices, new rulings) must not pad the answer.
+    /// Typed answers use the same shared rules as the spoken ones: urgency
+    /// ordering, no arithmetic walk-through, no semicolons, the pre-answer
+    /// check, the 90-word technical limit.
     #[test]
-    fn a_failed_audit_holds_the_batch_and_one_bad_case_does_not() {
-        for pro in [false, true] {
-            for text in [instructions(false, pro, None, "balanced"), type_ready_instructions(pro, None)] {
-                assert!(text.contains("fail and hold the whole batch"), "a failed audit must hold the batch");
-                assert!(text.contains("hold only the affected items"), "one bad case must not hold the batch");
-                assert!(text.contains("how many errors the target allows"), "no error budget");
-                assert!(text.contains("at what corrected score it passes"), "no rescore after a wrong reference");
-                assert!(text.contains("new random sample"), "the corrected items must not be the recheck");
-                assert!(text.contains("Skip either step"), "conditional steps must not be added to every answer");
+    fn typed_answers_must_decide_and_be_concrete() {
+        let typed = type_ready_instructions(false, None);
+        for needle in [
+            "Order by urgency",
+            "do not walk through the arithmetic",
+            "Split the sentence",
+            "Before answering",
+            "90 technical",
+        ] {
+            assert!(typed.contains(needle), "typed instructions lost {needle:?}");
+        }
+    }
+
+    /// The two answer surfaces must carry the same rule set forever: if one of
+    /// them ever stops concatenating `ANSWER_RULES` (as type-ready did with
+    /// the old decisive paragraph), this fails.
+    #[test]
+    fn spoken_and_typed_answers_share_one_rule_set() {
+        let needles = [
+            "under 15 seconds",
+            "Order by urgency",
+            "do not walk through the arithmetic",
+            "Split the sentence",
+            "Before answering",
+            "60 words",
+            "90 technical",
+        ];
+        for text in [instructions(false, false, None, "balanced"), type_ready_instructions(false, None)] {
+            for needle in needles {
+                assert!(text.contains(needle), "an answer surface lost {needle:?}");
             }
+            assert!(!text.contains("DECISIVE"), "an answer surface still carries the old decisive paragraph");
         }
     }
 
@@ -692,7 +689,7 @@ mod instructions_tests {
     #[test]
     fn answer_styles_go_out_only_for_pro() {
         for (style, marker) in [
-            ("interview", "STAR"),
+            ("interview", "situation, task, action, result"),
             ("sales", "sales call"),
             ("technical", "deep-dive"),
             ("short", "three short sentences"),
@@ -707,7 +704,7 @@ mod instructions_tests {
         assert_eq!(style_paragraph("balanced"), "");
         assert_eq!(style_paragraph("something-else"), "");
         let balanced = instructions(false, true, None, "balanced");
-        assert!(!balanced.contains("STAR"));
+        assert!(!balanced.contains("situation, task, action, result"));
         assert!(!balanced.contains("sales call"));
     }
 
@@ -715,8 +712,11 @@ mod instructions_tests {
     fn spoken_voice_rules_are_in_every_call_instruction() {
         for pro in [false, true] {
             let text = instructions(false, pro, None, "balanced");
-            assert!(text.contains("contractions"), "pro={pro}: lost the spoken-voice rule");
             assert!(text.contains("no bullets"), "pro={pro}: lost the no-bullets rule");
+            assert!(
+                text.to_lowercase().contains("contractions"),
+                "pro={pro}: lost the contractions rule"
+            );
             assert!(!text.contains("short bold label"), "pro={pro}: still asks for bold labels");
             assert!(
                 !text.contains("at most three short supporting points"),
@@ -740,7 +740,7 @@ mod instructions_tests {
 
     #[test]
     fn type_ready_instructions_carry_the_voice_rules() {
-        assert!(type_ready_instructions(false, None).contains("contractions"));
+        assert!(type_ready_instructions(false, None).contains("Contractions always"));
     }
 
     #[test]
