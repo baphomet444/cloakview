@@ -1,11 +1,29 @@
 /** The Settings window's decisions, free of React and Tauri so they can be unit-tested. */
-import type { Settings, SettingsPatch, Shortcuts } from "../lib/models";
+import type { ProviderInfo, Settings, SettingsPatch, Shortcuts } from "../lib/models";
 
 export type Theme = "dark" | "light";
 
 /** `settings.theme` is free-form in Rust; only "light" selects the light theme. */
 export function themeFromSetting(theme: string): Theme {
   return theme === "light" ? "light" : "dark";
+}
+
+const ANSWER_MODEL_NAMES: Readonly<Record<string, string>> = {
+  "gpt-6-luna": "Luna",
+  "gpt-6.1-terra": "Terra",
+};
+
+export function answerModelLabel(model: string): string {
+  return ANSWER_MODEL_NAMES[model] ?? model;
+}
+
+/** Live listening uses `settings.realtimeModel`; the profile's `sttModel` is only its default. */
+export function transcriptionModelShown(
+  provider: Pick<ProviderInfo, "sttModel" | "sttModelOptions">,
+  chosen: string | undefined,
+): string {
+  if (chosen !== undefined && provider.sttModelOptions.includes(chosen)) return chosen;
+  return provider.sttModel ?? "—";
 }
 
 /** Rust clamps to 0.1..=1.0 as well; below 0.1 the overlay would be invisible and impossible to find. */
@@ -19,8 +37,8 @@ export function clampOpacity(value: number): number {
 /**
  * The fields saved with the Save button, as typed. Language, theme and opacity apply
  * (and save) the moment they change; an accelerator would be invalid halfway
- * through typing, so these wait for Save. Answer models are not here at all:
- * they come from the chosen provider's profile (`list_profiles`).
+ * through typing, so these wait for Save. The answer model is not here: it
+ * saves as soon as it is picked (`set_answer_model`).
  */
 export type SettingsDraft = {
   shortcuts: Shortcuts;

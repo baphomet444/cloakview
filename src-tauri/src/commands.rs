@@ -62,6 +62,8 @@ pub struct ProviderInfo {
     /// Models the provider supports for streaming STT; empty for batch-only
     /// providers. The UI uses this to populate the realtime model dropdown.
     pub stt_model_options: Vec<String>,
+    /// Answer models the user can pick from; empty when there is no choice.
+    pub llm_model_options: Vec<String>,
     pub has_key: bool,
     pub active: bool,
 }
@@ -84,6 +86,7 @@ pub fn list_profiles(state: State<AppState>) -> Result<Vec<ProviderInfo>, IpcErr
                 stt_model: effective.stt_model,
                 llm_model: effective.llm_model,
                 stt_model_options: p.stt_model_options.iter().map(|s| (*s).to_string()).collect(),
+                llm_model_options: p.llm_model_options.iter().map(|s| (*s).to_string()).collect(),
                 has_key: secrets::has_key(&p.id).unwrap_or(false),
                 active: p.id == active.id,
             }
@@ -154,6 +157,21 @@ pub fn set_realtime_model(
     *state.settings.write().expect("settings lock") = s.clone();
     let _ = app.emit(SETTINGS_CHANGED_EVENT, s.clone());
     Ok(s)
+}
+
+/// Changes the model behind answers, screen reads, typing, translation and
+/// summaries. The in-memory settings change only once the file is saved.
+#[tauri::command]
+pub fn set_answer_model(app: AppHandle, state: State<AppState>, model: String) -> Result<Settings, IpcError> {
+    let mut current = state.settings.write().expect("settings lock");
+    let mut next = current.clone();
+    crate::providers::set_answer_model(&mut next, &model).map_err(IpcError::from)?;
+    settings::save_settings(&app, &next).map_err(IpcError::from)?;
+    *current = next.clone();
+    drop(current);
+    crate::diag::log(&format!("answer model set to {model}"));
+    let _ = app.emit(SETTINGS_CHANGED_EVENT, next.clone());
+    Ok(next)
 }
 
 /// Per-side result of `test_connection`. A failure message is a fixed

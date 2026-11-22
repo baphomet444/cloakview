@@ -155,6 +155,7 @@ const cases: Case[] = [
   ["clear_key", () => ipc.clearKey("groq"), { providerId: "groq" }],
   ["set_active_provider", () => ipc.setActiveProvider("together"), { providerId: "together" }],
   ["set_realtime_model", () => ipc.setRealtimeModel("gpt-4o-transcribe"), { model: "gpt-4o-transcribe" }],
+  ["set_answer_model", () => ipc.setAnswerModel("gpt-6.1-terra"), { model: "gpt-6.1-terra" }],
   ["test_connection", () => ipc.testConnection("openai"), { providerId: "openai" }],
 ];
 

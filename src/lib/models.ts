@@ -126,7 +126,7 @@ export type Settings = {
   opacity: number;
   /** The active AI provider's id ("openai" when unknown). Not user-editable here: `set_active_provider`. */
   activeProvider: string;
-  /** Safety valve kept in the settings file (not the UI): per-provider model replacements. */
+  /** Per-provider model replacements. `llm` is written by `set_answer_model`. */
   modelOverrides: Record<string, ModelOverride>;
   realtimeModel: string;
   /** How long to wait after the interviewer pauses before suggesting a reply (ms). */
@@ -164,6 +164,8 @@ export type ProviderInfo = {
   llmModel: string;
   /** Models the provider supports for streaming STT; empty for batch-only providers. */
   sttModelOptions: string[];
+  /** Answer models to pick from, default first; empty when there is no choice. */
+  llmModelOptions: string[];
   hasKey: boolean;
   active: boolean;
 };

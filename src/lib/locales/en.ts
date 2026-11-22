@@ -43,6 +43,8 @@ export const en = {
   "settings.providerHint": "One provider, one key: listening and answers both go to the provider you pick, using the key below.",
   "settings.listeningNote": "Listening needs a streaming provider. This one transcribes in batches — answers work, live listening does not (yet).",
   "settings.modelsLine": "Transcription: {stt} · Answers: {llm}",
+  "settings.answerModel": "Answer model",
+  "settings.answerModelHint": "Used for answers, screen reading, typing, translation and summaries. Luna is cheaper. Terra writes and reads the screen better, at about 10 times the price. Translation switches the next time you start listening.",
   "settings.realtimeModel": "Transcription model",
   "settings.realtimeModelHint": "Which OpenAI Realtime model transcribes the call. gpt-4o-mini-transcribe is faster and cheaper; gpt-4o-transcribe is more accurate.",
   "settings.replyDelay": "Reply delay",

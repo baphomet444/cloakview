@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Settings } from "../lib/models";
 import {
   MIN_OPACITY,
+  answerModelLabel,
   clampOpacity,
   draftFromSettings,
   draftIsValid,
@@ -9,6 +10,7 @@ import {
   isDraftDirty,
   maskKey,
   themeFromSetting,
+  transcriptionModelShown,
 } from "./settingsLogic";
 
 const settings: Settings = {
@@ -28,6 +30,30 @@ const settings: Settings = {
   translateTo: "",
   callLanguage: "",
 };
+
+describe("answerModelLabel", () => {
+  it("shows the short names, and the id of a model it has no name for", () => {
+    expect(answerModelLabel("gpt-6-luna")).toBe("Luna");
+    expect(answerModelLabel("gpt-6.1-terra")).toBe("Terra");
+    expect(answerModelLabel("something-else")).toBe("something-else");
+  });
+});
+
+describe("transcriptionModelShown", () => {
+  const provider = {
+    sttModel: "gpt-4o-mini-transcribe",
+    sttModelOptions: ["gpt-4o-mini-transcribe", "gpt-4o-transcribe"],
+  };
+
+  it("shows the model picked for listening, not the profile's default", () => {
+    expect(transcriptionModelShown(provider, "gpt-4o-transcribe")).toBe("gpt-4o-transcribe");
+  });
+
+  it("falls back to the profile's model for a stale or unsupported choice", () => {
+    expect(transcriptionModelShown(provider, "gpt-4o-mini-realtime")).toBe("gpt-4o-mini-transcribe");
+    expect(transcriptionModelShown({ sttModel: null, sttModelOptions: [] }, "gpt-4o-transcribe")).toBe("—");
+  });
+});
 
 describe("themeFromSetting", () => {
   it("only 'light' selects the light theme; anything else, including an unknown value, is dark", () => {

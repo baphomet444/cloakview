@@ -45,9 +45,9 @@ pub fn active_profile(settings: &Settings) -> ProviderProfile {
     effective_profile(settings, &settings.active_provider)
 }
 
-/// The profile with `model_overrides` applied. The override map is a safety
-/// valve kept in the settings file (not the UI): a retired default model can
-/// be replaced without waiting for a release.
+/// The profile with `model_overrides` applied. The map holds the answer model
+/// picked in Settings (`set_answer_model`), and stays a safety valve: a retired
+/// default model can be replaced by hand without waiting for a release.
 fn with_overrides(mut profile: ProviderProfile, overrides: Option<&ModelOverride>) -> ProviderProfile {
     if let Some(overrides) = overrides {
         if let Some(stt) = overrides.stt.as_ref().filter(|m| !m.trim().is_empty()) {
@@ -58,6 +58,23 @@ fn with_overrides(mut profile: ProviderProfile, overrides: Option<&ModelOverride
         }
     }
     profile
+}
+
+/// Picks the answer model of the active provider from the ones it offers.
+/// The default is stored as "no override", so it follows the profile.
+pub fn set_answer_model(settings: &mut Settings, model: &str) -> AppResult<()> {
+    // The profile without overrides: its `llm_model` is the real default.
+    let id = active_profile(settings).id;
+    let profile = find_profile(&id).ok_or_else(|| AppError::UnknownProvider(id.clone()))?;
+    if !profile.llm_model_options.contains(&model) {
+        return Err(AppError::Provider(format!("'{model}' is not an answer model of {}", profile.display_name)));
+    }
+    let choice = settings.model_overrides.entry(id.clone()).or_default();
+    choice.llm = (model != profile.llm_model).then(|| model.to_string());
+    if choice.llm.is_none() && choice.stt.is_none() {
+        settings.model_overrides.remove(&id);
+    }
+    Ok(())
 }
 
 fn resolve(profile: ProviderProfile, settings: &Settings) -> AppResult<Arc<dyn cv_providers::Provider>> {
@@ -125,6 +142,52 @@ mod tests {
         let none = with_overrides(p.clone(), None);
         assert_eq!(none.stt_model, p.stt_model);
         assert_eq!(none.llm_model, p.llm_model);
+    }
+
+    #[test]
+    fn choosing_terra_changes_the_model_and_keeps_the_low_effort() {
+        let mut s = Settings::default();
+        set_answer_model(&mut s, "gpt-6.1-terra").unwrap();
+        let active = active_profile(&s);
+        assert_eq!(active.llm_model, "gpt-6.1-terra");
+        assert_eq!(active.reasoning_effort, Some("low"));
+    }
+
+    #[test]
+    fn choosing_the_default_again_leaves_no_override_behind() {
+        let mut s = Settings::default();
+        set_answer_model(&mut s, "gpt-6.1-terra").unwrap();
+        set_answer_model(&mut s, "gpt-6-luna").unwrap();
+        assert_eq!(active_profile(&s).llm_model, "gpt-6-luna");
+        assert!(s.model_overrides.is_empty(), "the default must keep following the profile");
+    }
+
+    #[test]
+    fn choosing_an_answer_model_keeps_a_transcription_override() {
+        let mut s = Settings::default();
+        s.model_overrides.insert("openai".into(), ModelOverride { stt: Some("gpt-4o-transcribe".into()), llm: None });
+        for model in ["gpt-6.1-terra", "gpt-6-luna"] {
+            set_answer_model(&mut s, model).unwrap();
+            assert_eq!(active_profile(&s).stt_model.as_deref(), Some("gpt-4o-transcribe"));
+        }
+    }
+
+    #[test]
+    fn an_answer_model_that_is_not_offered_is_refused_and_changes_nothing() {
+        let mut s = Settings::default();
+        set_answer_model(&mut s, "gpt-6.1-terra").unwrap();
+        for bad in ["", "gpt-4o-transcribe", "gpt-6-terra"] {
+            assert!(matches!(set_answer_model(&mut s, bad), Err(AppError::Provider(_))), "{bad:?}");
+            assert_eq!(active_profile(&s).llm_model, "gpt-6.1-terra");
+        }
+    }
+
+    #[test]
+    fn an_answer_model_choice_survives_a_restart() {
+        let mut s = Settings::default();
+        set_answer_model(&mut s, "gpt-6.1-terra").unwrap();
+        let reloaded: Settings = serde_json::from_str(&serde_json::to_string(&s).unwrap()).unwrap();
+        assert_eq!(active_profile(&reloaded).llm_model, "gpt-6.1-terra");
     }
 
     #[test]
