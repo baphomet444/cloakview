@@ -34,7 +34,7 @@ export function DownloadButton({
 
   return (
     <a
-      href={siteConfig.GITHUB_RELEASES}
+      href={siteConfig.DOWNLOAD_URL}
       rel="noopener noreferrer"
       className={`${base} ${className}`}
     >

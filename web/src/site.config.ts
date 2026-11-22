@@ -25,6 +25,9 @@ export const siteConfig = {
 
   // --- Placeholders pendientes de valores reales ---
   GITHUB_RELEASES: "https://github.com/baphomet444/cloakview/releases/latest",
+  // Unico URL publica de descarga: firma un token corto y sirve el asset del
+  // release privado, para que el binario no tenga una ruta publica estable.
+  DOWNLOAD_URL: "/api/dl",
   GITHUB_REPO: "https://github.com/baphomet444/cloakview",
   // Perfil limpio, sin los parámetros del QR con el que se compartió.
   INSTAGRAM_URL: "https://www.instagram.com/cloak_view",
