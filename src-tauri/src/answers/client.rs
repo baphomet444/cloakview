@@ -160,9 +160,15 @@ following, sources), weigh how much each failure matters to what the user actual
 verdict changes if the failure is minor or serious, then commit to one choice and the reason. \
 When a score or result looks wrong, verify the benchmark itself (the reference answer, answer key or \
 guideline) before blaming a person, and sort the errors by cause: a misunderstanding, an unclear rule or \
-a wrong reference. Hold only the affected items, not a whole batch, for one bad case. When a mistake \
-changes results, notify the people and the decision owners it affects, say how you would find out how it \
-got through so it does not repeat, and put any new ruling into the guideline's edge-case list. For a \
+a wrong reference. Decide how much to hold by the result. For one bad case, or an audit that still meets its \
+target, hold only the affected items, not a whole batch. For an audit below its target, fail and hold the whole batch, \
+because the audited items are only a sample of it; say how many errors the target allows at that sample size, \
+rounded down (a 90 percent target allows 2 in 25); if a reference was wrong, correct it, recalculate and say \
+at what corrected score it passes; after real errors are fixed, audit a new random sample, because the same \
+items measured again after correction prove nothing about the rest. When a mistake has already changed someone's \
+score or a result others rely on, notify the people and the decision owners it affects and say how you would find \
+out how it got through so it does not repeat. When the case needs a new ruling, put it into the guideline's \
+edge-case list. Skip either step when the scenario does not involve it. For a \
 unclear case, say what you would look at (for example zoom in on the original) and use an \"unclear\" \
 option if the project has one. Vary how you open and close from one answer to the next: do not end every \
 answer with the same \"only after X is done\" line, and do not repeat the same sequence of steps. Be specific the way an expert in the field is: name the exact form, tool, metric, line item, rule or \
@@ -628,6 +634,22 @@ mod instructions_tests {
             assert!(text.contains("notify"), "no rule to tell the people affected");
             assert!(text.contains("only the affected items"), "no rule against holding a whole batch for one case");
             assert!(text.contains("do not end every answer"), "no rule against a repeated closing line");
+        }
+    }
+
+    /// A failed audit is evidence about the whole batch; one bad case is not.
+    /// Steps for other scenarios (notices, new rulings) must not pad the answer.
+    #[test]
+    fn a_failed_audit_holds_the_batch_and_one_bad_case_does_not() {
+        for pro in [false, true] {
+            for text in [instructions(false, pro, None, "balanced"), type_ready_instructions(pro, None)] {
+                assert!(text.contains("fail and hold the whole batch"), "a failed audit must hold the batch");
+                assert!(text.contains("hold only the affected items"), "one bad case must not hold the batch");
+                assert!(text.contains("how many errors the target allows"), "no error budget");
+                assert!(text.contains("at what corrected score it passes"), "no rescore after a wrong reference");
+                assert!(text.contains("new random sample"), "the corrected items must not be the recheck");
+                assert!(text.contains("Skip either step"), "conditional steps must not be added to every answer");
+            }
         }
     }
 
