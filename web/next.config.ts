@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { siteConfig } from "./src/site.config";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -16,6 +17,22 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Descarga directa: los CTA del sitio apuntan a /dl/mac y este redirect
+      // entrega el DMG de la última release. Un 302 externo a nivel de
+      // plataforma: no abre la página de GitHub, no cuesta una función.
+      // (Los redirects de next.config corren antes del proxy de locales.)
+      {
+        source: siteConfig.DOWNLOAD_URL,
+        destination: siteConfig.DOWNLOAD_DMG_ARM64,
+        permanent: false,
+      },
+      // Alias bajo /es: el enlace es el mismo en los dos idiomas, pero así una
+      // URL escrita a mano (/es/dl/mac) tampoco muere en un 404.
+      {
+        source: `/es${siteConfig.DOWNLOAD_URL}`,
+        destination: siteConfig.DOWNLOAD_DMG_ARM64,
+        permanent: false,
+      },
       {
         source: "/:path*",
         has: [{ type: "host", value: "www.getcloakview.com" }],

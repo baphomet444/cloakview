@@ -1,7 +1,10 @@
 // Qué CTA es cada enlace, para los eventos de analytics del sitio.
 // Sin imports: `tests/analytics-targets.test.ts` importa este módulo con node:test.
 
-/** Todos los CTA de descarga apuntan a la última release (siteConfig.GITHUB_RELEASES). */
+/** Todos los CTA de descarga apuntan a la descarga directa (siteConfig.DOWNLOAD_URL). */
+export const DOWNLOAD_URL = "/dl/mac";
+
+/** Se mantiene por compatibilidad: las releases de GitHub siguen contando como descarga. */
 export const GITHUB_RELEASES = "github.com/baphomet444/cloakview/releases";
 
 /** El checkout de CloakView Pro es el link de producto de Polar (siteConfig.PRO_CHECKOUT_URL). */
@@ -16,6 +19,7 @@ export type AnalyticsEvent = "download_dmg" | "checkout_click";
  */
 export function eventForHref(href: string | null | undefined): AnalyticsEvent | null {
   if (!href) return null;
+  if (href.includes(DOWNLOAD_URL)) return "download_dmg";
   if (href.includes(GITHUB_RELEASES)) return "download_dmg";
   if (href.includes(POLAR_CHECKOUT)) return "checkout_click";
   return null;

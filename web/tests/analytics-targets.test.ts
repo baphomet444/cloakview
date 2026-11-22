@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { eventForHref } from "../src/lib/analytics-targets.ts";
 
 test("los enlaces de descarga emiten download_dmg", () => {
+  assert.equal(eventForHref("/dl/mac"), "download_dmg");
   assert.equal(
     eventForHref("https://github.com/baphomet444/cloakview/releases/latest"),
     "download_dmg",

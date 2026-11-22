@@ -222,7 +222,7 @@
     "description": "Download the CloakView DMG for Apple Silicon, check its SHA-256 and install in three steps. Signed and notarized by Apple; requires macOS 14.2 or later.",
     "badge": "macOS 14.2+",
     "heading": "Download CloakView for Mac",
-    "intro": "Your key stays yours. Choose a download below; all options remain visible regardless of your device. Downloads open on GitHub Releases.",
+    "intro": "Your key stays yours. Choose a download below; all options remain visible regardless of your device. The DMG starts downloading right away, with no release page in between.",
     "optionsLabel": "Available platforms",
     "recommended": "Recommended for this Mac",
     "notarized": "Signed and notarized by Apple",
