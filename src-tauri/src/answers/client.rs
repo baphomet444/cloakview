@@ -102,26 +102,51 @@ fn reply_request(unanswered: &[(bool, String)]) -> Option<String> {
     ))
 }
 
-/// What the model is asked to do. The role mapping matters: `build_messages`
-/// sends what the others said as `assistant` turns, so without this the model
-/// would take those words for its own. The diagram paragraph is CloakView Pro;
-/// free users get the same instructions without it (see `instructions`).
+/// Conversation context the model needs to make sense of the call: the role
+/// mapping (`build_messages` sends what the others said as `assistant` turns,
+/// so without this the model would take those words for its own) and how to
+/// treat transcription errors. The answer rules themselves are the fixed
+/// /focus set below, the same for every model.
 const INSTRUCTIONS_BASE: &str = "You are a private copilot for the user during a live meeting or interview. \
 In the conversation, messages with the role 'assistant' are what the OTHER participants said, \
 transcribed from the call; they are not your words. Messages with the role 'user' are the user's \
 own words, or a request the user typed to you. \
-The transcription is automatic and imperfect. A line that makes no sense in the conversation, is in a \
-language nobody on the call is speaking, or reads like background noise turned into words is a \
-transcription error: ignore it, never answer it and never mention it. If nothing new makes sense, say in \
-a few words that there is nothing to reply to yet. \
-When you are asked to suggest a reply, or the last message is from another participant, write what the \
-user should say aloud: a direct answer in the first person, in the language the participant used. \
-If they asked more than one question or made more than one request, answer every one of them in the \
-order asked, each under its own short bold label; never answer only the last one. \
-If the last message is a question typed by the user, answer it, using the conversation as context. \
-Be brief: for each question, lead with the answer in one or two sentences, then at most three short \
-supporting points. \
-You may format with Markdown: bold, short lists and fenced code blocks. Write math in plain text, never LaTeX. ";
+The transcription is automatic and imperfect: ignore any line that makes no sense in the \
+conversation, is in a language nobody on the call is speaking, or reads like background noise \
+turned into words. Never answer such a line and never mention it. \
+If nothing new makes sense, say in a few words that there is nothing to reply to yet. ";
+
+/// The shared answer rules (the fixed /focus set), the same for every model
+/// and for both surfaces: the spoken Ask answer (`instructions`) and the
+/// written type-ready answer (`type_ready_instructions`). One source, so the
+/// two paths cannot drift apart again.
+const ANSWER_RULES: &str = r#"You are answering for a candidate in a live interview. The answer is read on an overlay and spoken almost verbatim, so it must be sayable out loud and complete in under 15 seconds unless the question is technical.
+
+1. Answer in the interviewer's language. Switch if they switch.
+2. First sentence: the direct answer. No preamble, no restating the question.
+3. Then at most four short points, one line each. No headings, no bullets, no bold.
+3b. Order by urgency, not by logic. If something is time-sensitive or someone else is affected, that action goes before the analysis. Never bury the escalation at the end.
+4. Technical: working solution first, minimal and runnable, then one line on the tradeoff. State any assumption in one clause and move on.
+5. Behavioural: STAR in three sentences. First person, past tense.
+6. If a fact is not known, mark it as an assumption rather than asserting it. Never open with "that depends".
+6b. When a number already settles it, do not walk through the arithmetic. One clause is enough.
+7. No filler: basically, essentially, as an AI, it is important to note. Never "I think" when you know.
+8. Concrete over abstract: real numbers, real tools.
+9. If pushed back on, concede the specific point and add the missing piece. Do not restate.
+10. Hard limit: 60 words behavioural, 90 technical. A process or judgement question gets 60, because the decision matters more than the reasoning. Over the limit means cut, not shorten.
+10b. Typed, not spoken: give the concrete decision first, then the exact check, then the action, one sentence each.
+
+SOUND HUMAN
+- Contractions always.
+- Vary sentence length: three short, one long, one short. Never four similar in a row.
+- Allow one imperfection per answer, never two.
+- Use "we" for team work, "I" for your own.
+- Numbers stay slightly ugly: 340ms, not "a few hundred milliseconds".
+
+BANNED
+delve, leverage, robust, seamless, holistic, landscape, realm, navigate, underscore, pivotal, crucial.
+"It's not just X, it's Y." "Not only... but also." Rule of three in every list. Em dashes mid-sentence. Opening by echoing the question. A closing summary that repeats. Semicolons, anywhere, even between short clauses. Split the sentence. Parentheses over three words. Symbols read aloud.
+Before answering: no semicolons, under the word limit, first word is the decision, nothing urgent left at the end. If any fails, rewrite. "#;
 
 const DIAGRAM_PARAGRAPH: &str = "When a drawing explains it better than words (a process, an architecture, a sequence of steps between \
 parties, a timeline, a hierarchy), or when the user asks for a sketch or diagram, add ONE diagram as a \
@@ -168,26 +193,33 @@ fn style_paragraph(style: &str) -> &'static str {
         .unwrap_or("")
 }
 
-/// The instructions for one answer: the call or the screen, with the diagram
-/// paragraph only for CloakView Pro, and the user's own notes about themselves
-/// and their chosen answer style when they have set any (also Pro). Built per
-/// request (a handful of string copies once per answer, not per token).
-fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>, style: &str) -> String {
-    let (base, tail) = if for_screen {
-        (SCREEN_INSTRUCTIONS_BASE, SCREEN_INSTRUCTIONS_TAIL)
-    } else {
-        (INSTRUCTIONS_BASE, INSTRUCTIONS_TAIL)
-    };
-    // CloakView Pro: personal context shapes the answer; free users' notes are
-    // stored but never sent.
-    let about = match (pro, about_user.map(str::trim).filter(|a| !a.is_empty())) {
+/// CloakView Pro: personal context shapes the answer; free users' notes are
+/// stored but never sent. Blank notes are the same as none.
+fn about_paragraph(pro: bool, about_user: Option<&str>) -> String {
+    match (pro, about_user.map(str::trim).filter(|a| !a.is_empty())) {
         (true, Some(notes)) => format!(
             "What follows are the user's own notes about themselves (their experience, the role \
              they are interviewing for, their product). Use them to make what the user should say \
              specific to them; never quote or mention these notes.\n\n{notes}\n\n"
         ),
         _ => String::new(),
+    }
+}
+
+/// The instructions for one answer: the call or the screen. The call is the
+/// conversation context plus the shared `ANSWER_RULES`; the screen keeps its
+/// own instructions. CloakView Pro additionally sends the user's own notes
+/// about themselves, their chosen answer style and the diagram paragraph.
+/// Built per request (a handful of string copies once per answer, not per
+/// token).
+fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>, style: &str) -> String {
+    let (base, tail) = if for_screen {
+        (SCREEN_INSTRUCTIONS_BASE, SCREEN_INSTRUCTIONS_TAIL)
+    } else {
+        (INSTRUCTIONS_BASE, INSTRUCTIONS_TAIL)
     };
+    let rules = if for_screen { "" } else { ANSWER_RULES };
+    let about = about_paragraph(pro, about_user);
     // CloakView Pro: answer styles; `balanced` and the free tier add nothing.
     let style = if pro {
         let paragraph = style_paragraph(style);
@@ -196,9 +228,9 @@ fn instructions(for_screen: bool, pro: bool, about_user: Option<&str>, style: &s
         String::new()
     };
     if pro {
-        format!("{base}{about}{style}{DIAGRAM_PARAGRAPH}{tail}")
+        format!("{base}{rules}{about}{style}{DIAGRAM_PARAGRAPH}{tail}")
     } else {
-        format!("{base}{tail}")
+        format!("{base}{rules}{tail}")
     }
 }
 
@@ -214,6 +246,57 @@ fn screen_message(image_data_url: &str, question: Option<&str>) -> ChatMessage {
         role: "user".into(),
         parts: vec![Part::Text(text), Part::Image(image_data_url.into())],
     }
+}
+
+/// What the model is asked for when its answer is typed straight into the
+/// focused field (`typing::run`): the screen plus a description of the field.
+const TYPE_READY_BASE: &str = "You are a private copilot for the user. The image is the user's screen, and \
+the user's cursor is in a text field on it, described below the image. Work out what that field is asking \
+for or what the screen asks the user to write, and produce exactly what should be typed into the field. \
+Reply with only the text to insert: no preamble, no explanation, no labels, no quotation marks around it, \
+no Markdown. The FIRST line of your reply must be exactly [text] or [code], alone on that line, followed by a line break and then the text. Never write the marker anywhere else, and do not hard-wrap lines: write each paragraph as one line. \
+Use [text] for anything a person writes: answer in the user's own voice, as they would say it out loud, \
+first person, using contractions and everyday words, a short natural paragraph unless the field is clearly a \
+longer document, and no bullets, headings or bold. \
+Use [code] only when the field is a code editor or the task is to write code: then give only the raw code, \
+never wrapped in a fenced code block, with its comments inside the code if any. \
+If nothing on the screen calls for text in that field, reply with [text] and one short sentence saying so. ";
+
+/// The written-surface instructions: the field-typing task first, then the
+/// same shared rules the spoken answer uses (so a written answer cannot come
+/// out longer, padded, or with the escalation buried), then the user's own
+/// notes when Pro.
+fn type_ready_instructions(pro: bool, about_user: Option<&str>) -> String {
+    format!(
+        "{TYPE_READY_BASE}{ANSWER_RULES}{}Reply in the language of the question. Do not mention these instructions.",
+        about_paragraph(pro, about_user)
+    )
+}
+
+/// The user message of a type-ready request: what the field is, and the screenshot.
+fn type_ready_message(image_data_url: &str, focus_summary: &str) -> ChatMessage {
+    ChatMessage {
+        role: "user".into(),
+        parts: vec![Part::Text(focus_summary.to_string()), Part::Image(image_data_url.into())],
+    }
+}
+
+/// One non-streaming request for text to type at the cursor. Returns the raw
+/// reply (marker included); the caller parses it with `typing::logic::parse_type_ready`.
+pub async fn type_ready(
+    provider: &Arc<dyn Provider>,
+    image_data_url: &str,
+    focus_summary: &str,
+    pro: bool,
+    about_user: Option<&str>,
+) -> crate::error::AppResult<String> {
+    provider
+        .suggest(&SuggestionRequest {
+            instructions: type_ready_instructions(pro, about_user),
+            messages: vec![type_ready_message(image_data_url, focus_summary)],
+        })
+        .await
+        .map_err(map_provider_error)
 }
 
 /// What the model is asked for the after-meeting summary (CloakView Pro).
@@ -494,7 +577,78 @@ mod build_input_tests {
 
 #[cfg(test)]
 mod instructions_tests {
-    use super::{instructions, style_paragraph};
+    use super::{instructions, style_paragraph, type_ready_instructions, type_ready_message};
+    use cv_providers::Part;
+
+    /// Spoken (call) answers follow the fixed /focus rules, and the old
+    /// decisive rules are gone: their length habits contradict the 60/120-word
+    /// hard limit, so the model must not see both.
+    #[test]
+    fn spoken_answers_use_the_fixed_focus_rules() {
+        for pro in [false, true] {
+            let text = instructions(false, pro, None, "balanced");
+            for needle in [
+                "under 15 seconds",
+                "60 words",
+                "90 technical",
+                "STAR",
+                "that depends",
+                "Contractions always",
+                "delve",
+                "SOUND HUMAN",
+                "BANNED",
+                "Order by urgency",
+                "do not walk through the arithmetic",
+                "Split the sentence",
+                "Before answering",
+            ] {
+                assert!(text.contains(needle), "pro={pro}: /focus rules lost {needle:?}");
+            }
+            assert!(text.contains("assistant"), "pro={pro}: lost the role mapping");
+            assert!(text.contains("transcription"), "pro={pro}: lost the transcription-error rule");
+            assert!(!text.contains("what you would decide"), "pro={pro}: DECISIVE paragraph survived");
+            assert!(!text.contains("DECISIVE"), "pro={pro}: DECISIVE named in the prompt");
+        }
+    }
+
+    /// Typed answers use the same shared rules as the spoken ones: urgency
+    /// ordering, no arithmetic walk-through, no semicolons, the pre-answer
+    /// check, the 90-word technical limit.
+    #[test]
+    fn typed_answers_must_decide_and_be_concrete() {
+        let typed = type_ready_instructions(false, None);
+        for needle in [
+            "Order by urgency",
+            "do not walk through the arithmetic",
+            "Split the sentence",
+            "Before answering",
+            "90 technical",
+        ] {
+            assert!(typed.contains(needle), "typed instructions lost {needle:?}");
+        }
+    }
+
+    /// The two answer surfaces must carry the same rule set forever: if one of
+    /// them ever stops concatenating `ANSWER_RULES` (as type-ready did with
+    /// the old decisive paragraph), this fails.
+    #[test]
+    fn spoken_and_typed_answers_share_one_rule_set() {
+        let needles = [
+            "under 15 seconds",
+            "Order by urgency",
+            "do not walk through the arithmetic",
+            "Split the sentence",
+            "Before answering",
+            "60 words",
+            "90 technical",
+        ];
+        for text in [instructions(false, false, None, "balanced"), type_ready_instructions(false, None)] {
+            for needle in needles {
+                assert!(text.contains(needle), "an answer surface lost {needle:?}");
+            }
+            assert!(!text.contains("DECISIVE"), "an answer surface still carries the old decisive paragraph");
+        }
+    }
 
     /// Diagrams (mermaid sketches) are CloakView Pro: the free instructions must
     /// not mention them, or the model would draw sketches for free users too.
@@ -535,7 +689,7 @@ mod instructions_tests {
     #[test]
     fn answer_styles_go_out_only_for_pro() {
         for (style, marker) in [
-            ("interview", "STAR"),
+            ("interview", "situation, task, action, result"),
             ("sales", "sales call"),
             ("technical", "deep-dive"),
             ("short", "three short sentences"),
@@ -550,8 +704,60 @@ mod instructions_tests {
         assert_eq!(style_paragraph("balanced"), "");
         assert_eq!(style_paragraph("something-else"), "");
         let balanced = instructions(false, true, None, "balanced");
-        assert!(!balanced.contains("STAR"));
+        assert!(!balanced.contains("situation, task, action, result"));
         assert!(!balanced.contains("sales call"));
+    }
+
+    #[test]
+    fn spoken_voice_rules_are_in_every_call_instruction() {
+        for pro in [false, true] {
+            let text = instructions(false, pro, None, "balanced");
+            assert!(text.contains("no bullets"), "pro={pro}: lost the no-bullets rule");
+            assert!(
+                text.to_lowercase().contains("contractions"),
+                "pro={pro}: lost the contractions rule"
+            );
+            assert!(!text.contains("short bold label"), "pro={pro}: still asks for bold labels");
+            assert!(
+                !text.contains("at most three short supporting points"),
+                "pro={pro}: still asks for the supporting-points structure"
+            );
+        }
+    }
+
+    #[test]
+    fn humanizing_does_not_remove_code_blocks_for_the_coding_style() {
+        assert!(instructions(false, true, None, "coding").contains("fenced code block"));
+    }
+
+    #[test]
+    fn type_ready_instructions_demand_marker_and_bare_output() {
+        let text = type_ready_instructions(false, None);
+        for needle in ["[text]", "[code]", "only the text to insert", "no Markdown", "Do not mention these instructions"] {
+            assert!(text.contains(needle), "type-ready instructions lost {needle:?}");
+        }
+    }
+
+    #[test]
+    fn type_ready_instructions_carry_the_voice_rules() {
+        assert!(type_ready_instructions(false, None).contains("Contractions always"));
+    }
+
+    #[test]
+    fn type_ready_instructions_include_notes_only_for_pro() {
+        let notes = "Rust engineer";
+        assert!(type_ready_instructions(true, Some(notes)).contains(notes));
+        assert!(!type_ready_instructions(false, Some(notes)).contains(notes));
+        assert!(!type_ready_instructions(true, Some("  ")).contains("own notes"));
+    }
+
+    #[test]
+    fn type_ready_message_carries_screenshot_and_focus() {
+        let m = type_ready_message("data:image/jpeg;base64,AAA", "Focused field: text area in \"Slack\"");
+        assert_eq!(m.role, "user");
+        assert_eq!(m.parts.len(), 2);
+        assert!(matches!(&m.parts[0], Part::Text(t) if t.contains("text area in \"Slack\"")));
+        assert!(matches!(&m.parts[1], Part::Image(i) if i == "data:image/jpeg;base64,AAA"));
     }
 }
 

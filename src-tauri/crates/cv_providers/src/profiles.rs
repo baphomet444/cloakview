@@ -27,6 +27,13 @@ pub struct ProviderProfile {
     pub stt_mode: SttMode,
     pub stt_model: Option<String>, // None => provider cannot transcribe
     pub llm_model: String,
+    /// The answer models the user can pick from, default first. Every one must
+    /// accept images and this profile's `reasoning_effort`. Empty = no choice.
+    pub llm_model_options: &'static [&'static str],
+    /// How hard a reasoning model thinks before answering (`reasoning.effort`
+    /// of the Responses API). `None` sends no field, which is what non-reasoning
+    /// models and the Chat dialect need.
+    pub reasoning_effort: Option<&'static str>,
     /// Which STT models the provider offers for the streaming listen path.
     /// Empty for providers that cannot stream (Batch) or have no STT at all.
     /// The first entry is the default.
@@ -52,7 +59,11 @@ pub fn builtin_profiles() -> Vec<ProviderProfile> {
             // 0.2.1 build already uses. The batch name is what transcribe()
             // and the connection test use.
             stt_model: Some("gpt-4o-mini-transcribe".into()),
-            llm_model: "gpt-4o-mini".into(),
+            llm_model: "gpt-6-luna".into(),
+            // Checked 2026-11-22 against developers.openai.com/api/docs/models:
+            // both take images, stream, and accept effort "low".
+            llm_model_options: &["gpt-6-luna", "gpt-6.1-terra"],
+            reasoning_effort: Some("low"),
             stt_model_options: &[
                 "gpt-4o-mini-transcribe",
                 "gpt-4o-transcribe",
@@ -69,6 +80,8 @@ pub fn builtin_profiles() -> Vec<ProviderProfile> {
             // llama-3.3-70b-versatile was retired 2026-08-16; gpt-oss-120b is
             // in the current production table.
             llm_model: "openai/gpt-oss-120b".into(),
+            llm_model_options: &[],
+            reasoning_effort: None,
             stt_model_options: &[],
             models_doc_url: "https://console.groq.com/docs/models".into(),
         },
@@ -82,6 +95,8 @@ pub fn builtin_profiles() -> Vec<ProviderProfile> {
             // Llama-3.3-70B left the serverless catalog; gpt-oss-120b is in
             // the current chat table.
             llm_model: "openai/gpt-oss-120b".into(),
+            llm_model_options: &[],
+            reasoning_effort: None,
             stt_model_options: &[],
             models_doc_url: "https://docs.together.ai/docs/serverless-models".into(),
         },
@@ -121,6 +136,13 @@ mod tests {
             &["gpt-4o-mini-transcribe", "gpt-4o-transcribe"]
         );
         assert_eq!(openai.stt_model_options[0], "gpt-4o-mini-transcribe");
+    }
+
+    #[test]
+    fn openai_offers_luna_then_terra_for_answers() {
+        let openai = builtin_profiles().into_iter().find(|p| p.id == "openai").unwrap();
+        assert_eq!(openai.llm_model_options, &["gpt-6-luna", "gpt-6.1-terra"]);
+        assert_eq!(openai.llm_model_options[0], openai.llm_model, "the default must be the first choice");
     }
 
     #[test]

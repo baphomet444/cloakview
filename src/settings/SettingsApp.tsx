@@ -10,6 +10,7 @@ import {
   saveKey,
   saveSettings,
   setActiveProvider,
+  setAnswerModel,
   setRealtimeModel,
   testConnection,
 } from "../lib/ipc";
@@ -19,6 +20,7 @@ import { WindowFrame } from "../windows/WindowFrame";
 import { applyAppearance, useSettingsBoot } from "../windows/useSettingsBoot";
 import {
   MIN_OPACITY,
+  answerModelLabel,
   clampOpacity,
   draftFromSettings,
   draftIsValid,
@@ -26,6 +28,7 @@ import {
   isDraftDirty,
   maskKey,
   themeFromSetting,
+  transcriptionModelShown,
   type SettingsDraft,
   type Theme,
 } from "./settingsLogic";
@@ -38,6 +41,7 @@ const SHORTCUT_FIELDS: readonly { key: keyof Shortcuts; labelKey: CatalogKey }[]
   { key: "pushToAsk", labelKey: "settings.shortcutPushToAsk" },
   { key: "toggleListen", labelKey: "settings.shortcutToggleListen" },
   { key: "readScreen", labelKey: "settings.shortcutReadScreen" },
+  { key: "typeAtCursor", labelKey: "settings.shortcutTypeAtCursor" },
 ];
 
 const LANGUAGES: readonly { value: Locale; labelKey: CatalogKey }[] = [
@@ -80,8 +84,8 @@ const THEMES: readonly { value: Theme; labelKey: CatalogKey }[] = [
  * The AI provider and its key (Keychain), and the saved settings. Language,
  * theme, opacity and the provider apply and save as soon as they change; the
  * shortcuts wait for Save, because an accelerator is invalid while being
- * typed. Answer models are not editable: they come from the provider's
- * profile. Rust re-registers the shortcuts when they change.
+ * typed. The answer model is picked from the ones the provider's profile
+ * offers. Rust re-registers the shortcuts when they change.
  */
 export function SettingsApp() {
   const { settings, setSettings, locale: bootLocale, bootErrorKey } = useSettingsBoot();
@@ -182,6 +186,16 @@ export function SettingsApp() {
     try {
       const saved = await setActiveProvider(id);
       setSettings(saved);
+      setTestResult(null);
+      await refreshProviders();
+    } catch (error) {
+      setErrorKey(errorCopyKey(error));
+    }
+  }
+
+  async function chooseAnswerModel(model: string): Promise<void> {
+    try {
+      setSettings(await setAnswerModel(model));
       setTestResult(null);
       await refreshProviders();
     } catch (error) {
@@ -297,9 +311,23 @@ export function SettingsApp() {
                 <>
                   <p className="win-hint">
                     {t("settings.modelsLine")
-                      .replace("{stt}", active.sttModel ?? "—")
+                      .replace("{stt}", transcriptionModelShown(active, settings?.realtimeModel))
                       .replace("{llm}", active.llmModel)}
                   </p>
+                  {active.llmModelOptions.length > 0 && (
+                    <>
+                      <span className="win-label" id="set-answer-model-label">
+                        {t("settings.answerModel")}
+                      </span>
+                      <Segmented
+                        id="set-answer-model"
+                        options={active.llmModelOptions.map((model) => ({ value: model, label: answerModelLabel(model) }))}
+                        value={active.llmModel}
+                        onChange={(next) => void chooseAnswerModel(next)}
+                      />
+                      <p className="win-hint">{t("settings.answerModelHint")}</p>
+                    </>
+                  )}
                   {active.sttMode === "batch" && <p className="set-status win-muted">{t("settings.listeningNote")}</p>}
                   {active.sttModelOptions.length > 0 && settings !== null && (
                     <>

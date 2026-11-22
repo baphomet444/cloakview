@@ -1,5 +1,16 @@
 # Development notes
 
+## Type at cursor (⌃⌥T)
+
+`typeAtCursor` (⌃⌥T by default, configurable like the other shortcuts, CloakView Pro) reads the
+screen, inspects the focused field through the Accessibility API, asks the model for text that fits
+that field, and inserts it at the cursor: prose is typed (line breaks as Shift+Return, so a chat box
+never sends), code is pasted and the clipboard restored. Press the shortcut again, or Esc, to stop;
+it also stops if you switch apps. It refuses password fields and elements that are not text fields.
+It needs the Accessibility permission (System Settings → Privacy & Security → Accessibility), which
+is tied to the app's code signature, so a development build asks again. Design:
+`docs/superpowers/specs/2026-11-19-type-at-cursor-design.md`.
+
 ## Known limitations
 
 ### Reopening from the Dock leaves another app's full-screen Space (macOS)

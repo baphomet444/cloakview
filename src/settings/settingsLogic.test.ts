@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Settings } from "../lib/models";
 import {
   MIN_OPACITY,
+  answerModelLabel,
   clampOpacity,
   draftFromSettings,
   draftIsValid,
@@ -9,6 +10,7 @@ import {
   isDraftDirty,
   maskKey,
   themeFromSetting,
+  transcriptionModelShown,
 } from "./settingsLogic";
 
 const settings: Settings = {
@@ -21,13 +23,37 @@ const settings: Settings = {
   replyDelayMs: 1000,
   userKeywords: [],
   userName: null,
-  shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "cmdOrControl+shift+space", toggleListen: "", readScreen: "" },
+  shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "cmdOrControl+shift+space", toggleListen: "", readScreen: "", typeAtCursor: "ctrl+alt+t" },
   includeMic: false,
   personalContext: "",
   answerStyle: "balanced",
   translateTo: "",
   callLanguage: "",
 };
+
+describe("answerModelLabel", () => {
+  it("shows the official name with its version, and the id of a model it has no name for", () => {
+    expect(answerModelLabel("gpt-6-luna")).toBe("GPT-6 Luna");
+    expect(answerModelLabel("gpt-6.1-terra")).toBe("GPT-6.1 Terra");
+    expect(answerModelLabel("something-else")).toBe("something-else");
+  });
+});
+
+describe("transcriptionModelShown", () => {
+  const provider = {
+    sttModel: "gpt-4o-mini-transcribe",
+    sttModelOptions: ["gpt-4o-mini-transcribe", "gpt-4o-transcribe"],
+  };
+
+  it("shows the model picked for listening, not the profile's default", () => {
+    expect(transcriptionModelShown(provider, "gpt-4o-transcribe")).toBe("gpt-4o-transcribe");
+  });
+
+  it("falls back to the profile's model for a stale or unsupported choice", () => {
+    expect(transcriptionModelShown(provider, "gpt-4o-mini-realtime")).toBe("gpt-4o-mini-transcribe");
+    expect(transcriptionModelShown({ sttModel: null, sttModelOptions: [] }, "gpt-4o-transcribe")).toBe("—");
+  });
+});
 
 describe("themeFromSetting", () => {
   it("only 'light' selects the light theme; anything else, including an unknown value, is dark", () => {
@@ -70,18 +96,24 @@ describe("the shortcuts and context draft", () => {
     expect(isDraftDirty({ ...draft, personalContext: "Rust engineer." }, settings)).toBe(true);
   });
 
-  it("is always valid (a blank shortcut turns that action off)", () => {
-    expect(draftIsValid(draftFromSettings(settings))).toBe(true);
-    expect(draftIsValid({ ...draftFromSettings(settings), shortcuts: { quickHide: "", pushToAsk: "", toggleListen: "", readScreen: "" } })).toBe(true);
+  it("is dirty when only the type-at-cursor shortcut changed", () => {
+    const draft = draftFromSettings(settings);
+    expect(isDraftDirty(draft, settings)).toBe(false);
+    expect(isDraftDirty({ ...draft, shortcuts: { ...draft.shortcuts, typeAtCursor: "ctrl+alt+y" } }, settings)).toBe(true);
   });
 
-  it("saves trimmed values and always all four shortcuts (the patch replaces the set)", () => {
+  it("is always valid (a blank shortcut turns that action off)", () => {
+    expect(draftIsValid(draftFromSettings(settings))).toBe(true);
+    expect(draftIsValid({ ...draftFromSettings(settings), shortcuts: { quickHide: "", pushToAsk: "", toggleListen: "", readScreen: "", typeAtCursor: "" } })).toBe(true);
+  });
+
+  it("saves trimmed values and always all five shortcuts (the patch replaces the set)", () => {
     const patch = draftPatch({
-      shortcuts: { quickHide: " cmdOrControl+shift+h ", pushToAsk: "", toggleListen: "alt+l ", readScreen: " alt+s " },
+      shortcuts: { quickHide: " cmdOrControl+shift+h ", pushToAsk: "", toggleListen: "alt+l ", readScreen: " alt+s ", typeAtCursor: " alt+t " },
       personalContext: "  Senior Rust engineer.  ",
     });
     expect(patch).toEqual({
-      shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "", toggleListen: "alt+l", readScreen: "alt+s" },
+      shortcuts: { quickHide: "cmdOrControl+shift+h", pushToAsk: "", toggleListen: "alt+l", readScreen: "alt+s", typeAtCursor: "alt+t" },
       personalContext: "Senior Rust engineer.",
     });
   });

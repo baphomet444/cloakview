@@ -18,6 +18,7 @@ mod session;
 mod settings;
 mod state;
 mod system_language;
+mod typing;
 pub mod transcript;
 mod windows_ext;
 
@@ -53,6 +54,7 @@ ipc_commands![
     clear_key,
     set_active_provider,
     set_realtime_model,
+    set_answer_model,
     test_connection,
     get_settings,
     save_settings,
@@ -185,6 +187,7 @@ mod ipc_surface_tests {
         "clear_key",
         "set_active_provider",
         "set_realtime_model",
+        "set_answer_model",
         "test_connection",
         // listen / answer
         "start_listen",

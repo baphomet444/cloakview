@@ -19,8 +19,9 @@ pub struct Settings {
     /// profiles): one provider, one key, for listening and answers alike.
     /// Unknown values behave like "openai".
     pub active_provider: String,
-    /// Safety valve, not exposed in the UI: replaces a profile's default
-    /// model (a retired model, say) without waiting for a release.
+    /// Replaces a profile's default models. Settings writes `llm` here
+    /// (`providers::set_answer_model`); `stt` is a hand-edited safety valve for
+    /// a retired model.
     pub model_overrides: std::collections::HashMap<String, ModelOverride>,
     /// The OpenAI Realtime transcription model for the streaming listen
     /// path (used only while the active provider is "openai").
@@ -198,7 +199,8 @@ mod tests {
                     "quickHide": "ctrl+alt+h",
                     "pushToAsk": "cmdOrControl+shift+space",
                     "toggleListen": "ctrl+alt+l",
-                    "readScreen": "cmdOrControl+shift+s"
+                    "readScreen": "cmdOrControl+shift+s",
+                    "typeAtCursor": "ctrl+alt+t"
                 },
                 "includeMic": true,
                 "personalContext": "",
