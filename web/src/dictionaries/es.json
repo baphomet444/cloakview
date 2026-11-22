@@ -260,9 +260,9 @@
     },
     "whatYouGet": {
       "title": "Qué trae el DMG",
-      "intro": "Un archivo de 9,2 MB publicado en GitHub Releases, firmado y notarizado por Apple.",
+      "intro": "Un archivo de 9,4 MB publicado en GitHub Releases, firmado y notarizado por Apple.",
       "items": [
-        "CloakView 0.3.2 para Apple Silicon (arm64). No hay versión Intel en la v1.",
+        "CloakView para Apple Silicon (arm64). No hay versión Intel en la v1.",
         "Un archivo de checksums junto al DMG para comparar el SHA-256 antes de abrir nada.",
         "Sin instalador ni proceso auxiliar: abrís el DMG, arrastrás la app a Aplicaciones y lo expulsás."
       ]
@@ -287,7 +287,7 @@
     "verify": {
       "title": "Verificá el checksum antes de instalar",
       "text": "Corré esto en Terminal y compará el resultado con el SHA-256 de arriba, o con el de las notas del release:",
-      "command": "shasum -a 256 ~/Downloads/CloakView_0.3.2_aarch64.dmg"
+      "command": "shasum -a 256 ~/Downloads/CloakView-Pro_aarch64.dmg"
     }
   },
   "meta": {
