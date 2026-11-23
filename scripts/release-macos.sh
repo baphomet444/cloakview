@@ -34,12 +34,17 @@ cp "$dmg" "$pro_dmg"
 
 shasum -a 256 "$dmg"
 
-# Publish to the private R2 bucket that /api/dl signs for. Skipped when the credentials are not
-# in the environment, so a release still works on a machine that cannot reach Cloudflare.
-if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${R2_ACCOUNT_ID:-}" ]; then
+# Publish to the private R2 bucket that /api/dl signs for. The S3 keys the site presigns with can
+# also publish the artifact, so they live in ~/.cloakview-r2.env (mode 600) instead of the shell.
+# Skipped when no credentials are reachable, so a release still works on an offline machine.
+r2_env="${R2_ENV_FILE:-$HOME/.cloakview-r2.env}"
+if [ -f "$r2_env" ] || { [ -n "${R2_ACCESS_KEY_ID:-}" ] && [ -n "${R2_ACCOUNT_ID:-}" ]; }; then
+  echo "Uploading to R2 with the S3 credentials from ${r2_env}"
+  python3 scripts/r2-put.py "$pro_dmg" "${R2_KEY:-CloakView-Pro_aarch64.dmg}"
+elif [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${R2_ACCOUNT_ID:-}" ]; then
   r2_key="${R2_KEY:-CloakView-Pro_aarch64.dmg}"
   r2_bucket="${R2_BUCKET:-cloakview-downloads}"
-  echo "Uploading to R2: $r2_bucket/$r2_key"
+  echo "Uploading to R2 with wrangler: $r2_bucket/$r2_key"
   CLOUDFLARE_ACCOUNT_ID="$R2_ACCOUNT_ID" npx --yes wrangler@4 r2 object put "$r2_bucket/$r2_key" \
     --file "$pro_dmg" --content-type application/x-apple-diskimage --remote
 else

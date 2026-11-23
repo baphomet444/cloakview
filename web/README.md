@@ -49,7 +49,13 @@ Environment:
   request time and redirect to it. The bucket stays private, the URL lives 5 minutes, and the
   function only ever returns a redirect — no 4.5 MB response limit, no egress through Vercel.
   `R2_BUCKET` (default `cloakview-downloads`) and `R2_KEY` (default `CloakView-Pro_aarch64.dmg`)
-  override the object; the credential must be scoped to the bucket, read-only.
+  override the object.
+
+  These keys are an **R2 API token** scoped to that one bucket (Object Read & Write — read alone
+  cannot publish a release). The same keys live in `~/.cloakview-r2.env` (mode 600) so
+  `scripts/release-macos.sh` can push the DMG with `scripts/r2-put.py`, which signs a SigV4 PUT
+  with nothing but the standard library. Rotate with R2 → Manage R2 API Tokens → Roll, then
+  re-add the two variables here and redeploy.
 - `DL_GITHUB_TOKEN` (fallback) a fine-grained PAT with **Contents: read** on the repo. With it
   the asset is streamed through the function.
 - `DL_PRESIGN_URL` (fallback) a single presigned R2/S3 URL. It wins over GitHub, but a fixed URL
