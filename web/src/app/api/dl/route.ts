@@ -1,5 +1,6 @@
 import { createRateLimiter } from "@/lib/assistant-input";
 import { mint, verify } from "@/lib/dl-token";
+import { presignR2Download, r2Config } from "@/lib/r2";
 
 /**
  * The only public download URL.
@@ -11,9 +12,15 @@ import { mint, verify } from "@/lib/dl-token";
  * public path.
  *
  * Backends, by environment:
+ *   R2_* credentials set -> redirect to a URL signed here, valid 5 minutes (private bucket)
  *   DL_PRESIGN_URL  set -> redirect to it (R2/S3 presigned; storage stays private)
  *   DL_GITHUB_TOKEN set -> stream the asset through this function (private repo)
  *   neither             -> redirect to browser_download_url (repo still public)
+ *
+ * The R2 path is the only one that keeps the binary off both GitHub and this function: the
+ * redirect is a few hundred bytes, so neither the 4.5 MB response limit nor function bandwidth
+ * is in play, and the signature is minted per request instead of living in an env var that can
+ * expire (which is what DL_PRESIGN_URL can only ever be good for).
  *
  * No route segment config: next.config sets cacheComponents, which rejects `runtime` and
  * `dynamic`. Route handlers are dynamic and Node-runtime by default, which is what this needs
@@ -62,6 +69,14 @@ export async function GET(request: Request): Promise<Response> {
     return new Response(null, { status: 302, headers: { Location: next.toString(), "Cache-Control": "no-store" } });
   }
   if (!verify(token)) return Response.json({ error: "expired" }, { status: 403 });
+
+  const r2 = r2Config();
+  if (r2) {
+    return new Response(null, {
+      status: 302,
+      headers: { Location: presignR2Download(r2), "Cache-Control": "no-store" },
+    });
+  }
 
   if (PRESIGN) {
     return new Response(null, { status: 302, headers: { Location: PRESIGN, "Cache-Control": "no-store" } });

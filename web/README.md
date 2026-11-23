@@ -45,11 +45,20 @@ this route fronts the artifact instead and mints a signed, 15-minute URL.
 Environment:
 
 - `DL_SECRET` (required, >= 32 chars) signs the token. Missing => 500, on purpose.
-- `DL_GITHUB_TOKEN` (set once the repo is private) a fine-grained PAT with **Contents: read**
-  on the repo. With it the asset is streamed through the function.
-- `DL_PRESIGN_URL` (optional) a presigned R2/S3 URL; when set it wins over GitHub and the
-  storage host is never exposed.
+- `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` (preferred) sign an R2 GET at
+  request time and redirect to it. The bucket stays private, the URL lives 5 minutes, and the
+  function only ever returns a redirect — no 4.5 MB response limit, no egress through Vercel.
+  `R2_BUCKET` (default `cloakview-downloads`) and `R2_KEY` (default `CloakView-Pro_aarch64.dmg`)
+  override the object; the credential must be scoped to the bucket, read-only.
+- `DL_GITHUB_TOKEN` (fallback) a fine-grained PAT with **Contents: read** on the repo. With it
+  the asset is streamed through the function.
+- `DL_PRESIGN_URL` (fallback) a single presigned R2/S3 URL. It wins over GitHub, but a fixed URL
+  expires, so it is only useful for a manual rescue, not for releases.
 - `DL_REPO` / `DL_ASSET` override the default repo and asset name.
 
-With none of the token modes set the route just redirects to `browser_download_url`, which
-is correct only while the repo is public. Rate limit is 30/min per IP.
+With none of them set the route just redirects to `browser_download_url`, which is correct only
+while the repo is public. Rate limit is 30/min per IP.
+
+Publishing a release puts the DMG in R2 with `scripts/release-macos.sh` (needs
+`CLOUDFLARE_API_TOKEN` + `R2_ACCOUNT_ID` in the environment); the site then serves whatever key
+`R2_KEY` names, so the object is overwritten per release rather than accreting paths.

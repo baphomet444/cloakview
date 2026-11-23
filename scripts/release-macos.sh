@@ -33,5 +33,18 @@ pro_dmg="src-tauri/target/release/bundle/dmg/CloakView-Pro_aarch64.dmg"
 cp "$dmg" "$pro_dmg"
 
 shasum -a 256 "$dmg"
+
+# Publish to the private R2 bucket that /api/dl signs for. Skipped when the credentials are not
+# in the environment, so a release still works on a machine that cannot reach Cloudflare.
+if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${R2_ACCOUNT_ID:-}" ]; then
+  r2_key="${R2_KEY:-CloakView-Pro_aarch64.dmg}"
+  r2_bucket="${R2_BUCKET:-cloakview-downloads}"
+  echo "Uploading to R2: $r2_bucket/$r2_key"
+  CLOUDFLARE_ACCOUNT_ID="$R2_ACCOUNT_ID" npx --yes wrangler@4 r2 object put "$r2_bucket/$r2_key" \
+    --file "$pro_dmg" --content-type application/x-apple-diskimage --remote
+else
+  echo "R2 credentials not set -- skipping R2 upload (site falls back to GitHub)."
+fi
+
 echo "Upload both to the GitHub release:"
 echo "  gh release upload v${version} \"$dmg\" \"$pro_dmg\" --repo baphomet444/cloakview --clobber"
