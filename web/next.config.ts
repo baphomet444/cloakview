@@ -17,20 +17,17 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // Descarga directa: los CTA del sitio apuntan a /dl/mac y este redirect
-      // entrega el DMG de la última release. Un 302 externo a nivel de
-      // plataforma: no abre la página de GitHub, no cuesta una función.
+      // Los CTA apuntan a /api/dl. /dl/mac era el enlace anterior y ya está
+      // compartido, así que redirige a la descarga firmada en vez de dar 404.
       // (Los redirects de next.config corren antes del proxy de locales.)
       {
-        source: siteConfig.DOWNLOAD_URL,
-        destination: siteConfig.DOWNLOAD_DMG_ARM64,
+        source: siteConfig.LEGACY_DOWNLOAD_URL,
+        destination: siteConfig.DOWNLOAD_URL,
         permanent: false,
       },
-      // Alias bajo /es: el enlace es el mismo en los dos idiomas, pero así una
-      // URL escrita a mano (/es/dl/mac) tampoco muere en un 404.
       {
-        source: `/es${siteConfig.DOWNLOAD_URL}`,
-        destination: siteConfig.DOWNLOAD_DMG_ARM64,
+        source: `/es${siteConfig.LEGACY_DOWNLOAD_URL}`,
+        destination: siteConfig.DOWNLOAD_URL,
         permanent: false,
       },
       {

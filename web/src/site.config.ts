@@ -26,14 +26,12 @@ export const siteConfig = {
   // --- Placeholders pendientes de valores reales ---
   GITHUB_RELEASES: "https://github.com/baphomet444/cloakview/releases/latest",
   GITHUB_REPO: "https://github.com/baphomet444/cloakview",
-  // Descarga directa del DMG. El asset se publica con nombre estable
-  // (`CloakView-Pro_aarch64.dmg`), así que /releases/latest/download/ resuelve
-  // siempre la última release: una release nueva no toca el sitio.
-  DOWNLOAD_DMG_ARM64:
-    "https://github.com/baphomet444/cloakview/releases/latest/download/CloakView-Pro_aarch64.dmg",
-  // Lo que ven los CTA. Redirige al DMG (next.config.ts) en vez de abrir la
-  // página de GitHub: un clic = una descarga.
-  DOWNLOAD_URL: "/dl/mac",
+  // Única URL pública de descarga (src/app/api/dl/route.ts): firma un token de
+  // 15 minutos y entrega el DMG de la última release, sin que el binario tenga
+  // una ruta pública estable. Sigue sirviendo cuando el repo sea privado.
+  DOWNLOAD_URL: "/api/dl",
+  // Enlaces viejos ya compartidos; next.config.ts los redirige a DOWNLOAD_URL.
+  LEGACY_DOWNLOAD_URL: "/dl/mac",
   // Perfil limpio, sin los parámetros del QR con el que se compartió.
   INSTAGRAM_URL: "https://www.instagram.com/cloak_view",
   // Cuentas creadas para el lanzamiento (nov-2026). Los handles son los públicos:

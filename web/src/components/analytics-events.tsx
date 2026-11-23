@@ -5,7 +5,7 @@ import { track } from "@vercel/analytics";
 import { eventForHref } from "@/lib/analytics-targets";
 
 /**
- * Los CTA que nos importan son enlaces (`/dl/mac` para el DMG, `buy.polar.sh`
+ * Los CTA que nos importan son enlaces (`/api/dl` para el DMG, `buy.polar.sh`
  * para el checkout de Pro), así que un único listener delegado en el
  * documento cubre cada uno sin convertir las páginas de servidor en componentes de
  * cliente. La clasificación vive en `lib/analytics-targets.ts`, que tiene sus tests.
