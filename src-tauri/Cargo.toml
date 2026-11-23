@@ -44,3 +44,13 @@ cv_providers = { path = "crates/cv_providers" }
 [dev-dependencies]
 # Time control for the debounce tests in listen.rs.
 tokio = { version = "1", features = ["full", "test-util"] }
+
+# Reverse-engineering cost, not prevention: stripped symbols and a single LTO unit remove the
+# type and function names that make a decompiled binary readable, and shrink it. Keys are not
+# the concern (BYOK through the OS keyring); the frontend bundle and the string constants are.
+# Cost: release builds get slower. Check before adding to a fast loop.
+[profile.release]
+strip = "symbols"
+lto = "fat"
+codegen-units = 1
+opt-level = "s"
