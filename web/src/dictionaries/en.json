@@ -155,7 +155,7 @@
     },
     "download": {
       "title": "Get CloakView",
-      "body": "Free to download and use. Requires macOS 14.2 or later on a Mac with Apple Silicon. Signed and notarized by Apple. Distributed via GitHub Releases — no account needed.",
+      "body": "Free to download and use. Requires macOS 14.2 or later on a Mac with Apple Silicon. Signed and notarized by Apple. Download directly — no account needed.",
       "button": "Download for macOS",
       "soon": "Coming soon.",
       "note": "We will never ask for your email to download."
@@ -260,10 +260,10 @@
     },
     "whatYouGet": {
       "title": "What the DMG contains",
-      "intro": "One file, 9.4 MB, published on GitHub Releases and signed plus notarized by Apple.",
+      "intro": "One DMG file, signed and notarized by Apple.",
       "items": [
         "CloakView for Apple Silicon (arm64). There is no Intel build in v1.",
-        "A checksums file next to the DMG, so you can match the SHA-256 before you open anything.",
+        "A checksums file on GitHub Releases, so you can match the SHA-256 before you open anything.",
         "No installer and no helper process: open the DMG, drag the app to Applications, eject."
       ]
     },
@@ -646,8 +646,8 @@
     }
   },
   "newsletter": {
-    "title": "Get one email when Pro ships",
-    "body": "CloakView itself is free and needs no account. Leave your email only if you want to hear when CloakView Pro — the one-time $99 upgrade — goes on sale, and when a new version is out.",
+    "title": "Get CloakView product updates",
+    "body": "CloakView itself is free and needs no account. Leave your email if you want product updates and news about new versions.",
     "placeholder": "you@example.com",
     "button": "Notify me",
     "sending": "Sending…",
@@ -656,7 +656,7 @@
     "invalid": "That address doesn't look like an email.",
     "error": "Couldn't save it right now. Please try again in a minute.",
     "unavailable": "The list isn't open yet. Try again soon.",
-    "note": "One email when Pro ships, plus the occasional release note. No spam, and one click unsubscribes."
+    "note": "Occasional product updates and release notes. No spam, and one click unsubscribes."
   },
   "assistant": {
     "open": "Ask CloakView",

@@ -155,7 +155,7 @@
     },
     "download": {
       "title": "Consigue CloakView",
-      "body": "Gratis para descargar y usar. Requiere macOS 14.2 o posterior en un Mac con Apple Silicon. Firmada y notarizada por Apple. Se distribuye vía GitHub Releases — sin cuenta de por medio.",
+      "body": "Gratis para descargar y usar. Requiere macOS 14.2 o posterior en un Mac con Apple Silicon. Firmada y notarizada por Apple. Descarga directa, sin necesidad de una cuenta.",
       "button": "Descargar para macOS",
       "soon": "Próximamente.",
       "note": "Nunca te pediremos tu email para descargar."
@@ -260,10 +260,10 @@
     },
     "whatYouGet": {
       "title": "Qué trae el DMG",
-      "intro": "Un archivo de 9,4 MB publicado en GitHub Releases, firmado y notarizado por Apple.",
+      "intro": "Un archivo DMG, firmado y notarizado por Apple.",
       "items": [
         "CloakView para Apple Silicon (arm64). No hay versión Intel en la v1.",
-        "Un archivo de checksums junto al DMG para comparar el SHA-256 antes de abrir nada.",
+        "Un archivo de checksums en GitHub Releases para comparar el SHA-256 antes de abrir nada.",
         "Sin instalador ni proceso auxiliar: abrís el DMG, arrastrás la app a Aplicaciones y lo expulsás."
       ]
     },
@@ -646,8 +646,8 @@
     }
   },
   "newsletter": {
-    "title": "Un solo correo cuando salga Pro",
-    "body": "CloakView es gratis y no necesita cuenta. Deja tu email solo si quieres enterarte cuando se ponga a la venta CloakView Pro —la mejora de pago único de $99— y cuando haya versión nueva.",
+    "title": "Recibe novedades de CloakView",
+    "body": "CloakView es gratis y no necesita cuenta. Deja tu email si quieres recibir novedades del producto y noticias sobre nuevas versiones.",
     "placeholder": "tu@ejemplo.com",
     "button": "Avísame",
     "sending": "Enviando…",
@@ -656,7 +656,7 @@
     "invalid": "Esa dirección no parece un email.",
     "error": "No se pudo guardar ahora. Inténtalo otra vez en un minuto.",
     "unavailable": "La lista aún no está abierta. Prueba pronto.",
-    "note": "Un correo cuando salga Pro y algún aviso de versión nueva. Sin spam y con baja en un clic."
+    "note": "Novedades ocasionales del producto y avisos de nuevas versiones. Sin spam y con baja en un clic."
   },
   "assistant": {
     "open": "Pregunta a CloakView",
