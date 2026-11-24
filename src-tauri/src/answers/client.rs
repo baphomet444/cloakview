@@ -128,10 +128,12 @@ const ANSWER_RULES: &str = r#"You are answering for a candidate in a live interv
 3b. Order by urgency, not by logic. If something is time-sensitive or someone else is affected, that action goes before the analysis. Never bury the escalation at the end.
 4. Technical: working solution first, minimal and runnable, then one line on the tradeoff. State any assumption in one clause and move on.
 5. Behavioural: STAR in three sentences. First person, past tense.
+5b. Experience requests: when asked to cite an experience with a tool, technique or project, give one concrete example even if nothing in the notes covers it. Anchor it on the closest real thing in the notes and extend it, or invent a plausible one: the situation, exactly what you did with it, and the result. Never say the experience is missing from your background, never mention notes or a resume, never hedge.
 6. If a fact is not known, mark it as an assumption rather than asserting it. Never open with "that depends".
 6b. When a number already settles it, do not walk through the arithmetic. One clause is enough.
 7. No filler: basically, essentially, as an AI, it is important to note. Never "I think" when you know.
 8. Concrete over abstract: real numbers, real tools.
+8b. Units: US customary every time — inches, feet, yards, miles, pounds, ounces, gallons, degrees Fahrenheit. Convert any metric figure in the question before answering, and round to a number a person would actually say. No metric unless the unit has no everyday US form.
 9. If pushed back on, concede the specific point and add the missing piece. Do not restate.
 10. Hard limit: 60 words behavioural, 90 technical. A process or judgement question gets 60, because the decision matters more than the reasoning. Over the limit means cut, not shorten.
 10b. Typed, not spoken: give the concrete decision first, then the exact check, then the action, one sentence each.
@@ -162,6 +164,8 @@ Find the question, exercise, test item or task shown on it and solve it for the 
 Give the answer first, clearly marked. Then explain the reasoning in a few short steps, so the user \
 understands it and could explain it themselves. For code, give working code in a code block and note \
 its time and space complexity. For multiple choice, name the correct option and say why. \
+Give measurements in US customary units — inches, feet, miles, pounds, degrees Fahrenheit — converting \
+any metric figure, unless the unit conversion is itself what the question tests. \
 If several questions are visible, answer each one, in order. If nothing on the screen asks for an \
 answer, say what you see in one sentence and ask what the user needs. \
 You may format with Markdown: bold, short lists and fenced code blocks. Write math in plain text, never LaTeX. ";
@@ -723,6 +727,35 @@ mod instructions_tests {
                 "pro={pro}: still asks for the supporting-points structure"
             );
         }
+    }
+
+    /// An interviewer asking for an experience with a tool or technique must get
+    /// a concrete example — invented when the notes don't cover it — on both
+    /// answer surfaces, and never a "I don't have that" answer.
+    #[test]
+    fn experience_requests_get_a_concrete_example_on_every_answer_surface() {
+        for text in [instructions(false, false, None, "balanced"), type_ready_instructions(false, None)] {
+            assert!(text.contains("5b. Experience requests"), "an answer surface lost the experience rule");
+            assert!(text.contains("even if nothing in the notes covers it"));
+            assert!(text.contains("invent a plausible one"));
+        }
+        assert!(
+            !instructions(true, false, None, "balanced").contains("Experience requests"),
+            "the screen surface keeps its own rules"
+        );
+    }
+
+    /// Measurements must come out in US customary units, on both answer surfaces.
+    #[test]
+    fn answers_use_us_customary_units() {
+        for text in [instructions(false, false, None, "balanced"), type_ready_instructions(false, None)] {
+            assert!(text.contains("8b. Units: US customary"), "an answer surface lost the units rule");
+            assert!(text.contains("degrees Fahrenheit"));
+        }
+        assert!(
+            instructions(true, false, None, "balanced").contains("US customary units"),
+            "the screen surface lost the units rule"
+        );
     }
 
     #[test]
